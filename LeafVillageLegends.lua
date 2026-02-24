@@ -75,11 +75,11 @@ local CLASS_COLORS = {
   MAGE = {0.41, 0.80, 0.94}, WARLOCK = {0.58, 0.51, 0.79}, DRUID = {1.00, 0.49, 0.04},
 }
 
--- Faction-specific flat background colour for the live player model portrait.
--- Each entry: {r, g, b}
+-- Faction-specific gradient background for the live player model portrait.
+-- Each entry: 8 values for SetGradientAlpha("VERTICAL", r1,g1,b1,a1, r2,g2,b2,a2)
 local FACTION_BACKGROUNDS = {
-  Horde    = {0.60, 0.05, 0.05},  -- Horde: red
-  Alliance = {0.05, 0.25, 0.60},  -- Alliance: blue
+  Horde    = { 0.45, 0.00, 0.00, 0.95,  0.15, 0.00, 0.00, 0.95 },  -- red gradient
+  Alliance = { 0.05, 0.20, 0.60, 0.95,  0.00, 0.08, 0.35, 0.95 },  -- blue gradient
 }
 
 local THEME = {
@@ -603,6 +603,34 @@ function LeafVE:ResetAllLeafPoints()
     end)
   end
   Print("|cFFFF4444All Leaf Points have been reset for all players.|r")
+end
+
+-- Clears all cached achievement leaderboard data locally (SavedVariables + memory).
+local function HardResetAchievementLeaderboard_Local()
+  EnsureDB()
+  if not LeafVE_GlobalDB.leaderboardCache then
+    LeafVE_GlobalDB.leaderboardCache = { achievementPoints = {}, leafPoints = {}, weekly = {}, lifetime = {}, lastUpdate = 0 }
+  end
+  -- Wipe the achievement leaderboard snapshot from cache
+  LeafVE_GlobalDB.leaderboardCache.achievementPoints = {}
+  LeafVE_GlobalDB.leaderboardCache.lastUpdate = 0
+  -- Zero out per-player achievement point totals used for ranking
+  if LeafVE_GlobalDB.achievementCache then
+    for _, data in pairs(LeafVE_GlobalDB.achievementCache) do
+      if type(data) == "table" then
+        data.totalPoints = 0
+      end
+    end
+  end
+  -- Refresh leaderboard panels if open
+  if LeafVE.UI and LeafVE.UI.panels then
+    if LeafVE.UI.panels.leaderLife and LeafVE.UI.panels.leaderLife:IsVisible() then
+      LeafVE.UI:RefreshLeaderboard("leaderLife")
+    end
+    if LeafVE.UI.panels.leaderWeek and LeafVE.UI.panels.leaderWeek:IsVisible() then
+      LeafVE.UI:RefreshLeaderboard("leaderWeek")
+    end
+  end
 end
 
 function LeafVE:GetHistory(playerName, limit)
@@ -1790,6 +1818,13 @@ function LeafVE:OnAddonMessage(prefix, message, channel, sender)
     return
   end
 
+  -- Handle achievement leaderboard reset broadcast
+  if string.sub(message, 1, 26) == "LVE_ADMIN_RESET_ACHIEVE_LB" then
+    HardResetAchievementLeaderboard_Local()
+    Print("|cFFFF4444A guild admin has reset the Achievement Leaderboard.|r")
+    return
+  end
+
   -- Parse badge sync message
   if string.sub(message, 1, 7) == "BADGES:" then
     local badgeData = string.sub(message, 8)
@@ -2318,12 +2353,12 @@ function LeafVE.UI:BuildPlayerCard(parent)
   })
   portraitContainer:SetBackdropColor(0.1, 0.1, 0.15, 0.9)
   portraitContainer:SetBackdropBorderColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3], 0.8)
+  self.cardPortraitContainer = portraitContainer
 
-  -- Faction-coloured solid background: single full-area texture (red=Horde, blue=Alliance)
+  -- Faction-gradient background for the live player model portrait (hidden until live model shown)
   local modelBG = portraitContainer:CreateTexture(nil, "BACKGROUND")
   modelBG:SetAllPoints(portraitContainer)
   modelBG:SetTexture("Interface\\ChatFrame\\ChatFrameBackground")
-  modelBG:SetVertexColor(0.1, 0.1, 0.15, 0.9)
   modelBG:Hide()
   self.cardModelBG = modelBG
 
@@ -3027,16 +3062,24 @@ function LeafVE.UI:ShowPlayerCard(playerName)
     if self.cardPortraitTypeText then
       self.cardPortraitTypeText:SetText("|cFF00FF00Live|r")
     end
-    -- Apply faction colour: red for Horde, blue for Alliance.
+    -- Apply faction gradient: red for Horde, blue for Alliance; gold border.
     if self.cardModelBG then
       local faction = UnitFactionGroup(unitToken)
       local bg = faction and FACTION_BACKGROUNDS[faction]
       if bg then
-        self.cardModelBG:SetVertexColor(bg[1], bg[2], bg[3], 0.9)
+        self.cardModelBG:SetGradientAlpha("VERTICAL", unpack(bg))
       else
         self.cardModelBG:SetVertexColor(0.1, 0.1, 0.15, 0.9)
       end
       self.cardModelBG:Show()
+    end
+    if self.cardPortraitContainer then
+      local faction = UnitFactionGroup(unitToken)
+      if faction and FACTION_BACKGROUNDS[faction] then
+        self.cardPortraitContainer:SetBackdropBorderColor(0.83, 0.65, 0.20, 1)
+      else
+        self.cardPortraitContainer:SetBackdropBorderColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3], 0.8)
+      end
     end
   else
     self.cardModel:Hide()
@@ -3048,6 +3091,9 @@ function LeafVE.UI:ShowPlayerCard(playerName)
       self.cardPortraitTypeText:SetText("|cFFFFAA00"..class.."|r")
     end
     if self.cardModelBG then self.cardModelBG:Hide() end
+    if self.cardPortraitContainer then
+      self.cardPortraitContainer:SetBackdropBorderColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3], 0.8)
+    end
   end
 
   -- UPDATE RECENT BADGES (LEFT SIDE) - REPLACES Today/Week/Season stats
@@ -5055,6 +5101,23 @@ StaticPopupDialogs["LEAFVE_CONFIRM_RESET_LEAF_POINTS"] = {
   hideOnEscape = true,
 }
 
+-- Confirmation popup for "Reset All Achievement Leaderboard Data"
+StaticPopupDialogs["LEAFVE_CONFIRM_RESET_ACHIEVE_LB"] = {
+  text = "|cFFFF4444Reset ALL Achievement Leaderboard Data?|r\n\nThis will zero out every player's achievement point totals from the leaderboard and broadcast the reset to all guild members. Cannot be undone.",
+  button1 = "Confirm Reset",
+  button2 = "Cancel",
+  OnAccept = function()
+    HardResetAchievementLeaderboard_Local()
+    if InGuild() then
+      SendAddonMessage("LeafVE", "LVE_ADMIN_RESET_ACHIEVE_LB:"..Now(), "GUILD")
+    end
+    Print("|cFFFF4444Achievement Leaderboard data has been reset for all players.|r")
+  end,
+  timeout = 0,
+  whileDead = true,
+  hideOnEscape = true,
+}
+
 local function BuildAdminPanel(panel)
   local headerBG = panel:CreateTexture(nil, "BACKGROUND")
   headerBG:SetPoint("TOP", panel, "TOP", -15, -10)
@@ -5089,6 +5152,7 @@ local function BuildAdminPanel(panel)
     if new < 0 then new = 0 end
     if new > max then new = max end
     scrollFrame:SetVerticalScroll(new)
+    scrollBar:SetValue(new)
   end)
 
   local scrollBar = CreateFrame("Slider", nil, panel)
@@ -5354,6 +5418,39 @@ local function BuildAdminPanel(panel)
   div4:SetVertexColor(THEME.gold[1], THEME.gold[2], THEME.gold[3], 0.4)
   yBase = yBase - 18
 
+  -- Section: Achievement Leaderboard Reset
+  local resetAchLBSection = subFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  resetAchLBSection:SetPoint("TOPLEFT", subFrame, "TOPLEFT", 12, yBase)
+  resetAchLBSection:SetText("|cFF2DD35CAchievement Leaderboard Reset|r")
+  yBase = yBase - 28
+
+  local resetAchLBHint = subFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+  resetAchLBHint:SetPoint("TOPLEFT", subFrame, "TOPLEFT", 12, yBase)
+  resetAchLBHint:SetText("|cFF888888Wipes all cached achievement point totals from the leaderboard and broadcasts to all guild members.|r")
+  resetAchLBHint:SetWidth(430)
+  resetAchLBHint:SetJustifyH("LEFT")
+  yBase = yBase - 34
+
+  local resetAchLBBtn = CreateFrame("Button", nil, subFrame, "UIPanelButtonTemplate")
+  resetAchLBBtn:SetWidth(230)
+  resetAchLBBtn:SetHeight(22)
+  resetAchLBBtn:SetPoint("TOPLEFT", subFrame, "TOPLEFT", 12, yBase)
+  resetAchLBBtn:SetText("Reset ALL Achievement Leaderboard Data")
+  SkinButtonAccent(resetAchLBBtn)
+  resetAchLBBtn:SetScript("OnClick", function()
+    StaticPopup_Show("LEAFVE_CONFIRM_RESET_ACHIEVE_LB")
+  end)
+  yBase = yBase - gap
+
+  -- Divider
+  local div5 = subFrame:CreateTexture(nil, "ARTWORK")
+  div5:SetPoint("TOPLEFT", subFrame, "TOPLEFT", 12, yBase)
+  div5:SetWidth(430)
+  div5:SetHeight(1)
+  div5:SetTexture("Interface\\Tooltips\\UI-Tooltip-Background")
+  div5:SetVertexColor(THEME.gold[1], THEME.gold[2], THEME.gold[3], 0.4)
+  yBase = yBase - 18
+
   -- Section: Testing
   local testSection = subFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
   testSection:SetPoint("TOPLEFT", subFrame, "TOPLEFT", 12, yBase)
@@ -5396,6 +5493,10 @@ local function BuildAdminPanel(panel)
   -- Set the scroll child height and update scrollbar range
   subFrame:SetHeight(math.abs(yBase) + 50)
   UpdateAdminScroll()
+  -- Re-sync scrollbar range when the panel becomes visible (layout may not be ready at build time)
+  panel:SetScript("OnShow", function()
+    UpdateAdminScroll()
+  end)
 end
 local function BuildWelcomePanel(panel)
   -- Header
