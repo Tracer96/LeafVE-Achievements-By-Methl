@@ -399,6 +399,27 @@ local ACHIEVEMENTS = {
   -- Death extras (from KAM)
   casual_deaths_5={id="casual_deaths_5",name="First Steps to Death",desc="Die 5 times",category="Casual",points=3,icon="Interface\\Icons\\Spell_Shadow_DeathScream"},
   casual_deaths_25={id="casual_deaths_25",name="Quarter Century of Defeats",desc="Die 25 times",category="Casual",points=5,icon="Interface\\Icons\\INV_Misc_Spyglass_03"},
+  -- Resurrection tracking
+  casual_resurrect_10={id="casual_resurrect_10",name="Second Wind",desc="Get resurrected 10 times",category="Casual",points=10,icon="Interface\\Icons\\Spell_Holy_Resurrection"},
+  casual_resurrect_50={id="casual_resurrect_50",name="Phoenix",desc="Get resurrected 50 times",category="Casual",points=25,icon="Interface\\Icons\\Spell_Holy_Resurrection"},
+  -- Flight path tracking
+  casual_flight_10={id="casual_flight_10",name="Frequent Flyer",desc="Take 10 flight paths",category="Casual",points=10,icon="Interface\\Icons\\Ability_Mount_Gryphon_01"},
+  casual_flight_50={id="casual_flight_50",name="Sky Captain",desc="Take 50 flight paths",category="Casual",points=25,icon="Interface\\Icons\\Ability_Mount_Gryphon_01"},
+  -- Bandage use tracking
+  casual_bandage_25={id="casual_bandage_25",name="Field Medic",desc="Use 25 bandages",category="Casual",points=10,icon="Interface\\Icons\\Spell_Holy_SealOfSacrifice"},
+  casual_bandage_100={id="casual_bandage_100",name="Combat Medic",desc="Use 100 bandages",category="Casual",points=20,icon="Interface\\Icons\\Spell_Holy_SealOfSacrifice"},
+  -- Loot tracking
+  casual_loot_100={id="casual_loot_100",name="Looter",desc="Loot 100 items",category="Casual",points=5,icon="Interface\\Icons\\INV_Misc_Bag_07"},
+  casual_loot_1000={id="casual_loot_1000",name="Treasure Hunter",desc="Loot 1000 items",category="Casual",points=15,icon="Interface\\Icons\\INV_Misc_Bag_22"},
+  casual_loot_5000={id="casual_loot_5000",name="Hoarder",desc="Loot 5000 items",category="Casual",points=30,icon="Interface\\Icons\\INV_Misc_Bag_22"},
+  -- Trade tracking
+  casual_trade_10={id="casual_trade_10",name="Trader",desc="Complete 10 trades with other players",category="Casual",points=10,icon="Interface\\Icons\\INV_Misc_Coin_01"},
+  -- Level milestones
+  casual_level_5={id="casual_level_5",name="Baby Steps",desc="Reach level 5",category="Leveling",points=3,icon="Interface\\Icons\\INV_Misc_Bone_HumanSkull_01"},
+  casual_level_15={id="casual_level_15",name="Getting Started",desc="Reach level 15",category="Leveling",points=5,icon="Interface\\Icons\\INV_Misc_Bone_HumanSkull_01"},
+  casual_level_25={id="casual_level_25",name="Quarter Way",desc="Reach level 25",category="Leveling",points=8,icon="Interface\\Icons\\INV_Helmet_08"},
+  casual_level_35={id="casual_level_35",name="Midway There",desc="Reach level 35",category="Leveling",points=12,icon="Interface\\Icons\\INV_Shoulder_23"},
+  casual_level_45={id="casual_level_45",name="Almost There",desc="Reach level 45",category="Leveling",points=18,icon="Interface\\Icons\\INV_Chest_Plate16"},
 }
 
 local TITLES = {
@@ -443,9 +464,6 @@ local TITLES = {
   
   -- Naxxramas Titles
   {id="title_death_demise",name="of the Ashen Verdict",achievement="raid_naxx_kelthuzad",prefix=false,icon="Interface\\Icons\\Spell_Shadow_SoulGem"},
-  {id="title_immortal",name="the Immortal",achievement="elite_flawless_kt",prefix=false,icon="Interface\\Icons\\Spell_Holy_DivineIntervention"},
-  {id="title_undying",name="the Undying",achievement="elite_no_wipe_naxx",prefix=false,icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
-  {id="title_patient",name="the Patient",achievement="elite_no_wipe_naxx",prefix=false,icon="Interface\\Icons\\Spell_Nature_TimeStop"},
   {id="title_lich_hunter",name="Lich Hunter",achievement="raid_naxx_kelthuzad",prefix=false,icon="Interface\\Icons\\Spell_Shadow_SoulGem"},
   {id="title_plaguebearer",name="Plaguebearer",achievement="raid_naxx_loatheb",prefix=false,icon="Interface\\Icons\\Spell_Shadow_CallofBone"},
   {id="title_spore_bane",name="Spore Bane",achievement="raid_naxx_loatheb",prefix=false,icon="Interface\\Icons\\Spell_Shadow_CallofBone"},
@@ -454,28 +472,8 @@ local TITLES = {
   {id="title_four_horsemen",name="of the Four Horsemen",achievement="raid_naxx_four_horsemen",prefix=false,icon="Interface\\Icons\\Spell_DeathKnight_ClassIcon"},
   {id="title_death_knight",name="Death Knight",achievement="raid_naxx_four_horsemen",prefix=false,icon="Interface\\Icons\\Spell_DeathKnight_ClassIcon"},
   
-  -- Elite Raid Titles
-  {id="title_insane",name="the Insane",achievement="elite_naked_rag",prefix=false,icon="Interface\\Icons\\Spell_Shadow_Charm"},
-  {id="title_flawless",name="the Flawless",achievement="elite_flawless_cthun",prefix=false,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength"},
-  {id="title_speed_demon",name="Speed Demon",achievement="elite_naxx_speedrun",prefix=false,icon="Interface\\Icons\\Spell_Fire_BurningSpeed"},
-  {id="title_speed_runner",name="the Speed Runner",achievement="elite_mc_speedrun",prefix=false,icon="Interface\\Icons\\Spell_Fire_BurningSpeed"},
-  {id="title_unstoppable",name="the Unstoppable",achievement="elite_no_wipe_bwl",prefix=false,icon="Interface\\Icons\\INV_Misc_Ribbon_01"},
-  {id="title_perfect",name="the Perfect",achievement="elite_flawless_nef",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black"},
-  {id="title_flawless_firelord",name="Flawless Firelord",achievement="elite_flawless_rag",prefix=false,icon="Interface\\Icons\\Spell_Fire_LavaSpawn"},
-  {id="title_untouchable",name="the Untouchable",achievement="elite_flawless_kt",prefix=false,icon="Interface\\Icons\\Spell_Shadow_SoulGem"},
-  
   -- Elite Achievement Titles
   {id="title_ironman",name="the Ironman",achievement="elite_ironman",prefix=false,icon="Interface\\Icons\\INV_Helmet_74"},
-  {id="title_guild_pioneer",name="Guild Pioneer",achievement="elite_guild_first_mc",prefix=false,icon="Interface\\Icons\\INV_Misc_Trophy_Gold"},
-  {id="title_legendary",name="the Legendary",achievement="elite_guild_first_naxx",prefix=false,icon="Interface\\Icons\\INV_Misc_Trophy_Gold"},
-  {id="title_undergeared",name="the Undergeared",achievement="elite_undergeared_rag",prefix=false,icon="Interface\\Icons\\INV_Chest_Cloth_17"},
-  {id="title_self_made",name="the Self-Made",achievement="elite_resource_solo",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_17"},
-  {id="title_raid_marathon",name="Raid Marathoner",achievement="elite_all_raids_one_week",prefix=false,icon="Interface\\Icons\\Spell_Holy_BorrowedTime"},
-  {id="title_purist",name="the Purist",achievement="elite_no_consumables_rag",prefix=false,icon="Interface\\Icons\\INV_Potion_54"},
-  {id="title_one_man_army",name="One Man Army",achievement="elite_tank_solo_5man",prefix=false,icon="Interface\\Icons\\Ability_Warrior_DefensiveStance"},
-  {id="title_perfect_healer",name="Perfect Healer",achievement="elite_heal_no_death",prefix=false,icon="Interface\\Icons\\Spell_Holy_FlashHeal"},
-  {id="title_solo_hero",name="Solo Hero",achievement="elite_solo_ubrs",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
-  {id="title_death_defier",name="Death Defier",achievement="elite_solo_strat",prefix=false,icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
   
   -- PvP Titles
   {id="title_warlord",name="Warlord",achievement="pvp_hk_5000",prefix=true,icon="Interface\\Icons\\INV_Sword_62"},
@@ -485,7 +483,6 @@ local TITLES = {
   {id="title_gladiator",name="Gladiator",achievement="pvp_hk_1000",prefix=false,icon="Interface\\Icons\\INV_Sword_48"},
   {id="title_duelist",name="the Duelist",achievement="pvp_duel_50",prefix=false,icon="Interface\\Icons\\INV_Sword_39"},
   {id="title_high_warlord",name="High Warlord",achievement="pvp_hk_10000",prefix=true,icon="Interface\\Icons\\INV_Sword_39"},
-  {id="title_battlemaster",name="Battlemaster",achievement="pvp_wsg_flag_return",prefix=false,icon="Interface\\Icons\\INV_Banner_02"},
   
   -- Profession Titles
   {id="title_master_alchemist",name="Master Alchemist",achievement="prof_alchemy_300",prefix=false,icon="Interface\\Icons\\Trade_Alchemy"},
@@ -499,9 +496,7 @@ local TITLES = {
   {id="title_loremaster",name="Loremaster",achievement="casual_quest_1000",prefix=false,icon="Interface\\Icons\\INV_Misc_Book_09"},
   {id="title_angler",name="the Master Angler",achievement="casual_fish_1000",prefix=false,icon="Interface\\Icons\\Trade_Fishing"},
   {id="title_pet_collector",name="the Pet Collector",achievement="casual_pet_fanatic",prefix=false,icon="Interface\\Icons\\INV_Box_PetCarrier_01"},
-  {id="title_merchant",name="the Merchant",achievement="casual_ah_sell",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_05"},
   {id="title_banker",name="the Banker",achievement="gold_5000",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_17"},
-  {id="title_socialite",name="the Socialite",achievement="casual_friend_emote",prefix=false,icon="Interface\\Icons\\INV_Misc_Toy_07"},
   {id="title_death_prone",name="Death-Prone",achievement="casual_deaths_100",prefix=false,icon="Interface\\Icons\\Spell_Shadow_DeathScream"},
   {id="title_clumsy",name="the Clumsy",achievement="casual_fall_death",prefix=false,icon="Interface\\Icons\\Ability_Rogue_FeintedStrike"},
   
@@ -827,6 +822,21 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   elite_50_raids     = {counter="raidRuns",    goal=50},
   -- Ironman: deaths must remain 0 to hit level 60
   elite_ironman = {counter="deaths", goal=0},
+  -- Resurrections tracked via PLAYER_ALIVE
+  casual_resurrect_10 = {counter="resurrections", goal=10},
+  casual_resurrect_50 = {counter="resurrections", goal=50},
+  -- Flight paths tracked via TAXIMAP_CLOSED
+  casual_flight_10 = {counter="flights", goal=10},
+  casual_flight_50 = {counter="flights", goal=50},
+  -- Bandages tracked via UNIT_SPELLCAST_SUCCEEDED
+  casual_bandage_25  = {counter="bandages", goal=25},
+  casual_bandage_100 = {counter="bandages", goal=100},
+  -- Loots tracked via CHAT_MSG_LOOT
+  casual_loot_100  = {counter="loots", goal=100},
+  casual_loot_1000 = {counter="loots", goal=1000},
+  casual_loot_5000 = {counter="loots", goal=5000},
+  -- Trades tracked via TRADE_CLOSED
+  casual_trade_10 = {counter="trades", goal=10},
 }
 
 -- Returns {current, goal} or nil if no progress data exists for this achievement.
@@ -1245,10 +1255,15 @@ end
 
 function LeafVE_AchTest:CheckLevelAchievements()
   local level = UnitLevel("player")
+  if level >= 5  then self:AwardAchievement("casual_level_5",  true) end
   if level >= 10 then self:AwardAchievement("lvl_10", true) end
+  if level >= 15 then self:AwardAchievement("casual_level_15", true) end
   if level >= 20 then self:AwardAchievement("lvl_20", true) end
+  if level >= 25 then self:AwardAchievement("casual_level_25", true) end
   if level >= 30 then self:AwardAchievement("lvl_30", true) end
+  if level >= 35 then self:AwardAchievement("casual_level_35", true) end
   if level >= 40 then self:AwardAchievement("lvl_40", true) end
+  if level >= 45 then self:AwardAchievement("casual_level_45", true) end
   if level >= 50 then self:AwardAchievement("lvl_50", true) end
   if level >= 60 then self:AwardAchievement("lvl_60") end
 end
@@ -1511,14 +1526,19 @@ function LeafVE_AchTest:CheckProfessionAchievements()
     ["First Aid"]     = "prof_firstaid_300",
   }
   local artisanCount = 0
+  -- Expand all skill headers so collapsed professions are visible
+  if ExpandSkillHeader then ExpandSkillHeader(0) end
   local numSkills = GetNumSkillLines and GetNumSkillLines() or 0
   for i = 1, numSkills do
     local skillName, isHeader, _, skillRank = GetSkillLineInfo(i)
     if skillName and not isHeader then
       local achId = profMap[skillName]
-      if achId and skillRank and skillRank >= 300 then
-        self:AwardAchievement(achId, true)
-        artisanCount = artisanCount + 1
+      if achId then
+        Debug("Found profession: "..skillName.." at rank "..tostring(skillRank))
+        if skillRank and skillRank >= 300 then
+          self:AwardAchievement(achId, true)
+          artisanCount = artisanCount + 1
+        end
       end
     end
   end
@@ -1676,8 +1696,14 @@ local function CreateAchievementRow(parent)
   desc:SetWidth(555)
   desc:SetJustifyH("LEFT")
   frame.desc = desc
+  local leafIcon = frame:CreateTexture(nil, "ARTWORK")
+  leafIcon:SetWidth(16)
+  leafIcon:SetHeight(16)
+  leafIcon:SetPoint("BOTTOMLEFT", icon, "BOTTOMRIGHT", 8, 1)
+  leafIcon:SetTexture("Interface\\Icons\\INV_Leaf_01")
+  frame.leafIcon = leafIcon
   local points = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-  points:SetPoint("BOTTOMLEFT", icon, "BOTTOMRIGHT", 8, 0)
+  points:SetPoint("LEFT", leafIcon, "RIGHT", 3, 0)
   frame.points = points
   frame:EnableMouse(true)
   frame:SetScript("OnEnter", function()
@@ -1844,10 +1870,23 @@ function LeafVE_AchTest.UI:Build()
   f:SetBackdropColor(THEME.bg[1], THEME.bg[2], THEME.bg[3], THEME.bg[4])
   f:SetBackdropBorderColor(THEME.border[1], THEME.border[2], THEME.border[3], 1)
   
-  local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-  title:SetPoint("TOP", f, "TOP", 0, -15)
+  local header = CreateFrame("Frame", nil, f)
+  header:SetPoint("TOPLEFT", f, "TOPLEFT", 4, -4)
+  header:SetPoint("TOPRIGHT", f, "TOPRIGHT", -4, -4)
+  header:SetHeight(40)
+  header:SetBackdrop({
+    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true, tileSize = 16, edgeSize = 8,
+    insets = {left = 2, right = 2, top = 2, bottom = 2}
+  })
+  header:SetBackdropColor(0.04, 0.04, 0.05, 1.0)
+  header:SetBackdropBorderColor(THEME.gold[1], THEME.gold[2], THEME.gold[3], 0.5)
+
+  local title = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+  title:SetPoint("CENTER", header, "CENTER", 0, 0)
   title:SetText("LeafVE Achievement System")
-  title:SetTextColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3])
+  title:SetTextColor(THEME.gold[1], THEME.gold[2], THEME.gold[3])
   
   local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
   close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -6, -6)
@@ -2299,7 +2338,9 @@ function LeafVE_AchTest.UI:UpdateVisibleAchievements()
       frame.name:SetTextColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3])
       frame.desc:SetText(ach.data.desc)
       frame.desc:SetTextColor(0.9, 0.9, 0.9)
-      frame.points:SetText("|cFFFF7F00"..ach.data.points.." pts|r - Completed")
+      frame.leafIcon:SetVertexColor(1.0, 0.82, 0.20)
+      frame.leafIcon:SetAlpha(1)
+      frame.points:SetText("|cFFFFD433"..ach.data.points.."|r - Completed")
     else
       frame.icon:SetDesaturated(true)
       frame.icon:SetAlpha(0.5)
@@ -2309,7 +2350,9 @@ function LeafVE_AchTest.UI:UpdateVisibleAchievements()
       frame.name:SetTextColor(0.6, 0.6, 0.6)
       frame.desc:SetText(ach.data.desc)
       frame.desc:SetTextColor(0.5, 0.5, 0.5)
-      frame.points:SetText("|cFF888888"..ach.data.points.." pts|r")
+      frame.leafIcon:SetVertexColor(0.5, 0.5, 0.5)
+      frame.leafIcon:SetAlpha(0.5)
+      frame.points:SetText("|cFF888888"..ach.data.points.."|r")
     end
     frame:Show()
   end
@@ -2474,6 +2517,8 @@ local lastFallDamageTime  = 0
 local lastDrownDamageTime = 0
 -- Maximum seconds between environmental damage and PLAYER_DEAD to classify cause of death.
 local DEATH_CLASSIFY_WINDOW = 3
+-- Track whether player was dead, to count only genuine resurrections.
+local playerWasDead = false
 
 local ef = CreateFrame("Frame")
 ef:RegisterEvent("ADDON_LOADED")
@@ -2481,6 +2526,10 @@ ef:RegisterEvent("PLAYER_LEVEL_UP")
 ef:RegisterEvent("PLAYER_MONEY")
 ef:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
 ef:RegisterEvent("PLAYER_DEAD")
+ef:RegisterEvent("PLAYER_ALIVE")
+ef:RegisterEvent("PLAYER_UNGHOST")
+ef:RegisterEvent("TAXIMAP_CLOSED")
+ef:RegisterEvent("TRADE_CLOSED")
 ef:RegisterEvent("QUEST_COMPLETE")
 ef:RegisterEvent("PARTY_MEMBERS_CHANGED")
 ef:RegisterEvent("DUEL_WON")
@@ -2511,6 +2560,7 @@ ef:SetScript("OnEvent", function()
     end
   end
   if event == "PLAYER_DEAD" then
+    playerWasDead = true
     local me = ShortName(UnitName("player"))
     if me then
       local total = IncrCounter(me, "deaths")
@@ -2566,6 +2616,35 @@ ef:SetScript("OnEvent", function()
       if total >= 100 then LeafVE_AchTest:AwardAchievement("pvp_duel_100", true) end
     end
   end
+  if event == "PLAYER_ALIVE" or event == "PLAYER_UNGHOST" then
+    -- Only count resurrections when coming back from a previous death
+    if playerWasDead then
+      playerWasDead = false
+      local me = ShortName(UnitName("player"))
+      if me then
+        local total = IncrCounter(me, "resurrections")
+        if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_resurrect_10", true) end
+        if total >= 50 then LeafVE_AchTest:AwardAchievement("casual_resurrect_50", true) end
+      end
+    end
+  end
+  if event == "TAXIMAP_CLOSED" then
+    -- TAXIMAP_CLOSED fires when taxi map closes; we check if a flight was taken
+    -- by checking if the player is on a taxi after closing the map
+    local me = ShortName(UnitName("player"))
+    if me and UnitOnTaxi and UnitOnTaxi("player") then
+      local total = IncrCounter(me, "flights")
+      if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_flight_10", true) end
+      if total >= 50 then LeafVE_AchTest:AwardAchievement("casual_flight_50", true) end
+    end
+  end
+  if event == "TRADE_CLOSED" then
+    local me = ShortName(UnitName("player"))
+    if me then
+      local total = IncrCounter(me, "trades")
+      if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_trade_10", true) end
+    end
+  end
 end)
 
 -- Track environmental damage timestamps to classify the cause of death in PLAYER_DEAD.
@@ -2612,6 +2691,15 @@ spellFrame:SetScript("OnEvent", function()
         if total >= 1   then LeafVE_AchTest:AwardAchievement("casual_hearthstone_1",   true) end
         if total >= 50  then LeafVE_AchTest:AwardAchievement("casual_hearthstone_use", true) end
         if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_hearthstone_100", true) end
+      end
+    end
+    -- Bandage tracking (First Aid spells contain "Bandage" in the name)
+    if string.find(spellName, "Bandage") then
+      local me = ShortName(UnitName("player"))
+      if me then
+        local total = IncrCounter(me, "bandages")
+        if total >= 25  then LeafVE_AchTest:AwardAchievement("casual_bandage_25",  true) end
+        if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_bandage_100", true) end
       end
     end
 
@@ -2666,6 +2754,14 @@ lootFrame:SetScript("OnEvent", function()
         if total >= 100  then LeafVE_AchTest:AwardAchievement("casual_fish_100",  true) end
         if total >= 1000 then LeafVE_AchTest:AwardAchievement("casual_fish_1000", true) end
       end
+    end
+    -- Count all looted items for casual_loot_* achievements
+    local me = ShortName(UnitName("player"))
+    if me and string.find(string.lower(arg1 or ""), "you receive loot") then
+      local lootTotal = IncrCounter(me, "loots")
+      if lootTotal >= 100  then LeafVE_AchTest:AwardAchievement("casual_loot_100",  true) end
+      if lootTotal >= 1000 then LeafVE_AchTest:AwardAchievement("casual_loot_1000", true) end
+      if lootTotal >= 5000 then LeafVE_AchTest:AwardAchievement("casual_loot_5000", true) end
     end
   end
 end)
