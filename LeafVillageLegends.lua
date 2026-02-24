@@ -1103,16 +1103,15 @@ end
 function LeafVE:GetCompletedQuestTitle()
   local numEntries = GetNumQuestLogEntries and GetNumQuestLogEntries() or 0
   -- First pass: find a quest marked complete (isComplete ~= 0) that is still in the log.
-  -- In 1.12, QUEST_TURNED_IN often fires before QUEST_LOG_UPDATE removes the quest,
-  -- so the completed quest is still there with isComplete = 1.
   for i = 1, numEntries do
     local title, _, _, isHeader, isComplete = GetQuestLogTitle(i)
     if title and not isHeader and isComplete and isComplete ~= 0 then
       return title
     end
   end
-  -- Second pass: if the quest is already gone (QUEST_LOG_UPDATE fired first),
-  -- find it by diffing the cached log against what is currently in the log.
+  -- Second pass: find the quest that disappeared by diffing the cached log
+  -- against what is currently in the log. This handles the case (typical on
+  -- Vanilla 1.12 via QUEST_LOG_UPDATE) where the quest is already gone.
   local current = {}
   for i = 1, numEntries do
     local title, _, _, isHeader = GetQuestLogTitle(i)
@@ -1261,25 +1260,19 @@ function LeafVE:OnBossKillChat(msg)
   Print(string.format("Boss slain: %s! +%d G", bossName, bossPts))
 end
 
-function LeafVE:OnQuestTurnedIn()
+function LeafVE:HandleQuestCompletion(questTitle)
   local me = ShortName(UnitName("player"))
   if not me then return end
   if not InGuild() then return end
   EnsureDB()
   local today = DayKey()
 
-  -- Identify which quest was just completed by diffing the cached quest log
-  local questTitle = self:GetCompletedQuestTitle()
-
   -- Prevent awarding LP for the same quest title more than once per character
-  -- (only when we could actually identify the quest; unknown quests fall through to daily cap)
   if questTitle then
     if not LeafVE_DB.questCompletions[me] then
       LeafVE_DB.questCompletions[me] = {}
     end
     if LeafVE_DB.questCompletions[me][questTitle] then
-      -- Already awarded LP for this quest; update cache and return
-      self:CacheQuestLog()
       return
     end
   end
@@ -1293,7 +1286,6 @@ function LeafVE:OnQuestTurnedIn()
   local questCap = (LeafVE_DB.options and LeafVE_DB.options.questMaxDaily) or QUEST_MAX_DAILY
   local questPts = (LeafVE_DB.options and LeafVE_DB.options.questPoints) or QUEST_POINTS
   if questCap ~= 0 and LeafVE_DB.questTracking[me][today] >= questCap then
-    self:CacheQuestLog()
     return
   end
   LeafVE_DB.questTracking[me][today] = LeafVE_DB.questTracking[me][today] + 1
@@ -1302,12 +1294,9 @@ function LeafVE:OnQuestTurnedIn()
   end
   self:AddPoints(me, "G", questPts)
   local displayTitle = questTitle or "Quest"
-  local histMsg = "Quest completion"
-  if questTitle then histMsg = "Quest: "..questTitle end
+  local histMsg = questTitle and ("Quest: "..questTitle) or "Quest completion"
   self:AddToHistory(me, "G", questPts, histMsg)
   Print(string.format("Quest complete! [%s] +%d G (%d/%s today)", displayTitle, questPts, LeafVE_DB.questTracking[me][today], questCap == 0 and "unlimited" or tostring(questCap)))
-  -- Update the cached log to reflect the turn-in
-  self:CacheQuestLog()
 end
 
 function LeafVE:TickProximityPoints(dt)
@@ -6883,7 +6872,6 @@ ef:RegisterEvent("GUILD_ROSTER_UPDATE")
 ef:RegisterEvent("PARTY_MEMBERS_CHANGED")
 ef:RegisterEvent("RAID_ROSTER_UPDATE")
 ef:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-ef:RegisterEvent("QUEST_TURNED_IN")
 ef:RegisterEvent("QUEST_LOG_UPDATE")
 ef:RegisterEvent("PLAYER_REGEN_DISABLED")
 ef:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
@@ -6919,7 +6907,7 @@ ef:SetScript("OnEvent", function()
     LeafVE:PurgeStaleWeeklyData()
     -- Build pfDB lookups (pfQuest must be loaded before us, so pfDB is ready now)
     LeafVE:InitPfDB()
-    -- Seed the quest log cache so we can diff on the first QUEST_TURNED_IN
+    -- Seed the quest log cache so we can diff on QUEST_LOG_UPDATE
     LeafVE:CacheQuestLog()
     -- Register badge hyperlink handler last so it wraps any other addon's hook
     LeafVE:RegisterBadgeHyperlinkHandler()
@@ -6996,13 +6984,15 @@ ef:SetScript("OnEvent", function()
     return
   end
 
-  if event == "QUEST_TURNED_IN" then
-    LeafVE:OnQuestTurnedIn()
-    return
-  end
-
   if event == "QUEST_LOG_UPDATE" then
-    -- Keep the quest log cache fresh so we can diff on QUEST_TURNED_IN
+    -- Detect quest turn-ins by diffing against the cached quest log.
+    -- QUEST_TURNED_IN does not exist in Vanilla WoW 1.12, so we detect
+    -- completions here by noticing when a quest disappears from the log.
+    local completedTitle = LeafVE:GetCompletedQuestTitle()
+    if completedTitle then
+      LeafVE:HandleQuestCompletion(completedTitle)
+    end
+    -- Always update the cache after processing
     LeafVE:CacheQuestLog()
     return
   end
@@ -7445,7 +7435,7 @@ SlashCmdList["LEAFDEBUG"] = function(msg)
     
     Print("Test 6: Quest turn-in guild detection")
     Print("  LeafVE:GetGroupGuildies: "..(LeafVE.GetGroupGuildies and "PASS" or "FAIL"))
-    Print("  LeafVE:OnQuestTurnedIn: "..(LeafVE.OnQuestTurnedIn and "PASS" or "FAIL"))
+    Print("  LeafVE:HandleQuestCompletion: "..(LeafVE.HandleQuestCompletion and "PASS" or "FAIL"))
     Print("  LeafVE.guildRosterCache: "..(LeafVE.guildRosterCache and "PASS" or "FAIL"))
     Print("  LeafVE_DB.questTracking: "..(LeafVE_DB and LeafVE_DB.questTracking and "PASS" or "FAIL"))
     
