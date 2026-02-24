@@ -1282,6 +1282,7 @@ LeafVE_AchTest.UI.currentView = "achievements"
 LeafVE_AchTest.UI.selectedCategory = "All"
 LeafVE_AchTest.UI.searchText = ""
 LeafVE_AchTest.UI.titleSearchText = ""
+LeafVE_AchTest.UI.titleCategoryFilter = "All"
 
 -- Boss kill tracking: raid bosses only — dungeon bosses are tracked via BOSS_TO_DUNGEON
 local BOSS_ACHIEVEMENTS = {
@@ -1659,24 +1660,25 @@ end
 -- Virtual-scroll constants for the achievement list.
 -- ACH_ROW_H: pixel height of each achievement row.
 -- ACH_POOL:  number of recycled frame slots (covers visible area + buffer).
-local ACH_ROW_H = 65
+local ACH_ROW_H = 85
 local ACH_POOL  = 14
 
 -- Create one unstyled achievement row frame attached to `parent`.
 local function CreateAchievementRow(parent)
   local frame = CreateFrame("Frame", nil, parent)
   frame:SetWidth(660)
-  frame:SetHeight(60)
+  frame:SetHeight(80)
   frame:SetBackdrop({
     bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
     tile = true, tileSize = 16, edgeSize = 8,
     insets = {left = 2, right = 2, top = 2, bottom = 2}
   })
-  frame:SetBackdropColor(0.1, 0.1, 0.1, 0.6)
+  frame:SetBackdropColor(0.1, 0.1, 0.1, 0.8)
+  frame:SetBackdropBorderColor(THEME.gold[1], THEME.gold[2], THEME.gold[3], 0.7)
   local icon = frame:CreateTexture(nil, "ARTWORK")
-  icon:SetWidth(40)
-  icon:SetHeight(40)
+  icon:SetWidth(48)
+  icon:SetHeight(48)
   icon:SetPoint("LEFT", frame, "LEFT", 8, 0)
   icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
   frame.icon = icon
@@ -1686,24 +1688,25 @@ local function CreateAchievementRow(parent)
   checkmark:SetPoint("CENTER", icon, "TOPRIGHT", -2, -2)
   checkmark:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
   frame.checkmark = checkmark
-  local name = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  local name = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
   name:SetPoint("TOPLEFT", icon, "TOPRIGHT", 8, -5)
-  name:SetWidth(555)
+  name:SetWidth(490)
   name:SetJustifyH("LEFT")
   frame.name = name
-  local desc = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+  local desc = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
   desc:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -3)
-  desc:SetWidth(555)
+  desc:SetWidth(490)
   desc:SetJustifyH("LEFT")
   frame.desc = desc
-  local leafIcon = frame:CreateTexture(nil, "ARTWORK")
-  leafIcon:SetWidth(16)
-  leafIcon:SetHeight(16)
-  leafIcon:SetPoint("BOTTOMLEFT", icon, "BOTTOMRIGHT", 8, 1)
-  leafIcon:SetTexture("Interface\\Icons\\INV_Leaf_01")
-  frame.leafIcon = leafIcon
-  local points = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-  points:SetPoint("LEFT", leafIcon, "RIGHT", 3, 0)
+  local emblem = frame:CreateTexture(nil, "ARTWORK")
+  emblem:SetWidth(56)
+  emblem:SetHeight(56)
+  emblem:SetPoint("RIGHT", frame, "RIGHT", -8, 0)
+  emblem:SetTexture("Interface\\Icons\\Spell_Nature_ResistNature")
+  emblem:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+  frame.emblem = emblem
+  local points = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+  points:SetPoint("CENTER", emblem, "CENTER", 0, 0)
   frame.points = points
   frame:EnableMouse(true)
   frame:SetScript("OnEnter", function()
@@ -2108,6 +2111,30 @@ function LeafVE_AchTest.UI:Build()
   end)
   titleClearBtn:Hide()
   self.titleClearBtn = titleClearBtn
+
+  local titleAllBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+  titleAllBtn:SetPoint("LEFT", titleClearBtn, "RIGHT", 10, 0)
+  titleAllBtn:SetWidth(50)
+  titleAllBtn:SetHeight(25)
+  titleAllBtn:SetText("All")
+  titleAllBtn:SetScript("OnClick", function()
+    LeafVE_AchTest.UI.titleCategoryFilter = "All"
+    LeafVE_AchTest.UI:Refresh()
+  end)
+  titleAllBtn:Hide()
+  self.titleAllBtn = titleAllBtn
+
+  local titleObtainedBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+  titleObtainedBtn:SetPoint("LEFT", titleAllBtn, "RIGHT", 5, 0)
+  titleObtainedBtn:SetWidth(80)
+  titleObtainedBtn:SetHeight(25)
+  titleObtainedBtn:SetText("Obtained")
+  titleObtainedBtn:SetScript("OnClick", function()
+    LeafVE_AchTest.UI.titleCategoryFilter = "Obtained"
+    LeafVE_AchTest.UI:Refresh()
+  end)
+  titleObtainedBtn:Hide()
+  self.titleObtainedBtn = titleObtainedBtn
   
   local scrollFrame = CreateFrame("ScrollFrame", nil, f)
   scrollFrame:SetPoint("TOPLEFT", f, "TOPLEFT", 148, -145)
@@ -2204,6 +2231,8 @@ function LeafVE_AchTest.UI:Refresh()
     if self.titleSearchLabel then self.titleSearchLabel:Hide() end
     if self.titleSearchBox then self.titleSearchBox:Hide() end
     if self.titleClearBtn then self.titleClearBtn:Hide() end
+    if self.titleAllBtn then self.titleAllBtn:Hide() end
+    if self.titleObtainedBtn then self.titleObtainedBtn:Hide() end
     -- Show sidebar and highlight selected category button
     if self.sidebarFrame then self.sidebarFrame:Show() end
     if self.categoryButtons then
@@ -2228,6 +2257,8 @@ function LeafVE_AchTest.UI:Refresh()
     if self.titleSearchLabel then self.titleSearchLabel:Show() end
     if self.titleSearchBox then self.titleSearchBox:Show() end
     if self.titleClearBtn then self.titleClearBtn:Show() end
+    if self.titleAllBtn then self.titleAllBtn:Show() end
+    if self.titleObtainedBtn then self.titleObtainedBtn:Show() end
     if self.sidebarFrame then self.sidebarFrame:Hide() end
     self:RefreshTitles()
   end
@@ -2333,25 +2364,25 @@ function LeafVE_AchTest.UI:UpdateVisibleAchievements()
       frame.icon:SetDesaturated(false)
       frame.icon:SetAlpha(1)
       frame.checkmark:Show()
-      frame:SetBackdropBorderColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3], 0.6)
+      frame:SetBackdropBorderColor(THEME.gold[1], THEME.gold[2], THEME.gold[3], 0.9)
       frame.name:SetText(ach.data.name)
       frame.name:SetTextColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3])
       frame.desc:SetText(ach.data.desc)
       frame.desc:SetTextColor(0.9, 0.9, 0.9)
-      frame.leafIcon:SetVertexColor(1.0, 0.82, 0.20)
-      frame.leafIcon:SetAlpha(1)
-      frame.points:SetText("|cFFFFD433"..ach.data.points.."|r - Completed")
+      frame.emblem:SetVertexColor(1.0, 0.82, 0.20)
+      frame.emblem:SetAlpha(1)
+      frame.points:SetText("|cFFFFD433"..ach.data.points.."|r")
     else
       frame.icon:SetDesaturated(true)
       frame.icon:SetAlpha(0.5)
       frame.checkmark:Hide()
-      frame:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+      frame:SetBackdropBorderColor(THEME.gold[1], THEME.gold[2], THEME.gold[3], 0.4)
       frame.name:SetText(ach.data.name)
       frame.name:SetTextColor(0.6, 0.6, 0.6)
       frame.desc:SetText(ach.data.desc)
       frame.desc:SetTextColor(0.5, 0.5, 0.5)
-      frame.leafIcon:SetVertexColor(0.5, 0.5, 0.5)
-      frame.leafIcon:SetAlpha(0.5)
+      frame.emblem:SetVertexColor(0.5, 0.5, 0.5)
+      frame.emblem:SetAlpha(0.4)
       frame.points:SetText("|cFF888888"..ach.data.points.."|r")
     end
     frame:Show()
@@ -2378,7 +2409,13 @@ function LeafVE_AchTest.UI:RefreshTitles()
     end
     
     if matchesSearch then
-      table.insert(filteredTitles, titleData)
+      local matchesCategory = true
+      if self.titleCategoryFilter == "Obtained" then
+        matchesCategory = LeafVE_AchTest:HasAchievement(me, titleData.achievement)
+      end
+      if matchesCategory then
+        table.insert(filteredTitles, titleData)
+      end
     end
   end
   
