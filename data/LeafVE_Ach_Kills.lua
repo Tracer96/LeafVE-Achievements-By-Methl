@@ -143,13 +143,19 @@ killFrame:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")  -- for named kills
 killFrame:SetScript("OnEvent", function()
   -- Generic kill via floating combat text (KILLING_BLOW)
   if event == "COMBAT_TEXT_UPDATE" and arg1 == "KILLING_BLOW" then
-    local me = LeafVE_AchTest.ShortName(UnitName("player"))
-    if not me then return end
-    local total = LeafVE_AchTest.IncrCounter(me, "genericKills")
-    for i = 1, table.getn(GENERIC_MILESTONES) do
-      local m = GENERIC_MILESTONES[i]
-      if total >= m.value then
-        LeafVE_AchTest:AwardAchievement(m.id, true)
+    -- Delegate to RecordKill in main file (handles debounce + all milestones)
+    if LeafVE_AchTest.RecordKill then
+      LeafVE_AchTest.RecordKill(nil)
+    else
+      -- Fallback if RecordKill not yet available
+      local me = LeafVE_AchTest.ShortName(UnitName("player"))
+      if not me then return end
+      local total = LeafVE_AchTest.IncrCounter(me, "genericKills")
+      for i = 1, table.getn(GENERIC_MILESTONES) do
+        local m = GENERIC_MILESTONES[i]
+        if total >= m.value then
+          LeafVE_AchTest:AwardAchievement(m.id, true)
+        end
       end
     end
 
