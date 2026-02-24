@@ -1,0 +1,13 @@
+## Interface: 11200
+## Title: LeafVE Achievements
+## Notes: Achievement system for LeafVE private server
+## Version: 1.4.1
+## SavedVariables: LeafVE_AchTest_DB
+
+LeafVE_ConsumablesDB.lua
+LeafVE_AchievementsTest.lua
+LeafVE_Ach_Kills.lua
+LeafVE_Ach_Skills.lua
+LeafVE_Ach_Identity.lua
+LeafVE_Ach_Reputation.lua
+LeafVE_Ach_Quests.lua
