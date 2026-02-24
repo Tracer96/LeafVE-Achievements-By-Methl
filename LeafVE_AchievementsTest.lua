@@ -47,6 +47,7 @@ local function EnsureDB()
   if not LeafVE_AchTest_DB.raidProgress then LeafVE_AchTest_DB.raidProgress = {} end
   if not LeafVE_AchTest_DB.progressCounters then LeafVE_AchTest_DB.progressCounters = {} end
   if not LeafVE_AchTest_DB.completedQuests then LeafVE_AchTest_DB.completedQuests = {} end
+  if not LeafVE_AchTest_DB.iconCache then LeafVE_AchTest_DB.iconCache = {} end
 end
 
 local KALIMDOR_ZONES = {"Durotar","Mulgore","The Barrens","Teldrassil","Darkshore","Ashenvale","Stonetalon Mountains","Desolace","Feralas","Thousand Needles","Tanaris","Dustwallow Marsh","Azshara","Felwood","Un'Goro Crater","Moonglade","Winterspring","Silithus"}
@@ -496,6 +497,43 @@ local ACHIEVEMENTS = {
   explore_zones_25={id="explore_zones_25",name="Traveler",desc="Discover 25 unique subzones",category="Exploration",points=10,icon="Interface\\Icons\\INV_Misc_Map_01"},
   explore_zones_50={id="explore_zones_50",name="Pathfinder",desc="Discover 50 unique subzones",category="Exploration",points=20,icon="Interface\\Icons\\INV_Misc_Map_02"},
   explore_zones_100={id="explore_zones_100",name="World Explorer",desc="Complete Explore Kalimdor, Explore Eastern Kingdoms, and all Turtle WoW zone achievements",category="Exploration",points=100,icon="Interface\\Icons\\INV_Misc_Map_02",criteria_type="world_explorer_meta"},
+
+  -- Additional PvP milestones (trackable via existing HK/duel counters)
+  pvp_hk_250={id="pvp_hk_250",name="Veteran Combatant",desc="Earn 250 honorable kills",category="PvP",points=20,icon="Interface\\Icons\\INV_Sword_27"},
+  pvp_duel_75={id="pvp_duel_75",name="Seasoned Duelist",desc="Win 75 duels",category="PvP",points=35,icon="Interface\\Icons\\INV_Sword_39"},
+  pvp_wsg_flag_return={id="pvp_wsg_flag_return",name="Flag Defender",desc="Visit Warsong Gulch 10 times",category="PvP",points=20,icon="Interface\\Icons\\INV_Banner_02"},
+
+  -- Additional casual milestones (trackable via existing counters)
+  casual_deaths_200={id="casual_deaths_200",name="Hardened by Death",desc="Die 200 times",category="Casual",points=10,icon="Interface\\Icons\\Spell_Shadow_DeathScream"},
+  casual_fish_50={id="casual_fish_50",name="Fisher",desc="Catch 50 fish",category="Casual",points=8,icon="Interface\\Icons\\Trade_Fishing"},
+  casual_fish_250={id="casual_fish_250",name="Seasoned Angler",desc="Catch 250 fish",category="Casual",points=15,icon="Interface\\Icons\\Trade_Fishing"},
+  casual_fish_500={id="casual_fish_500",name="Expert Angler",desc="Catch 500 fish",category="Casual",points=20,icon="Interface\\Icons\\Trade_Fishing"},
+  casual_emote_500={id="casual_emote_500",name="Social Butterfly",desc="Use 500 emotes",category="Casual",points=20,icon="Interface\\Icons\\INV_Misc_Toy_07"},
+  casual_quest_250={id="casual_quest_250",name="Quest Veteran",desc="Complete 250 quests",category="Casual",points=15,icon="Interface\\Icons\\INV_Misc_Note_06"},
+  casual_quest_750={id="casual_quest_750",name="Quest Expert",desc="Complete 750 quests",category="Casual",points=30,icon="Interface\\Icons\\INV_Misc_Book_09"},
+  casual_ah_sell={id="casual_ah_sell",name="Market Trader",desc="Visit the Auction House 10 times",category="Casual",points=10,icon="Interface\\Icons\\INV_Misc_Coin_05"},
+  casual_friend_emote={id="casual_friend_emote",name="Life of the Party",desc="Use 50 emotes",category="Casual",points=10,icon="Interface\\Icons\\INV_Misc_Toy_07"},
+
+  -- Elite achievements referenced by titles (now properly defined)
+  elite_flawless_kt={id="elite_flawless_kt",name="Flawless Frost",desc="Defeat Kel'Thuzad without any raid deaths",category="Elite",points=750,icon="Interface\\Icons\\Spell_Shadow_SoulGem"},
+  elite_no_wipe_naxx={id="elite_no_wipe_naxx",name="Naxxramas Perfected",desc="Complete Naxxramas without a raid wipe",category="Elite",points=600,icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
+  elite_naked_rag={id="elite_naked_rag",name="Barely Geared",desc="Defeat Ragnaros with an average item level below 50",category="Elite",points=500,icon="Interface\\Icons\\INV_Chest_Cloth_17"},
+  elite_flawless_cthun={id="elite_flawless_cthun",name="Eye of Perfection",desc="Defeat C'Thun without any raid deaths",category="Elite",points=750,icon="Interface\\Icons\\Spell_Shadow_Charm"},
+  elite_naxx_speedrun={id="elite_naxx_speedrun",name="Naxx Speed Clear",desc="Clear Naxxramas in under 3 hours",category="Elite",points=600,icon="Interface\\Icons\\Spell_Fire_BurningSpeed"},
+  elite_mc_speedrun={id="elite_mc_speedrun",name="Molten Rush",desc="Clear Molten Core in under 90 minutes",category="Elite",points=400,icon="Interface\\Icons\\Spell_Fire_BurningSpeed"},
+  elite_no_wipe_bwl={id="elite_no_wipe_bwl",name="Blackwing Perfected",desc="Clear Blackwing Lair without a single wipe",category="Elite",points=500,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black"},
+  elite_flawless_nef={id="elite_flawless_nef",name="Nefarian's End",desc="Defeat Nefarian without any raid deaths",category="Elite",points=600,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black"},
+  elite_flawless_rag={id="elite_flawless_rag",name="Flawless Firelord",desc="Defeat Ragnaros without any raid deaths",category="Elite",points=600,icon="Interface\\Icons\\Spell_Fire_LavaSpawn"},
+  elite_guild_first_mc={id="elite_guild_first_mc",name="First Flames",desc="Participate in the guild's first Molten Core clear",category="Elite",points=300,icon="Interface\\Icons\\Spell_Fire_Incinerate"},
+  elite_guild_first_naxx={id="elite_guild_first_naxx",name="Naxx Pioneers",desc="Participate in the guild's first Naxxramas clear",category="Elite",points=500,icon="Interface\\Icons\\INV_Misc_Key_15"},
+  elite_undergeared_rag={id="elite_undergeared_rag",name="Rag Under Pressure",desc="Defeat Ragnaros with no player in tier 2 or higher",category="Elite",points=500,icon="Interface\\Icons\\INV_Chest_Cloth_17"},
+  elite_resource_solo={id="elite_resource_solo",name="Self-Sufficient",desc="Reach 300 in two professions using only self-gathered materials",category="Elite",points=300,icon="Interface\\Icons\\INV_Misc_Coin_17"},
+  elite_all_raids_one_week={id="elite_all_raids_one_week",name="Raid Week",desc="Complete all available raids within one week",category="Elite",points=500,icon="Interface\\Icons\\Spell_Holy_BorrowedTime"},
+  elite_no_consumables_rag={id="elite_no_consumables_rag",name="Pure Skill",desc="Defeat Ragnaros without using any consumables",category="Elite",points=500,icon="Interface\\Icons\\INV_Potion_54"},
+  elite_tank_solo_5man={id="elite_tank_solo_5man",name="Fortress",desc="Tank a 5-man dungeon from start to finish without a wipe",category="Elite",points=200,icon="Interface\\Icons\\Ability_Warrior_DefensiveStance"},
+  elite_heal_no_death={id="elite_heal_no_death",name="Perfect Restoration",desc="Heal a full dungeon run with zero player deaths",category="Elite",points=200,icon="Interface\\Icons\\Spell_Holy_FlashHeal"},
+  elite_solo_ubrs={id="elite_solo_ubrs",name="Spire Solo",desc="Complete Upper Blackrock Spire solo",category="Elite",points=400,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
+  elite_solo_strat={id="elite_solo_strat",name="Stratholme Solo",desc="Complete Stratholme solo",category="Elite",points=400,icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
 }
 
 local TITLES = {
@@ -632,6 +670,44 @@ local TITLES = {
   -- New hard/elite titles
   {id="title_raid_conqueror",name="Raid Conqueror",achievement="elite_all_raids_complete",prefix=false,icon="Interface\\Icons\\Spell_Holy_BorrowedTime",difficulty="hard",category="Elite"},
   {id="title_dungeon_conqueror",name="Dungeon Conqueror",achievement="elite_all_dungeons_complete",prefix=false,icon="Interface\\Icons\\INV_Chest_Cloth_17",difficulty="hard",category="Elite"},
+
+  -- PvP titles for existing trackable achievements
+  {id="title_skirmisher",name="Skirmisher",achievement="pvp_hk_50",prefix=false,icon="Interface\\Icons\\INV_Sword_04",category="PvP"},
+  {id="title_soldier",name="Soldier",achievement="pvp_hk_100",prefix=false,icon="Interface\\Icons\\INV_Sword_27",category="PvP"},
+  {id="title_battle_hardened",name="the Battle-Hardened",achievement="pvp_hk_2500",prefix=false,icon="Interface\\Icons\\INV_Sword_48",category="PvP"},
+  {id="title_veteran_combatant",name="Veteran Combatant",achievement="pvp_hk_250",prefix=false,icon="Interface\\Icons\\INV_Sword_27",category="PvP"},
+  {id="title_dueler",name="the Dueler",achievement="pvp_duel_10",prefix=false,icon="Interface\\Icons\\Ability_Dualwield",category="PvP"},
+  {id="title_dueling_champion",name="Dueling Champion",achievement="pvp_duel_25",prefix=false,icon="Interface\\Icons\\INV_Sword_39",category="PvP"},
+  {id="title_master_duelist2",name="Master Duelist",achievement="pvp_duel_75",prefix=false,icon="Interface\\Icons\\INV_Sword_39",category="PvP"},
+  {id="title_flag_defender",name="Flag Defender",achievement="pvp_wsg_flag_return",prefix=false,icon="Interface\\Icons\\INV_Banner_02",category="PvP"},
+
+  -- Exploration titles for existing trackable achievements
+  {id="title_kingdom_explorer",name="Kingdom Explorer",achievement="explore_eastern_kingdoms",prefix=false,icon="Interface\\Icons\\INV_Misc_Map_02",category="Exploration"},
+  {id="title_pathfinder",name="Pathfinder",achievement="explore_zones_25",prefix=false,icon="Interface\\Icons\\INV_Misc_Map_01",category="Exploration"},
+  {id="title_adventurer",name="the Adventurer",achievement="explore_zones_50",prefix=false,icon="Interface\\Icons\\INV_Misc_Map_02",category="Exploration"},
+
+  -- Casual titles for existing trackable achievements
+  {id="title_fisherman",name="the Fisherman",achievement="casual_fish_100",prefix=false,icon="Interface\\Icons\\Trade_Fishing",category="Casual"},
+  {id="title_master_fisher",name="Master Fisher",achievement="casual_fish_1000",prefix=false,icon="Interface\\Icons\\Trade_Fishing",category="Casual"},
+  {id="title_rider",name="the Rider",achievement="casual_mount_60",prefix=false,icon="Interface\\Icons\\Ability_Mount_Raptor",category="Casual"},
+  {id="title_seasoned",name="the Seasoned",achievement="casual_deaths_50",prefix=false,icon="Interface\\Icons\\INV_Misc_Spyglass_03",category="Casual"},
+  {id="title_traveler",name="the Traveler",achievement="casual_hearthstone_100",prefix=false,icon="Interface\\Icons\\INV_Misc_Rune_01",category="Casual"},
+  {id="title_trader",name="the Trader",achievement="casual_ah_sell",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_05",category="Casual"},
+
+  -- Raid titles for full-clear achievements
+  {id="title_mc_champion",name="Champion of the Core",achievement="raid_mc_complete",prefix=false,icon="Interface\\Icons\\Spell_Fire_LavaSpawn",category="Raids"},
+  {id="title_bwl_champion",name="Champion of Blackwing",achievement="raid_bwl_complete",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",category="Raids"},
+  {id="title_zg_champion",name="Champion of Zul'Gurub",achievement="raid_zg_complete",prefix=false,icon="Interface\\Icons\\Spell_Shadow_PainSpike",category="Raids"},
+  {id="title_naxx_champion",name="Champion of Naxxramas",achievement="raid_naxx_complete",prefix=false,icon="Interface\\Icons\\Spell_Shadow_SoulGem",category="Raids"},
+  {id="title_aq20_champion",name="Champion of Ruins",achievement="raid_aq20_complete",prefix=false,icon="Interface\\Icons\\INV_Qiraj_JewelBlessed",category="Raids"},
+  {id="title_aq40_champion",name="Champion of Ahn'Qiraj",achievement="raid_aq40_complete",prefix=false,icon="Interface\\Icons\\Spell_Shadow_Charm",category="Raids"},
+
+  -- Kill titles for existing trackable kill achievements
+  {id="title_combatant",name="the Combatant",achievement="kills_100",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",category="Kills"},
+  {id="title_slayer",name="the Slayer",achievement="kills_1000",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",category="Kills"},
+  {id="title_mass_murderer",name="Mass Murderer",achievement="kills_5000",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",difficulty="hard",category="Kills"},
+  {id="title_boss_hunter",name="Boss Hunter",achievement="elite_50_unique_bosses",prefix=false,icon="Interface\\Icons\\Spell_Holy_FlashHeal",category="Elite"},
+  {id="title_boss_explorer",name="Boss Explorer",achievement="elite_25_unique_bosses",prefix=false,icon="Interface\\Icons\\Ability_Warrior_DefensiveStance",category="Elite"},
 }
 
 -- ==========================================
@@ -707,8 +783,45 @@ end
 -- PUBLIC API FOR OTHER ADDONS
 -- ==========================================
 
+-- Fallback pool used when an achievement has no explicit icon.
+local FALLBACK_ICON_POOL = {
+  "Interface\\Icons\\INV_Misc_Map_01",
+  "Interface\\Icons\\INV_Misc_Map_02",
+  "Interface\\Icons\\INV_Misc_Coin_01",
+  "Interface\\Icons\\INV_Misc_Coin_05",
+  "Interface\\Icons\\INV_Misc_Trophy_03",
+  "Interface\\Icons\\Spell_Holy_BlessingOfStrength",
+  "Interface\\Icons\\Ability_Warrior_Rampage",
+  "Interface\\Icons\\Spell_Nature_ResistNature",
+}
+
+-- Deterministic hash of a string achId: sum of (byte * position) mod pool length.
+local function HashAchId(achId)
+  local s = tostring(achId)
+  local h = 0
+  for i = 1, string.len(s) do
+    h = h + string.byte(s, i) * i
+  end
+  return h
+end
+
 local function GetAchievementIcon(achId)
-  return "Interface\\Icons\\Spell_Nature_ResistNature"
+  -- 1. Use the explicitly configured icon if present.
+  local achData = ACHIEVEMENTS[achId]
+  if achData and achData.icon then return achData.icon end
+  -- 2. Re-use a previously cached fallback so it never changes.
+  if LeafVE_AchTest_DB and LeafVE_AchTest_DB.iconCache then
+    local cached = LeafVE_AchTest_DB.iconCache[achId]
+    if cached then return cached end
+  end
+  -- 3. Compute a deterministic fallback and store it.
+  local poolLen = table.getn(FALLBACK_ICON_POOL)
+  local idx = (HashAchId(achId) % poolLen) + 1
+  local icon = FALLBACK_ICON_POOL[idx]
+  if LeafVE_AchTest_DB and LeafVE_AchTest_DB.iconCache then
+    LeafVE_AchTest_DB.iconCache[achId] = icon
+  end
+  return icon
 end
 
 -- ==========================================
@@ -820,6 +933,7 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   -- PvP HKs: read live from the API
   pvp_hk_50    = {api="hk", goal=50},
   pvp_hk_100   = {api="hk", goal=100},
+  pvp_hk_250   = {api="hk", goal=250},
   pvp_hk_1000  = {api="hk", goal=1000},
   pvp_hk_2500  = {api="hk", goal=2500},
   pvp_hk_5000  = {api="hk", goal=5000},
@@ -828,6 +942,7 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   pvp_duel_10  = {counter="duels", goal=10},
   pvp_duel_25  = {counter="duels", goal=25},
   pvp_duel_50  = {counter="duels", goal=50},
+  pvp_duel_75  = {counter="duels", goal=75},
   pvp_duel_100 = {counter="duels", goal=100},
   -- Gold: read live from the API
   gold_10   = {api="gold", goal=10},
@@ -1169,7 +1284,9 @@ function LeafVE_AchTest:CheckQuestAchievements()
     total = (pc and pc.quests) or 0
   end
   if total >= 100  then self:AwardAchievement("casual_quest_100",  true) end
+  if total >= 250  then self:AwardAchievement("casual_quest_250",  true) end
   if total >= 500  then self:AwardAchievement("casual_quest_500",  true) end
+  if total >= 750  then self:AwardAchievement("casual_quest_750",  true) end
   if total >= 1000 then self:AwardAchievement("casual_quest_1000", true) end
 end
 
@@ -1747,6 +1864,18 @@ function LeafVE_AchTest:CheckBacklogAchievements()
 
   -- Re-check meta achievements based on what has been awarded so far
   self:CheckMetaAchievements()
+
+  -- Check honorable kill milestones via API (triggers on login/backlog)
+  if GetPVPLifetimeHonorableKills then
+    local hkTotal = GetPVPLifetimeHonorableKills() or 0
+    if hkTotal >= 50    then self:AwardAchievement("pvp_hk_50",    true) end
+    if hkTotal >= 100   then self:AwardAchievement("pvp_hk_100",   true) end
+    if hkTotal >= 250   then self:AwardAchievement("pvp_hk_250",   true) end
+    if hkTotal >= 1000  then self:AwardAchievement("pvp_hk_1000",  true) end
+    if hkTotal >= 2500  then self:AwardAchievement("pvp_hk_2500",  true) end
+    if hkTotal >= 5000  then self:AwardAchievement("pvp_hk_5000",  true) end
+    if hkTotal >= 10000 then self:AwardAchievement("pvp_hk_10000", true) end
+  end
 
   -- Scan LeafVE_DB point history for previously tracked instance completions.
   -- If LeafVillageLegends recorded "Instance completion: <Zone>", credit the
@@ -3010,6 +3139,16 @@ function LeafVE_AchTest.UI:RefreshAchievements()
   self.currentAchList  = achievementList
   self.currentAchOwner = me
 
+  -- Debug: log category counts for Quest and Skills when DEBUG is enabled
+  if LeafVE_AchTest.DEBUG then
+    local questCount, skillCount = 0, 0
+    for _, entry in ipairs(achievementList) do
+      if entry.data.category == "Quests"     then questCount = questCount + 1 end
+      if entry.data.category == "Skills"     then skillCount = skillCount + 1 end
+    end
+    Debug("RefreshAchievements [cat="..tostring(self.selectedCategory).."] Quests="..questCount.." Skills="..skillCount.." total="..table.getn(achievementList))
+  end
+
   -- Set the scrollChild virtual height so the scrollbar range is correct.
   local totalHeight = math.max(10, table.getn(achievementList) * ACH_ROW_H + 10)
   self.scrollChild:SetHeight(totalHeight)
@@ -3239,7 +3378,7 @@ function LeafVE_AchTest.UI:RefreshTitles()
       local r, g, b = GetTitleColorRGB(titleDiff)
       frame.name:SetText(titleData.name)
       frame.name:SetTextColor(r, g, b)
-      frame.requirement:SetText("From: "..(achData and achData.name or "Unknown"))
+      frame.requirement:SetText("From: "..(achData and achData.name or "Complete the associated achievement."))
       frame.requirement:SetTextColor(0.9, 0.9, 0.9)
       frame.useBtn:Enable()
       frame.useBtn.titleID = titleData.id
@@ -3253,7 +3392,7 @@ function LeafVE_AchTest.UI:RefreshTitles()
       frame.icon:SetAlpha(0.3)
       frame.name:SetText(titleData.name)
       frame.name:SetTextColor(0.5, 0.5, 0.5)
-      frame.requirement:SetText("Requires: "..(achData and achData.name or "Unknown"))
+      frame.requirement:SetText("Requires: "..(achData and achData.name or "Complete the associated achievement."))
       frame.requirement:SetTextColor(0.6, 0.4, 0.4)
       frame.useBtn:Disable()
     end
@@ -3361,6 +3500,7 @@ ef:SetScript("OnEvent", function()
       if total >= 10  then LeafVE_AchTest:AwardAchievement("casual_deaths_10",  true) end
       if total >= 50  then LeafVE_AchTest:AwardAchievement("casual_deaths_50",  true) end
       if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_deaths_100", true) end
+      if total >= 200 then LeafVE_AchTest:AwardAchievement("casual_deaths_200", true) end
       -- Check if death was caused by falling (fall damage fired just before death)
       if GetTime() - lastFallDamageTime < DEATH_CLASSIFY_WINDOW then
         local fallTotal = IncrCounter(me, "fallDeaths")
@@ -3404,7 +3544,9 @@ ef:SetScript("OnEvent", function()
     if me then
       local total = IncrCounter(me, "duels")
       if total >= 10  then LeafVE_AchTest:AwardAchievement("pvp_duel_10",  true) end
+      if total >= 25  then LeafVE_AchTest:AwardAchievement("pvp_duel_25",  true) end
       if total >= 50  then LeafVE_AchTest:AwardAchievement("pvp_duel_50",  true) end
+      if total >= 75  then LeafVE_AchTest:AwardAchievement("pvp_duel_75",  true) end
       if total >= 100 then LeafVE_AchTest:AwardAchievement("pvp_duel_100", true) end
     end
   end
@@ -3505,7 +3647,10 @@ lootFrame:SetScript("OnEvent", function()
       if me then
         local total = IncrCounter(me, "fish")
         if total >= 25   then LeafVE_AchTest:AwardAchievement("casual_fish_25",   true) end
+        if total >= 50   then LeafVE_AchTest:AwardAchievement("casual_fish_50",   true) end
         if total >= 100  then LeafVE_AchTest:AwardAchievement("casual_fish_100",  true) end
+        if total >= 250  then LeafVE_AchTest:AwardAchievement("casual_fish_250",  true) end
+        if total >= 500  then LeafVE_AchTest:AwardAchievement("casual_fish_500",  true) end
         if total >= 1000 then LeafVE_AchTest:AwardAchievement("casual_fish_1000", true) end
       end
     end
@@ -3522,8 +3667,42 @@ emoteFrame:SetScript("OnEvent", function()
     local me = ShortName(UnitName("player"))
     if me and ShortName(senderName) == me then
       local total = IncrCounter(me, "emotes")
-      if total >= 25  then LeafVE_AchTest:AwardAchievement("casual_emote_25",  true) end
-      if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_emote_100", true) end
+      if total >= 25  then LeafVE_AchTest:AwardAchievement("casual_emote_25",       true) end
+      if total >= 50  then LeafVE_AchTest:AwardAchievement("casual_friend_emote",   true) end
+      if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_emote_100",      true) end
+      if total >= 500 then LeafVE_AchTest:AwardAchievement("casual_emote_500",      true) end
+    end
+  end
+end)
+
+-- Track Auction House visits for casual_ah_sell achievement (10 visits).
+local ahFrame = CreateFrame("Frame")
+ahFrame:RegisterEvent("AUCTION_HOUSE_SHOW")
+ahFrame:SetScript("OnEvent", function()
+  if event == "AUCTION_HOUSE_SHOW" then
+    local me = ShortName(UnitName("player"))
+    if me then
+      local total = IncrCounter(me, "ahvisits")
+      if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_ah_sell", true) end
+    end
+  end
+end)
+
+-- Track Warsong Gulch entries for pvp_wsg_flag_return achievement (10 enters).
+local wsgFrame = CreateFrame("Frame")
+wsgFrame:RegisterEvent("UPDATE_BATTLEFIELD_STATUS")
+wsgFrame:SetScript("OnEvent", function()
+  if event == "UPDATE_BATTLEFIELD_STATUS" then
+    local me = ShortName(UnitName("player"))
+    if me and GetBattlefieldStatus then
+      for i = 1, GetMaxBattlefieldID and GetMaxBattlefieldID() or 3 do
+        local status, mapName = GetBattlefieldStatus(i)
+        if status == "active" and mapName and string.find(string.lower(mapName), "warsong") then
+          local total = IncrCounter(me, "wsgvisits")
+          if total >= 10 then LeafVE_AchTest:AwardAchievement("pvp_wsg_flag_return", true) end
+          break
+        end
+      end
     end
   end
 end)
