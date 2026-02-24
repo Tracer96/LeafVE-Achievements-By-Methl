@@ -1265,12 +1265,6 @@ function LeafVE:OnQuestTurnedIn()
   local me = ShortName(UnitName("player"))
   if not me then return end
   if not InGuild() then return end
-  -- Only award quest points when grouped with at least one guild member
-  local guildies = self:GetGroupGuildies()
-  if table.getn(guildies) == 0 then
-    self:CacheQuestLog()
-    return
-  end
   EnsureDB()
   local today = DayKey()
 
