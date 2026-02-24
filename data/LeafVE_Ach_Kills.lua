@@ -92,6 +92,7 @@ killRegFrame:SetScript("OnEvent", function()
       RegisterKillAchievements()
     end
     -- Backlog: award critter achievements already reached from prior sessions
+    if not (LeafVE_AchTest and LeafVE_AchTest.ShortName) then return end
     local me = LeafVE_AchTest.ShortName(UnitName("player"))
     if me and LeafVE_AchTest_DB and LeafVE_AchTest_DB.progressCounters then
       local pc = LeafVE_AchTest_DB.progressCounters[me]
@@ -144,9 +145,9 @@ killFrame:SetScript("OnEvent", function()
   -- Generic kill via floating combat text (KILLING_BLOW)
   if event == "COMBAT_TEXT_UPDATE" and arg1 == "KILLING_BLOW" then
     -- Delegate to RecordKill in main file (handles debounce + all milestones)
-    if LeafVE_AchTest.RecordKill then
+    if LeafVE_AchTest and LeafVE_AchTest.RecordKill then
       LeafVE_AchTest.RecordKill(nil)
-    else
+    elseif LeafVE_AchTest and LeafVE_AchTest.ShortName then
       -- Fallback if RecordKill not yet available
       local me = LeafVE_AchTest.ShortName(UnitName("player"))
       if not me then return end
@@ -171,7 +172,7 @@ killFrame:SetScript("OnEvent", function()
 
     local lname = string.lower(targetName)
     local achId = NAMED_KILL_LOOKUP[lname]
-    if achId then
+    if achId and LeafVE_AchTest then
       local goal = NAMED_KILL_GOALS[achId]
       if goal then
         -- Critter: track cumulative kills

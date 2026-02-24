@@ -1,6 +1,22 @@
 -- LeafVE Achievement System - v1.4.0 - More Titles + Title Search Bar
 -- Guild message: [Title] [LeafVE Achievement] earned [Achievement]
 
+-- Lua 5.0 compatibility: string.match was introduced in Lua 5.1
+if not string.match then
+  string.match = function(s, pattern, init)
+    local t = {string.find(s, pattern, init)}
+    if not t[1] then return nil end
+    if table.getn(t) > 2 then
+      local captures = {}
+      for i = 3, table.getn(t) do
+        captures[i - 2] = t[i]
+      end
+      return unpack(captures)
+    end
+    return string.sub(s, t[1], t[2])
+  end
+end
+
 LeafVE_AchTest = LeafVE_AchTest or {}
 LeafVE_AchTest.name = "LeafVE_AchievementsTest"
 LeafVE_AchTest_DB = LeafVE_AchTest_DB or {}
@@ -3676,8 +3692,10 @@ emoteFrame:SetScript("OnEvent", function()
 end)
 
 -- Track Auction House visits for casual_ah_sell achievement (10 visits).
+-- AUCTION_HOUSE_SHOW was introduced in WoW 2.0; use pcall to avoid a load error on 1.12.
 local ahFrame = CreateFrame("Frame")
-ahFrame:RegisterEvent("AUCTION_HOUSE_SHOW")
+local ahOk, ahErr = pcall(function() ahFrame:RegisterEvent("AUCTION_HOUSE_SHOW") end)
+if not ahOk then Debug("AUCTION_HOUSE_SHOW unavailable: "..(ahErr or "unknown")) end
 ahFrame:SetScript("OnEvent", function()
   if event == "AUCTION_HOUSE_SHOW" then
     local me = ShortName(UnitName("player"))
