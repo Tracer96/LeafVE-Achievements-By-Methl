@@ -2291,31 +2291,36 @@ local ACHIEVEMENT_ICONS = {
 
 local function GetAchievementIcon(achId)
   if not achId then return "Interface\\Icons\\INV_Misc_QuestionMark" end
-  
-  local lowerAchId = string.lower(achId)
-  
-  local iconMap = {
-    lvl_10 = "Interface\\Icons\\INV_Sword_04",
-    lvl_20 = "Interface\\Icons\\INV_Sword_27",
-    lvl_30 = "Interface\\Icons\\INV_Sword_39",
-    lvl_40 = "Interface\\Icons\\INV_Sword_43",
-    lvl_50 = "Interface\\Icons\\INV_Sword_62",
-    lvl_60 = "Interface\\Icons\\INV_Sword_65",
-    gold_10 = "Interface\\Icons\\INV_Misc_Coin_01",
-    gold_100 = "Interface\\Icons\\INV_Misc_Coin_05",
-    gold_1000 = "Interface\\Icons\\INV_Misc_Gem_Pearl_05",
-  }
-  
-  if iconMap[lowerAchId] then
-    return iconMap[lowerAchId]
+
+  -- 1. Use the actual icon stored on the achievement definition (stable, per-ID).
+  if LeafVE_AchTest and LeafVE_AchTest.GetAchievementMeta then
+    local meta = LeafVE_AchTest.GetAchievementMeta(achId)
+    if meta and meta.icon then return meta.icon end
   end
-  
+
+  -- 2. Fall back to the local static map for any IDs not yet registered.
+  local lowerAchId = string.lower(achId)
+  if ACHIEVEMENT_ICONS[lowerAchId] then
+    return ACHIEVEMENT_ICONS[lowerAchId]
+  end
+
+  -- 3. Simple pattern-based fallback (deterministic, no RNG).
   if string.find(lowerAchId, "lvl") or string.find(lowerAchId, "level") then
     return "Interface\\Icons\\INV_Sword_04"
   elseif string.find(lowerAchId, "gold") then
     return "Interface\\Icons\\INV_Misc_Coin_01"
+  elseif string.find(lowerAchId, "raid") or string.find(lowerAchId, "elite") then
+    return "Interface\\Icons\\INV_Misc_Trophy_03"
+  elseif string.find(lowerAchId, "pvp") or string.find(lowerAchId, "duel") then
+    return "Interface\\Icons\\INV_Sword_27"
+  elseif string.find(lowerAchId, "dung") then
+    return "Interface\\Icons\\INV_Misc_Key_14"
+  elseif string.find(lowerAchId, "explore") then
+    return "Interface\\Icons\\INV_Misc_Map_01"
+  elseif string.find(lowerAchId, "prof") or string.find(lowerAchId, "skill") then
+    return "Interface\\Icons\\Trade_Alchemy"
   end
-  
+
   return "Interface\\Icons\\INV_Misc_QuestionMark"
 end
 
