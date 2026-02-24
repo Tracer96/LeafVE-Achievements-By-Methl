@@ -5157,7 +5157,6 @@ local function BuildAdminPanel(panel)
     if new < 0 then new = 0 end
     if new > max then new = max end
     scrollFrame:SetVerticalScroll(new)
-    scrollBar:SetValue(new)
   end)
 
   local scrollBar = CreateFrame("Slider", nil, panel)
@@ -5175,6 +5174,10 @@ local function BuildAdminPanel(panel)
     local max = scrollFrame:GetVerticalScrollRange()
     scrollBar:SetMinMaxValues(0, max > 0 and max or 1)
   end
+  scrollFrame:SetScript("OnVerticalScroll", function()
+    UpdateAdminScroll()
+    scrollBar:SetValue(scrollFrame:GetVerticalScroll())
+  end)
 
   local subFrame = CreateFrame("Frame", nil, scrollFrame)
   subFrame:SetWidth(440)
