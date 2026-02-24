@@ -399,6 +399,20 @@ local ACHIEVEMENTS = {
   -- Death extras (from KAM)
   casual_deaths_5={id="casual_deaths_5",name="First Steps to Death",desc="Die 5 times",category="Casual",points=3,icon="Interface\\Icons\\Spell_Shadow_DeathScream"},
   casual_deaths_25={id="casual_deaths_25",name="Quarter Century of Defeats",desc="Die 25 times",category="Casual",points=5,icon="Interface\\Icons\\INV_Misc_Spyglass_03"},
+
+  -- Tiered kill count achievements
+  kills_100={id="kills_100",name="Hundred Slayer",desc="Kill 100 mobs",category="Kills",points=10,icon="Interface\\Icons\\Ability_Warrior_Rampage"},
+  kills_500={id="kills_500",name="Five Hundred Club",desc="Kill 500 mobs",category="Kills",points=25,icon="Interface\\Icons\\Ability_Warrior_Rampage"},
+  kills_1000={id="kills_1000",name="Thousand Slayer",desc="Kill 1000 mobs",category="Kills",points=50,icon="Interface\\Icons\\Ability_Warrior_Rampage"},
+  kills_2500={id="kills_2500",name="Bloodsoaked",desc="Kill 2500 mobs",category="Kills",points=75,icon="Interface\\Icons\\Ability_Warrior_Rampage"},
+  kills_5000={id="kills_5000",name="Death Incarnate",desc="Kill 5000 mobs",category="Kills",points=100,icon="Interface\\Icons\\Ability_Warrior_Rampage"},
+  kills_10000={id="kills_10000",name="Annihilator",desc="Kill 10000 mobs",category="Kills",points=200,icon="Interface\\Icons\\Ability_Warrior_Rampage"},
+
+  -- Tiered zone-exploration achievements (count of unique subzones discovered)
+  explore_zones_10={id="explore_zones_10",name="Wanderer",desc="Discover 10 unique subzones",category="Exploration",points=5,icon="Interface\\Icons\\INV_Misc_Map_01"},
+  explore_zones_25={id="explore_zones_25",name="Traveler",desc="Discover 25 unique subzones",category="Exploration",points=10,icon="Interface\\Icons\\INV_Misc_Map_01"},
+  explore_zones_50={id="explore_zones_50",name="Pathfinder",desc="Discover 50 unique subzones",category="Exploration",points=20,icon="Interface\\Icons\\INV_Misc_Map_02"},
+  explore_zones_100={id="explore_zones_100",name="World Explorer",desc="Discover 100 unique subzones",category="Exploration",points=35,icon="Interface\\Icons\\INV_Misc_Map_02"},
 }
 
 local TITLES = {
@@ -515,6 +529,26 @@ local TITLES = {
   {id="title_undead_slayer",name="Undead Slayer",achievement="dung_strat_complete",prefix=false,icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
   {id="title_shadow_hunter",name="Shadow Hunter",achievement="dung_scholo_complete",prefix=false,icon="Interface\\Icons\\Spell_Shadow_Charm"},
   {id="title_dungeon_master",name="Dungeon Master",achievement="dung_dmn_complete",prefix=false,icon="Interface\\Icons\\INV_Misc_Key_14"},
+
+  -- New tiered kill titles (normal difficulty)
+  {id="title_hundred_slayer",name="the Hundred Slayer",achievement="kills_100",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",difficulty="normal"},
+  {id="title_bloodsoaked",name="the Bloodsoaked",achievement="kills_2500",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",difficulty="normal"},
+  {id="title_death_incarnate",name="Death Incarnate",achievement="kills_5000",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",difficulty="hard"},
+  {id="title_annihilator",name="the Annihilator",achievement="kills_10000",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",difficulty="hard"},
+
+  -- New exploration titles (normal difficulty)
+  {id="title_wanderer",name="the Wanderer",achievement="explore_zones_10",prefix=false,icon="Interface\\Icons\\INV_Misc_Map_01",difficulty="normal"},
+  {id="title_world_explorer",name="World Explorer",achievement="explore_zones_100",prefix=false,icon="Interface\\Icons\\INV_Misc_Map_02",difficulty="normal"},
+
+  -- New quest chain titles (normal difficulty)
+  {id="title_core_seeker",name="Core Seeker",achievement="quest_mc_attunement",prefix=false,icon="Interface\\Icons\\Spell_Fire_LavaSpawn",difficulty="normal"},
+  {id="title_deep_diver",name="Deep Diver",achievement="quest_princess_theradras",prefix=false,icon="Interface\\Icons\\INV_Misc_Root_02",difficulty="normal"},
+
+  -- New hard titles
+  {id="title_raid_conqueror",name="Raid Conqueror",achievement="elite_all_raids_complete",prefix=false,icon="Interface\\Icons\\Spell_Holy_BorrowedTime",difficulty="hard"},
+  {id="title_dungeon_conqueror",name="Dungeon Conqueror",achievement="elite_all_dungeons_complete",prefix=false,icon="Interface\\Icons\\INV_Chest_Cloth_17",difficulty="hard"},
+  {id="title_thousand_slayer",name="Thousand Slayer",achievement="kills_1000",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",difficulty="normal"},
+  {id="title_five_hundred",name="Five Hundred Club",achievement="kills_500",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",difficulty="normal"},
 }
 
 -- ==========================================
@@ -770,6 +804,28 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   elite_50_raids     = {counter="raidRuns",    goal=50},
   -- Ironman: deaths must remain 0 to hit level 60
   elite_ironman = {counter="deaths", goal=0},
+
+  -- Generic kill milestones (tracked via "genericKills" counter)
+  kill_01      = {counter="genericKills", goal=1},
+  kill_05      = {counter="genericKills", goal=5},
+  kill_10      = {counter="genericKills", goal=10},
+  kill_50      = {counter="genericKills", goal=50},
+  kill_100     = {counter="genericKills", goal=100},
+  kill_200     = {counter="genericKills", goal=200},
+  kill_500     = {counter="genericKills", goal=500},
+  kill_1000    = {counter="genericKills", goal=1000},
+  kill_10000   = {counter="genericKills", goal=10000},
+  kills_100    = {counter="genericKills", goal=100},
+  kills_500    = {counter="genericKills", goal=500},
+  kills_1000   = {counter="genericKills", goal=1000},
+  kills_2500   = {counter="genericKills", goal=2500},
+  kills_5000   = {counter="genericKills", goal=5000},
+  kills_10000  = {counter="genericKills", goal=10000},
+  -- Zone-exploration count achievements
+  explore_zones_10  = {counter="exploredZoneCount", goal=10},
+  explore_zones_25  = {counter="exploredZoneCount", goal=25},
+  explore_zones_50  = {counter="exploredZoneCount", goal=50},
+  explore_zones_100 = {counter="exploredZoneCount", goal=100},
 }
 
 -- Returns {current, goal} or nil if no progress data exists for this achievement.
@@ -818,10 +874,102 @@ local function IncrCounter(playerName, counterName, amount)
   return c[counterName]
 end
 
+-- ============================================================
+-- GetTitleColor: returns WoW color code for a title difficulty
+-- ============================================================
+local function GetTitleColor(difficulty)
+  if difficulty == "hard" then
+    return "|cFFB00000"
+  end
+  return "|cFFFF7F00"
+end
+
+-- ============================================================
+-- Kill tracking: RecordKill with debounce
+-- ============================================================
+
+-- Kill-milestone ID list (both old kill_* and new kills_*)
+local KILL_MILESTONE_LIST = {
+  {value=1,     id="kill_01"},
+  {value=5,     id="kill_05"},
+  {value=10,    id="kill_10"},
+  {value=50,    id="kill_50"},
+  {value=100,   id="kill_100"},
+  {value=200,   id="kill_200"},
+  {value=500,   id="kill_500"},
+  {value=1000,  id="kill_1000"},
+  {value=10000, id="kill_10000"},
+  {value=100,   id="kills_100"},
+  {value=500,   id="kills_500"},
+  {value=1000,  id="kills_1000"},
+  {value=2500,  id="kills_2500"},
+  {value=5000,  id="kills_5000"},
+  {value=10000, id="kills_10000"},
+}
+
+local killDebounce_mob  = ""
+local killDebounce_time = 0
+
+local function UpdateKillAchievements(me, total)
+  for _, m in ipairs(KILL_MILESTONE_LIST) do
+    if total >= m.value and ACHIEVEMENTS[m.id] then
+      LeafVE_AchTest:AwardAchievement(m.id, true)
+    end
+  end
+end
+
+local function RecordKill(mobName)
+  local me = ShortName(UnitName("player"))
+  if not me then return end
+  local now = GetTime and GetTime() or 0
+  local mkey = mobName or ""
+  -- Debounce: same mob within 0.3s, or any unnamed kill within 0.3s of any kill
+  if (now - killDebounce_time) < 0.3 then
+    if mkey == "" or mkey == killDebounce_mob then
+      return
+    end
+  end
+  killDebounce_mob  = mkey
+  killDebounce_time = now
+  local total = IncrCounter(me, "genericKills")
+  Debug("Kill recorded: "..(mkey ~= "" and mkey or "unknown").." total="..tostring(total))
+  UpdateKillAchievements(me, total)
+end
+
+-- ============================================================
+-- CheckGuildMemberAchievement
+-- ============================================================
+local function CheckGuildMemberAchievement()
+  if not IsInGuild or not IsInGuild() then return end
+  local me = ShortName(UnitName("player"))
+  if not me then return end
+  if not LeafVE_AchTest:HasAchievement(me, "casual_guild_join") then
+    LeafVE_AchTest:AwardAchievement("casual_guild_join", true)
+  end
+end
+
+-- ============================================================
+-- ScanProfessionsAndAward
+-- ============================================================
+-- Primary professions only (exclude secondary: First Aid, Fishing, Cooking)
+local PRIMARY_PROFESSION_NAMES = {
+  ["Alchemy"]=true, ["Blacksmithing"]=true, ["Enchanting"]=true,
+  ["Engineering"]=true, ["Herbalism"]=true, ["Leatherworking"]=true,
+  ["Mining"]=true, ["Skinning"]=true, ["Tailoring"]=true,
+  ["Jewelcrafting"]=true,
+}
+
+function LeafVE_AchTest.ScanProfessionsAndAward()
+  LeafVE_AchTest:CheckProfessionAchievements()
+end
+
 -- Expose helpers so separate achievement module files loaded after this file
 -- can add achievements and interact with the DB without duplicating locals.
-LeafVE_AchTest.ShortName   = ShortName
-LeafVE_AchTest.IncrCounter = IncrCounter
+LeafVE_AchTest.ShortName          = ShortName
+LeafVE_AchTest.IncrCounter        = IncrCounter
+LeafVE_AchTest.RecordKill         = RecordKill
+LeafVE_AchTest.GetTitleColor      = GetTitleColor
+LeafVE_AchTest.UpdateKillAchievements = UpdateKillAchievements
 function LeafVE_AchTest:AddAchievement(id, data)
   ACHIEVEMENTS[id] = data
 end
@@ -1109,7 +1257,12 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
 
     -- Build message: [Title] [LeafVE Achievement] earned [Achievement]
     if currentTitle then
-      guildMsg = "|cFFFF7F00["..currentTitle.name.."]|r |cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+      local titleDiff = "normal"
+      for _, td in ipairs(TITLES) do
+        if td.id == currentTitle.id then titleDiff = td.difficulty or "normal"; break end
+      end
+      local titleColor = GetTitleColor(titleDiff)
+      guildMsg = titleColor.."["..currentTitle.name.."]|r |cFF2DD35C[LeafVE Achievement]|r earned "..achLink
     else
       guildMsg = "|cFF2DD35C[LeafVE Achievement]|r earned "..achLink
     end
@@ -1461,7 +1614,9 @@ function LeafVE_AchTest:CheckProfessionAchievements()
       local achId = profMap[skillName]
       if achId and skillRank and skillRank >= 300 then
         self:AwardAchievement(achId, true)
-        artisanCount = artisanCount + 1
+        if PRIMARY_PROFESSION_NAMES[skillName] then
+          artisanCount = artisanCount + 1
+        end
       end
     end
   end
@@ -2445,7 +2600,12 @@ function LeafVE_AchTest.UI:Refresh()
   if self.pointsLabel then
     if currentTitle then
       local titleText = currentTitle.prefix and (currentTitle.name.." "..me) or (me.." "..currentTitle.name)
-      self.pointsLabel:SetText("|cFFFF7F00"..titleText.."|r | Points: |cFFFF7F00"..totalPoints.."|r")
+      local titleDiff = "normal"
+      for _, td in ipairs(TITLES) do
+        if td.id == currentTitle.id then titleDiff = td.difficulty or "normal"; break end
+      end
+      local titleColor = GetTitleColor(titleDiff)
+      self.pointsLabel:SetText(titleColor..titleText.."|r | Points: |cFFFF7F00"..totalPoints.."|r")
     else
       self.pointsLabel:SetText(me.." | Points: |cFFFF7F00"..totalPoints.."|r")
     end
@@ -2762,8 +2922,13 @@ function LeafVE_AchTest.UI:RefreshTitles()
       frame:SetBackdropBorderColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3], 0.6)
       frame.icon:SetDesaturated(false)
       frame.icon:SetAlpha(1)
+      local titleDiff = titleData.difficulty or "normal"
+      local r, g, b
+      if titleDiff == "hard" then r, g, b = 0.69, 0, 0
+      else r, g, b = THEME.orange[1], THEME.orange[2], THEME.orange[3]
+      end
       frame.name:SetText(titleData.name)
-      frame.name:SetTextColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3])
+      frame.name:SetTextColor(r, g, b)
       frame.requirement:SetText("From: "..(achData and achData.name or "Unknown"))
       frame.requirement:SetTextColor(0.9, 0.9, 0.9)
       frame.prefixBtn:Enable()
@@ -2818,10 +2983,14 @@ ef:RegisterEvent("ADDON_LOADED")
 ef:RegisterEvent("PLAYER_LEVEL_UP")
 ef:RegisterEvent("PLAYER_MONEY")
 ef:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
+ef:RegisterEvent("CHAT_MSG_COMBAT_XP_GAIN")
 ef:RegisterEvent("PLAYER_DEAD")
 ef:RegisterEvent("QUEST_COMPLETE")
 ef:RegisterEvent("PARTY_MEMBERS_CHANGED")
 ef:RegisterEvent("DUEL_WON")
+ef:RegisterEvent("PLAYER_ENTERING_WORLD")
+ef:RegisterEvent("GUILD_ROSTER_UPDATE")
+ef:RegisterEvent("SKILL_LINES_CHANGED")
 
 ef:SetScript("OnEvent", function()
   if event == "ADDON_LOADED" and arg1 == LeafVE_AchTest.name then
@@ -2835,18 +3004,48 @@ ef:SetScript("OnEvent", function()
     -- Backlog: award completions from previously stored boss kill progress + history
     LeafVE_AchTest:CheckBacklogAchievements()
     Print("Achievement System Loaded! Type /achtest")
+    -- Backlog: sync exploredZoneCount for tiered zone achievements
+    do
+      local me = ShortName(UnitName("player"))
+      if me and LeafVE_AchTest_DB.exploredZones and LeafVE_AchTest_DB.exploredZones[me] then
+        local zoneCount = 0
+        for _ in pairs(LeafVE_AchTest_DB.exploredZones[me]) do zoneCount = zoneCount + 1 end
+        EnsureDB()
+        if not LeafVE_AchTest_DB.progressCounters[me] then LeafVE_AchTest_DB.progressCounters[me] = {} end
+        LeafVE_AchTest_DB.progressCounters[me]["exploredZoneCount"] = zoneCount
+        if zoneCount >= 10  then LeafVE_AchTest:AwardAchievement("explore_zones_10",  true) end
+        if zoneCount >= 25  then LeafVE_AchTest:AwardAchievement("explore_zones_25",  true) end
+        if zoneCount >= 50  then LeafVE_AchTest:AwardAchievement("explore_zones_50",  true) end
+        if zoneCount >= 100 then LeafVE_AchTest:AwardAchievement("explore_zones_100", true) end
+      end
+    end
     Debug("Debug mode is: "..tostring(LeafVE_AchTest.DEBUG))
   end
   if event == "PLAYER_LEVEL_UP" then LeafVE_AchTest:CheckLevelAchievements() end
   if event == "PLAYER_MONEY" then LeafVE_AchTest:CheckGoldAchievements() end
   if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
-    -- Extract boss name from "Bossname dies." or "Bossname is slain!"
+    -- Extract mob/boss name from death messages
     local bossName = string.match(arg1, "^(.+) dies%.$")
                   or string.match(arg1, "^(.+) is slain!$")
                   or string.match(arg1, "^(.+) has been slain%.$")
     if bossName then
       LeafVE_AchTest:CheckBossKill(bossName)
+      RecordKill(bossName)
     end
+  end
+  if event == "CHAT_MSG_COMBAT_XP_GAIN" then
+    -- XP gain = the player killed something; use as fallback kill signal
+    RecordKill(nil)
+  end
+  if event == "PLAYER_ENTERING_WORLD" then
+    CheckGuildMemberAchievement()
+    LeafVE_AchTest.ScanProfessionsAndAward()
+  end
+  if event == "GUILD_ROSTER_UPDATE" then
+    CheckGuildMemberAchievement()
+  end
+  if event == "SKILL_LINES_CHANGED" then
+    LeafVE_AchTest.ScanProfessionsAndAward()
   end
   if event == "PLAYER_DEAD" then
     local me = ShortName(UnitName("player"))
@@ -3102,10 +3301,15 @@ local function HookChatWithTitles()
         local title = LeafVE_AchTest:GetCurrentTitle(me)
         if title then
           Debug("Adding title: "..title.name.." (prefix: "..tostring(title.prefix)..")")
+          local titleDiff = "normal"
+          for _, td in ipairs(TITLES) do
+            if td.id == title.id then titleDiff = td.difficulty or "normal"; break end
+          end
+          local titleColor = GetTitleColor(titleDiff)
           if title.prefix then
-            msg = "|cFFFF7F00["..title.name.."]|r "..msg
+            msg = titleColor.."["..title.name.."]|r "..msg
           else
-            msg = msg.." |cFFFF7F00["..title.name.."]|r"
+            msg = msg.." "..titleColor.."["..title.name.."]|r"
           end
           Debug("Modified message: "..msg)
         else
@@ -3210,6 +3414,17 @@ zoneDiscFrame:SetScript("OnEvent", function()
   end
   if LeafVE_AchTest_DB.exploredZones[me][subzone] then return end
   LeafVE_AchTest_DB.exploredZones[me][subzone] = true
+  -- Update the total zone count for tiered exploration achievements
+  local zoneCount = 0
+  for _ in pairs(LeafVE_AchTest_DB.exploredZones[me]) do zoneCount = zoneCount + 1 end
+  -- Sync counter with real count (used by ACHIEVEMENT_PROGRESS_DEF / GetAchievementProgress)
+  EnsureDB()
+  if not LeafVE_AchTest_DB.progressCounters[me] then LeafVE_AchTest_DB.progressCounters[me] = {} end
+  LeafVE_AchTest_DB.progressCounters[me]["exploredZoneCount"] = zoneCount
+  if zoneCount >= 10  then LeafVE_AchTest:AwardAchievement("explore_zones_10",  true) end
+  if zoneCount >= 25  then LeafVE_AchTest:AwardAchievement("explore_zones_25",  true) end
+  if zoneCount >= 50  then LeafVE_AchTest:AwardAchievement("explore_zones_50",  true) end
+  if zoneCount >= 100 then LeafVE_AchTest:AwardAchievement("explore_zones_100", true) end
   -- Check every zone-group achievement whose zones include this subzone
   for groupKey, zones in pairs(ZONE_GROUP_ZONES) do
     local achId = "explore_tw_"..groupKey

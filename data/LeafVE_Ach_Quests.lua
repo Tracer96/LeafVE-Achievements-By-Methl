@@ -173,6 +173,38 @@ local QUEST_CHAINS = {
     },
   },
 
+  -- ── Molten Core Attunement ─────────────────────────────────
+  {
+    id    = "quest_mc_attunement",
+    name  = "Attunement to the Core",
+    desc  = "Complete the Molten Core attunement quest chain.",
+    points = 75,
+    icon  = "Interface\\Icons\\Spell_Fire_LavaSpawn",
+    title = {id="title_core_seeker", name="Core Seeker", prefix=false},
+    steps = {
+      "Fireproof",
+      "Overmaster Pyron",
+      "Attunement to the Core",
+    },
+  },
+
+  -- ── Princess Theradras Chain (Maraudon) ────────────────────
+  {
+    id    = "quest_princess_theradras",
+    name  = "Earth's Bane",
+    desc  = "Defeat Princess Theradras after completing the Maraudon quest chain.",
+    points = 50,
+    icon  = "Interface\\Icons\\INV_Misc_Root_02",
+    title = {id="title_deep_diver", name="Deep Diver", prefix=false},
+    steps = {
+      "Corruption of Earth and Seed",
+      "Legends of Maraudon",
+      "The Scepter of Celebras",
+      "Shadowshard Fragments",
+      "Vyletongue Corruption",
+    },
+  },
+
 }
 
 -- ============================================================
