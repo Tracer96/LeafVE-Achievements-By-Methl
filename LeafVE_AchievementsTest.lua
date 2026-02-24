@@ -1,22 +1,6 @@
 -- LeafVE Achievement System - v1.4.0 - More Titles + Title Search Bar
 -- Guild message: [Title] [LeafVE Achievement] earned [Achievement]
 
--- Lua 5.0 compatibility: string.match was introduced in Lua 5.1
-if not string.match then
-  string.match = function(s, pattern, init)
-    local t = {string.find(s, pattern, init)}
-    if not t[1] then return nil end
-    if table.getn(t) > 2 then
-      local captures = {}
-      for i = 3, table.getn(t) do
-        captures[i - 2] = t[i]
-      end
-      return unpack(captures)
-    end
-    return string.sub(s, t[1], t[2])
-  end
-end
-
 LeafVE_AchTest = LeafVE_AchTest or {}
 LeafVE_AchTest.name = "LeafVE_AchievementsTest"
 LeafVE_AchTest_DB = LeafVE_AchTest_DB or {}
@@ -63,94 +47,10 @@ local function EnsureDB()
   if not LeafVE_AchTest_DB.raidProgress then LeafVE_AchTest_DB.raidProgress = {} end
   if not LeafVE_AchTest_DB.progressCounters then LeafVE_AchTest_DB.progressCounters = {} end
   if not LeafVE_AchTest_DB.completedQuests then LeafVE_AchTest_DB.completedQuests = {} end
-  if not LeafVE_AchTest_DB.iconCache then LeafVE_AchTest_DB.iconCache = {} end
 end
 
 local KALIMDOR_ZONES = {"Durotar","Mulgore","The Barrens","Teldrassil","Darkshore","Ashenvale","Stonetalon Mountains","Desolace","Feralas","Thousand Needles","Tanaris","Dustwallow Marsh","Azshara","Felwood","Un'Goro Crater","Moonglade","Winterspring","Silithus"}
 local EASTERN_KINGDOMS_ZONES = {"Dun Morogh","Elwynn Forest","Tirisfal Glades","Silverpine Forest","Westfall","Redridge Mountains","Duskwood","Wetlands","Loch Modan","Hillsbrad Foothills","Alterac Mountains","Arathi Highlands","Badlands","Searing Gorge","Burning Steppes","The Hinterlands","Western Plaguelands","Eastern Plaguelands","Stranglethorn Vale","Swamp of Sorrows","Blasted Lands","Deadwind Pass"}
-
--- Required subzone lists for continent exploration achievements.
--- Structure: [parentZone] = { subzone1, subzone2, ... }
-local REQUIRED_KALIMDOR_ZONES = {
-  ["Durotar"]              = {"Valley of Trials","Sen'jin Village","Razor Hill","The Burning Blade Coven"},
-  ["Mulgore"]              = {"Red Cloud Mesa","Bloodhoof Village","Thunder Bluff","Winterhoof Water Well"},
-  ["The Barrens"]          = {"The Crossroads","Ratchet","Camp Taurajo","Wailing Caverns","Mor'shan Rampart","Far Watch Post"},
-  ["Teldrassil"]           = {"Shadowglen","Dolanaar","Darnassus","Ban'ethil Hollow"},
-  ["Darkshore"]            = {"Auberdine","Grove of the Ancients","Ruins of Mathystra","Cliffspring River"},
-  ["Ashenvale"]            = {"Astranaar","Splintertree Post","Raynewood Retreat","Blackfathom Deeps"},
-  ["Stonetalon Mountains"] = {"Stonetalon Peak","Sun Rock Retreat","The Charred Vale","Windshear Crag"},
-  ["Desolace"]             = {"Ghost Walker Post","Nijel's Point","Shadowprey Village","Thunder Axe Fortress"},
-  ["Feralas"]              = {"Camp Mojache","Feathermoon Stronghold","Dire Maul","The Twin Colossals"},
-  ["Thousand Needles"]     = {"Freewind Post","The Shimmering Flats","Darkcloud Pinnacle","Great Lift"},
-  ["Dustwallow Marsh"]     = {"Brackenwall Village","Theramore Isle","Alcaz Island"},
-  ["Tanaris"]              = {"Gadgetzan","Steamwheedle Port","Zul'Farrak","The Noxious Lair"},
-  ["Un'Goro Crater"]       = {"Marshal's Refuge","Golakka Hot Springs","Fire Plume Ridge","The Slithering Scar"},
-  ["Azshara"]              = {"Talrendis Point","Ruins of Eldarath","Bay of Storms","Hetaera's Clutch"},
-  ["Felwood"]              = {"Bloodvenom Falls","Emerald Sanctuary","Jaedenar","Talonbranch Glade"},
-  ["Moonglade"]            = {"Nighthaven","Shrine of Remulos","Stormrage Barrow Dens"},
-  ["Winterspring"]         = {"Everlook","Frostsaber Rock","Lake Kel'Theril","Owl Wing Thicket"},
-  ["Silithus"]             = {"Cenarion Hold","Hive'Regal","Hive'Ashi","Ruins of Ahn'Qiraj"},
-}
-local REQUIRED_EK_ZONES = {
-  ["Elwynn Forest"]        = {"Northshire Valley","Goldshire","Stonefield Farm","Mirror Lake","Tower of Azora"},
-  ["Westfall"]             = {"Sentinel Hill","Moonbrook","The Deadmines","The Dust Plains"},
-  ["Redridge Mountains"]   = {"Lakeshire","Stonewatch Keep","Render's Camp","Tower of Ilgalar"},
-  ["Duskwood"]             = {"Darkshire","Raven Hill","Tranquil Gardens Cemetery","Roland's Doom"},
-  ["Dun Morogh"]           = {"Coldridge Valley","Anvilmar","Kharanos","Gnomeregan","Ironforge"},
-  ["Loch Modan"]           = {"Thelsamar","Stonewrought Dam","The Loch","Mo'grosh Stronghold"},
-  ["Wetlands"]             = {"Menethil Harbor","Dun Modr","Whelgar's Excavation Site","Direforge Hill"},
-  ["Arathi Highlands"]     = {"Refuge Pointe","Hammerfall","Stromgarde Keep","Circle of East Binding"},
-  ["Hillsbrad Foothills"]  = {"Southshore","Tarren Mill","Hillsbrad Fields","Durnholde Keep"},
-  ["Alterac Mountains"]    = {"Strahnbrad","Ruins of Alterac","The Uplands","Crushridge Hold"},
-  ["The Hinterlands"]      = {"Aerie Peak","Revantusk Village","Jintha'Alor","The Overlook Cliffs"},
-  ["Tirisfal Glades"]      = {"Deathknell","Brill","Undercity","Agamand Mills","The Bulwark"},
-  ["Silverpine Forest"]    = {"The Sepulcher","Ambermill","Shadowfang Keep","Skittering Dark"},
-  ["Western Plaguelands"]  = {"Andorhal","Chillwind Camp","Caer Darrow","Scholomance"},
-  ["Eastern Plaguelands"]  = {"Light's Hope Chapel","Stratholme","Crown Guard Tower","Naxxramas"},
-  ["Badlands"]             = {"Kargath","Uldaman","Camp Kosh","Dustbelch Grotto"},
-  ["Searing Gorge"]        = {"Thorium Point","The Cauldron","Grimesilt Dig Site"},
-  ["Burning Steppes"]      = {"Morgan's Vigil","Blackrock Mountain","Flame Crest","Dreadmaul Rock"},
-  ["Stranglethorn Vale"]   = {"Booty Bay","Grom'gol Base Camp","Rebel Camp","Zul'Gurub","Venture Co. Base Camp"},
-  ["Blasted Lands"]        = {"The Dark Portal","Nethergarde Keep","Dreadmaul Hold"},
-  ["Swamp of Sorrows"]     = {"Stonard","The Temple of Atal'Hakkar","Misty Valley"},
-  ["Deadwind Pass"]        = {"Karazhan","Deadwind Ravine","The Vice"},
-}
-
--- Build flat lookup sets for fast discovery checking.
-local KALIMDOR_SUBZONE_SET = {}
-local KALIMDOR_REQUIRED_TOTAL = 0
-for _, subzones in pairs(REQUIRED_KALIMDOR_ZONES) do
-  for _, sz in ipairs(subzones) do
-    if not KALIMDOR_SUBZONE_SET[sz] then
-      KALIMDOR_SUBZONE_SET[sz] = true
-      KALIMDOR_REQUIRED_TOTAL = KALIMDOR_REQUIRED_TOTAL + 1
-    end
-  end
-end
-
-local EK_SUBZONE_SET = {}
-local EK_REQUIRED_TOTAL = 0
-for _, subzones in pairs(REQUIRED_EK_ZONES) do
-  for _, sz in ipairs(subzones) do
-    if not EK_SUBZONE_SET[sz] then
-      EK_SUBZONE_SET[sz] = true
-      EK_REQUIRED_TOTAL = EK_REQUIRED_TOTAL + 1
-    end
-  end
-end
-
--- Union of Kalimdor + EK subzones: these are the "counted" subzones for The Wanderer.
-local COUNTED_WANDERER_SUBZONES = {}
-for sz in pairs(KALIMDOR_SUBZONE_SET) do COUNTED_WANDERER_SUBZONES[sz] = true end
-for sz in pairs(EK_SUBZONE_SET)      do COUNTED_WANDERER_SUBZONES[sz] = true end
-
--- List of all TW zone-group achievement IDs required for World Explorer.
-local WORLD_EXPLORER_TW_IDS = {
-  "explore_tw_balor","explore_tw_gilneas","explore_tw_northwind","explore_tw_lapidis",
-  "explore_tw_gillijim","explore_tw_scarlet_enclave","explore_tw_grim_reaches",
-  "explore_tw_telabim","explore_tw_hyjal","explore_tw_tirisfal_uplands",
-  "explore_tw_stonetalon","explore_tw_arathi","explore_tw_badlands","explore_tw_ashenvale",
-}
 
 -- Turtle WoW zone-group → list of discoverable subzone names.
 -- Used for zone-group exploration achievements and their tooltip criteria.
@@ -409,8 +309,8 @@ local ACHIEVEMENTS = {
   raid_ukh_complete={id="raid_ukh_complete",name="Upper Karazhan Halls: Raid Clear",desc="Defeat all bosses in Upper Karazhan Halls",category="Raids",points=200,icon="Interface\\Icons\\INV_Misc_Key_15",criteria_key="ukh",criteria_type="raid"},
   
   -- Exploration
-  explore_kalimdor={id="explore_kalimdor",name="Explore Kalimdor",desc="Discover all required locations across Kalimdor",category="Exploration",points=50,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_type="continent",criteria_key="kalimdor"},
-  explore_eastern_kingdoms={id="explore_eastern_kingdoms",name="Explore Eastern Kingdoms",desc="Discover all required locations across Eastern Kingdoms",category="Exploration",points=50,icon="Interface\\Icons\\INV_Misc_Map_02",criteria_type="continent",criteria_key="eastern_kingdoms"},
+  explore_kalimdor={id="explore_kalimdor",name="Explore Kalimdor",desc="Discover all zones in Kalimdor",category="Exploration",points=50,icon="Interface\\Icons\\INV_Misc_Map_01"},
+  explore_eastern_kingdoms={id="explore_eastern_kingdoms",name="Explore Eastern Kingdoms",desc="Discover all zones in Eastern Kingdoms",category="Exploration",points=50,icon="Interface\\Icons\\INV_Misc_Map_02"},
 
   -- Turtle WoW: Unique zone-group exploration achievements
   explore_tw_balor={id="explore_tw_balor",name="Explorer of Balor",desc="Discover all 6 locations in Balor.",category="Exploration",points=25,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_key="balor",criteria_type="zone_group"},
@@ -453,9 +353,9 @@ local ACHIEVEMENTS = {
   elite_drakkisath_5x={id="elite_drakkisath_5x",name="Blackrock Champion",desc="Defeat General Drakkisath 5 times",category="Elite",points=200,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
   elite_gandling_5x={id="elite_gandling_5x",name="Necromancer's Bane",desc="Defeat Darkmaster Gandling 5 times",category="Elite",points=200,icon="Interface\\Icons\\Spell_Shadow_Charm"},
   elite_baron_5x={id="elite_baron_5x",name="Baron's Nemesis",desc="Defeat Baron Rivendare 5 times",category="Elite",points=200,icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
-  elite_100_bosses={id="elite_100_bosses",name="Centurion Slayer",desc="Kill 100 total bosses",category="Elite",points=150,icon="Interface\\Icons\\INV_Misc_Trophy_03"},
-  elite_250_bosses={id="elite_250_bosses",name="Elite Slayer",desc="Kill 250 total bosses",category="Elite",points=200,icon="Interface\\Icons\\INV_Misc_Trophy_03"},
-  elite_500_bosses={id="elite_500_bosses",name="Champion Slayer",desc="Kill 500 total bosses",category="Elite",points=300,icon="Interface\\Icons\\INV_Misc_Trophy_03"},
+  elite_100_bosses={id="elite_100_bosses",name="Centurion Slayer",desc="Kill 100 total bosses",category="Elite",points=150,icon="Interface\\Icons\\INV_Misc_Trophy_Gold"},
+  elite_250_bosses={id="elite_250_bosses",name="Elite Slayer",desc="Kill 250 total bosses",category="Elite",points=200,icon="Interface\\Icons\\INV_Misc_Trophy_Gold"},
+  elite_500_bosses={id="elite_500_bosses",name="Champion Slayer",desc="Kill 500 total bosses",category="Elite",points=300,icon="Interface\\Icons\\INV_Misc_Trophy_Gold"},
   elite_50_dungeons={id="elite_50_dungeons",name="Dungeon Crawler",desc="Complete 50 dungeon runs",category="Elite",points=150,icon="Interface\\Icons\\INV_Misc_Key_14"},
   elite_100_dungeons={id="elite_100_dungeons",name="Dungeon Veteran",desc="Complete 100 dungeon runs",category="Elite",points=250,icon="Interface\\Icons\\INV_Misc_Key_15"},
   elite_25_raids={id="elite_25_raids",name="Raid Initiate",desc="Complete 25 raid runs",category="Elite",points=200,icon="Interface\\Icons\\INV_Misc_Ribbon_01"},
@@ -499,231 +399,122 @@ local ACHIEVEMENTS = {
   -- Death extras (from KAM)
   casual_deaths_5={id="casual_deaths_5",name="First Steps to Death",desc="Die 5 times",category="Casual",points=3,icon="Interface\\Icons\\Spell_Shadow_DeathScream"},
   casual_deaths_25={id="casual_deaths_25",name="Quarter Century of Defeats",desc="Die 25 times",category="Casual",points=5,icon="Interface\\Icons\\INV_Misc_Spyglass_03"},
-
-  -- Tiered kill count achievements
-  kills_100={id="kills_100",name="Hundred Slayer",desc="Kill 100 mobs",category="Kills",points=10,icon="Interface\\Icons\\Ability_Warrior_Rampage"},
-  kills_500={id="kills_500",name="Five Hundred Club",desc="Kill 500 mobs",category="Kills",points=25,icon="Interface\\Icons\\Ability_Warrior_Rampage"},
-  kills_1000={id="kills_1000",name="Thousand Slayer",desc="Kill 1000 mobs",category="Kills",points=50,icon="Interface\\Icons\\Ability_Warrior_Rampage"},
-  kills_2500={id="kills_2500",name="Bloodsoaked",desc="Kill 2500 mobs",category="Kills",points=75,icon="Interface\\Icons\\Ability_Warrior_Rampage"},
-  kills_5000={id="kills_5000",name="Death Incarnate",desc="Kill 5000 mobs",category="Kills",points=100,icon="Interface\\Icons\\Ability_Warrior_Rampage"},
-  kills_10000={id="kills_10000",name="Annihilator",desc="Kill 10000 mobs",category="Kills",points=200,icon="Interface\\Icons\\Ability_Warrior_Rampage"},
-
-  -- Tiered zone-exploration achievements (count of unique subzones discovered)
-  explore_zones_10={id="explore_zones_10",name="Wanderer",desc="Discover any 10 counted subzones (Kalimdor or Eastern Kingdoms)",category="Exploration",points=5,icon="Interface\\Icons\\INV_Misc_Map_01"},
-  explore_zones_25={id="explore_zones_25",name="Traveler",desc="Discover 25 unique subzones",category="Exploration",points=10,icon="Interface\\Icons\\INV_Misc_Map_01"},
-  explore_zones_50={id="explore_zones_50",name="Pathfinder",desc="Discover 50 unique subzones",category="Exploration",points=20,icon="Interface\\Icons\\INV_Misc_Map_02"},
-  explore_zones_100={id="explore_zones_100",name="World Explorer",desc="Complete Explore Kalimdor, Explore Eastern Kingdoms, and all Turtle WoW zone achievements",category="Exploration",points=100,icon="Interface\\Icons\\INV_Misc_Map_02",criteria_type="world_explorer_meta"},
-
-  -- Additional PvP milestones (trackable via existing HK/duel counters)
-  pvp_hk_250={id="pvp_hk_250",name="Veteran Combatant",desc="Earn 250 honorable kills",category="PvP",points=20,icon="Interface\\Icons\\INV_Sword_27"},
-  pvp_duel_75={id="pvp_duel_75",name="Seasoned Duelist",desc="Win 75 duels",category="PvP",points=35,icon="Interface\\Icons\\INV_Sword_39"},
-  pvp_wsg_flag_return={id="pvp_wsg_flag_return",name="Flag Defender",desc="Visit Warsong Gulch 10 times",category="PvP",points=20,icon="Interface\\Icons\\INV_Banner_02"},
-
-  -- Additional casual milestones (trackable via existing counters)
-  casual_deaths_200={id="casual_deaths_200",name="Hardened by Death",desc="Die 200 times",category="Casual",points=10,icon="Interface\\Icons\\Spell_Shadow_DeathScream"},
-  casual_fish_50={id="casual_fish_50",name="Fisher",desc="Catch 50 fish",category="Casual",points=8,icon="Interface\\Icons\\Trade_Fishing"},
-  casual_fish_250={id="casual_fish_250",name="Seasoned Angler",desc="Catch 250 fish",category="Casual",points=15,icon="Interface\\Icons\\Trade_Fishing"},
-  casual_fish_500={id="casual_fish_500",name="Expert Angler",desc="Catch 500 fish",category="Casual",points=20,icon="Interface\\Icons\\Trade_Fishing"},
-  casual_emote_500={id="casual_emote_500",name="Social Butterfly",desc="Use 500 emotes",category="Casual",points=20,icon="Interface\\Icons\\INV_Misc_Toy_07"},
-  casual_quest_250={id="casual_quest_250",name="Quest Veteran",desc="Complete 250 quests",category="Casual",points=15,icon="Interface\\Icons\\INV_Misc_Note_06"},
-  casual_quest_750={id="casual_quest_750",name="Quest Expert",desc="Complete 750 quests",category="Casual",points=30,icon="Interface\\Icons\\INV_Misc_Book_09"},
-  casual_ah_sell={id="casual_ah_sell",name="Market Trader",desc="Visit the Auction House 10 times",category="Casual",points=10,icon="Interface\\Icons\\INV_Misc_Coin_05"},
-  casual_friend_emote={id="casual_friend_emote",name="Life of the Party",desc="Use 50 emotes",category="Casual",points=10,icon="Interface\\Icons\\INV_Misc_Toy_07"},
-
-  -- Elite achievements referenced by titles (now properly defined)
-  elite_flawless_kt={id="elite_flawless_kt",name="Flawless Frost",desc="Defeat Kel'Thuzad without any raid deaths",category="Elite",points=750,icon="Interface\\Icons\\Spell_Shadow_SoulGem"},
-  elite_no_wipe_naxx={id="elite_no_wipe_naxx",name="Naxxramas Perfected",desc="Complete Naxxramas without a raid wipe",category="Elite",points=600,icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
-  elite_naked_rag={id="elite_naked_rag",name="Barely Geared",desc="Defeat Ragnaros with an average item level below 50",category="Elite",points=500,icon="Interface\\Icons\\INV_Chest_Cloth_17"},
-  elite_flawless_cthun={id="elite_flawless_cthun",name="Eye of Perfection",desc="Defeat C'Thun without any raid deaths",category="Elite",points=750,icon="Interface\\Icons\\Spell_Shadow_Charm"},
-  elite_naxx_speedrun={id="elite_naxx_speedrun",name="Naxx Speed Clear",desc="Clear Naxxramas in under 3 hours",category="Elite",points=600,icon="Interface\\Icons\\Spell_Fire_BurningSpeed"},
-  elite_mc_speedrun={id="elite_mc_speedrun",name="Molten Rush",desc="Clear Molten Core in under 90 minutes",category="Elite",points=400,icon="Interface\\Icons\\Spell_Fire_BurningSpeed"},
-  elite_no_wipe_bwl={id="elite_no_wipe_bwl",name="Blackwing Perfected",desc="Clear Blackwing Lair without a single wipe",category="Elite",points=500,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black"},
-  elite_flawless_nef={id="elite_flawless_nef",name="Nefarian's End",desc="Defeat Nefarian without any raid deaths",category="Elite",points=600,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black"},
-  elite_flawless_rag={id="elite_flawless_rag",name="Flawless Firelord",desc="Defeat Ragnaros without any raid deaths",category="Elite",points=600,icon="Interface\\Icons\\Spell_Fire_LavaSpawn"},
-  elite_guild_first_mc={id="elite_guild_first_mc",name="First Flames",desc="Participate in the guild's first Molten Core clear",category="Elite",points=300,icon="Interface\\Icons\\Spell_Fire_Incinerate"},
-  elite_guild_first_naxx={id="elite_guild_first_naxx",name="Naxx Pioneers",desc="Participate in the guild's first Naxxramas clear",category="Elite",points=500,icon="Interface\\Icons\\INV_Misc_Key_15"},
-  elite_undergeared_rag={id="elite_undergeared_rag",name="Rag Under Pressure",desc="Defeat Ragnaros with no player in tier 2 or higher",category="Elite",points=500,icon="Interface\\Icons\\INV_Chest_Cloth_17"},
-  elite_resource_solo={id="elite_resource_solo",name="Self-Sufficient",desc="Reach 300 in two professions using only self-gathered materials",category="Elite",points=300,icon="Interface\\Icons\\INV_Misc_Coin_17"},
-  elite_all_raids_one_week={id="elite_all_raids_one_week",name="Raid Week",desc="Complete all available raids within one week",category="Elite",points=500,icon="Interface\\Icons\\Spell_Holy_BorrowedTime"},
-  elite_no_consumables_rag={id="elite_no_consumables_rag",name="Pure Skill",desc="Defeat Ragnaros without using any consumables",category="Elite",points=500,icon="Interface\\Icons\\INV_Potion_54"},
-  elite_tank_solo_5man={id="elite_tank_solo_5man",name="Fortress",desc="Tank a 5-man dungeon from start to finish without a wipe",category="Elite",points=200,icon="Interface\\Icons\\Ability_Warrior_DefensiveStance"},
-  elite_heal_no_death={id="elite_heal_no_death",name="Perfect Restoration",desc="Heal a full dungeon run with zero player deaths",category="Elite",points=200,icon="Interface\\Icons\\Spell_Holy_FlashHeal"},
-  elite_solo_ubrs={id="elite_solo_ubrs",name="Spire Solo",desc="Complete Upper Blackrock Spire solo",category="Elite",points=400,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
-  elite_solo_strat={id="elite_solo_strat",name="Stratholme Solo",desc="Complete Stratholme solo",category="Elite",points=400,icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
 }
 
 local TITLES = {
   -- Leveling Titles
-  {id="title_champion",name="Champion",achievement="lvl_60",prefix=false,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",category="Leveling"},
-  {id="title_elder",name="the Elder",achievement="lvl_60",prefix=false,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",category="Leveling"},
+  {id="title_champion",name="Champion",achievement="lvl_60",prefix=false,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength"},
+  {id="title_elder",name="the Elder",achievement="lvl_60",prefix=false,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength"},
   
   -- Molten Core Titles
-  {id="title_firelord",name="Firelord",achievement="raid_mc_ragnaros",prefix=false,icon="Interface\\Icons\\Spell_Fire_LavaSpawn",category="Raids"},
-  {id="title_flamewaker",name="Flamewaker",achievement="raid_mc_sulfuron",prefix=false,icon="Interface\\Icons\\Spell_Fire_FireArmor",category="Raids"},
-  {id="title_core_hound",name="Core Hound",achievement="raid_mc_magmadar",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01",category="Raids"},
-  {id="title_molten_destroyer",name="Molten Destroyer",achievement="raid_mc_golemagg",prefix=false,icon="Interface\\Icons\\INV_Misc_MonsterScales_15",category="Raids"},
+  {id="title_firelord",name="Firelord",achievement="raid_mc_ragnaros",prefix=false,icon="Interface\\Icons\\Spell_Fire_LavaSpawn"},
+  {id="title_flamewaker",name="Flamewaker",achievement="raid_mc_sulfuron",prefix=false,icon="Interface\\Icons\\Spell_Fire_FireArmor"},
+  {id="title_core_hound",name="Core Hound",achievement="raid_mc_magmadar",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
+  {id="title_molten_destroyer",name="Molten Destroyer",achievement="raid_mc_golemagg",prefix=false,icon="Interface\\Icons\\INV_Misc_MonsterScales_15"},
   
   -- Onyxia/Dragons
-  {id="title_dragonslayer",name="Dragonslayer",achievement="raid_onyxia",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01",category="Raids"},
-  {id="title_dragon_hunter",name="Dragon Hunter",achievement="raid_onyxia",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01",category="Raids"},
+  {id="title_dragonslayer",name="Dragonslayer",achievement="raid_onyxia",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
+  {id="title_dragon_hunter",name="Dragon Hunter",achievement="raid_onyxia",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
   
   -- Blackwing Lair Titles
-  {id="title_blackwing_slayer",name="Blackwing Slayer",achievement="raid_bwl_nefarian",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",category="Raids"},
-  {id="title_dragonkin_slayer",name="Dragonkin Slayer",achievement="raid_bwl_razorgore",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",category="Raids"},
-  {id="title_chromatic",name="the Chromatic",achievement="raid_bwl_chromaggus",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Bronze",category="Raids"},
-  {id="title_vaels_bane",name="Vael's Bane",achievement="raid_bwl_vaelastrasz",prefix=false,icon="Interface\\Icons\\Spell_Shadow_ShadowWordDominate",category="Raids"},
-  {id="title_broodlord_slayer",name="Broodlord Slayer",achievement="raid_bwl_broodlord",prefix=false,icon="Interface\\Icons\\INV_Bracer_18",category="Raids"},
+  {id="title_blackwing_slayer",name="Blackwing Slayer",achievement="raid_bwl_nefarian",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black"},
+  {id="title_dragonkin_slayer",name="Dragonkin Slayer",achievement="raid_bwl_razorgore",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black"},
+  {id="title_chromatic",name="the Chromatic",achievement="raid_bwl_chromaggus",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Bronze"},
+  {id="title_vaels_bane",name="Vael's Bane",achievement="raid_bwl_vaelastrasz",prefix=false,icon="Interface\\Icons\\Spell_Shadow_ShadowWordDominate"},
+  {id="title_broodlord_slayer",name="Broodlord Slayer",achievement="raid_bwl_broodlord",prefix=false,icon="Interface\\Icons\\INV_Bracer_18"},
   
   -- Zul'Gurub Titles
-  {id="title_zandalar",name="of Zandalar",achievement="raid_zg_hakkar",prefix=false,icon="Interface\\Icons\\Spell_Shadow_PainSpike",category="Raids"},
-  {id="title_bloodlord",name="Bloodlord",achievement="raid_zg_hakkar",prefix=false,icon="Interface\\Icons\\Spell_Shadow_PainSpike",category="Raids"},
-  {id="title_troll_slayer",name="Troll Slayer",achievement="raid_zg_thekal",prefix=false,icon="Interface\\Icons\\Ability_Druid_Mangle2",category="Raids"},
-  {id="title_snake_handler",name="Snake Handler",achievement="raid_zg_venoxis",prefix=false,icon="Interface\\Icons\\Spell_Nature_NullifyPoison",category="Raids"},
+  {id="title_zandalar",name="of Zandalar",achievement="raid_zg_hakkar",prefix=false,icon="Interface\\Icons\\Spell_Shadow_PainSpike"},
+  {id="title_bloodlord",name="Bloodlord",achievement="raid_zg_hakkar",prefix=false,icon="Interface\\Icons\\Spell_Shadow_PainSpike"},
+  {id="title_troll_slayer",name="Troll Slayer",achievement="raid_zg_thekal",prefix=false,icon="Interface\\Icons\\Ability_Druid_Mangle2"},
+  {id="title_snake_handler",name="Snake Handler",achievement="raid_zg_venoxis",prefix=false,icon="Interface\\Icons\\Spell_Nature_NullifyPoison"},
   
   -- AQ20 Titles
-  {id="title_silithid_slayer",name="Silithid Slayer",achievement="raid_aq20_ossirian",prefix=false,icon="Interface\\Icons\\INV_Qiraj_JewelGlowing",category="Raids"},
-  {id="title_scarab_hunter",name="Scarab Hunter",achievement="raid_aq20_kurinnaxx",prefix=false,icon="Interface\\Icons\\INV_Qiraj_JewelBlessed",category="Raids"},
+  {id="title_silithid_slayer",name="Silithid Slayer",achievement="raid_aq20_ossirian",prefix=false,icon="Interface\\Icons\\INV_Qiraj_JewelGlowing"},
+  {id="title_scarab_hunter",name="Scarab Hunter",achievement="raid_aq20_kurinnaxx",prefix=false,icon="Interface\\Icons\\INV_Qiraj_JewelBlessed"},
   
   -- AQ40 Titles
-  {id="title_scarab_lord",name="Scarab Lord",achievement="raid_aq40_cthun",prefix=false,icon="Interface\\Icons\\Spell_Shadow_Charm",category="Raids"},
-  {id="title_qiraji_slayer",name="Qiraji Slayer",achievement="raid_aq40_cthun",prefix=false,icon="Interface\\Icons\\Spell_Shadow_Charm",category="Raids"},
-  {id="title_bug_squasher",name="Bug Squasher",achievement="raid_aq40_bug_trio",prefix=false,icon="Interface\\Icons\\INV_Misc_AhnQirajTrinket_02",category="Raids"},
-  {id="title_twin_emperor",name="Twin Emperor",achievement="raid_aq40_twins",prefix=false,icon="Interface\\Icons\\INV_Jewelry_Ring_AhnQiraj_04",category="Raids"},
-  {id="title_viscidus_slayer",name="Viscidus Slayer",achievement="raid_aq40_viscidus",prefix=false,icon="Interface\\Icons\\Spell_Nature_Acid_01",category="Raids"},
-  {id="title_the_prophet",name="the Prophet",achievement="raid_aq40_skeram",prefix=false,icon="Interface\\Icons\\Spell_Shadow_MindSteal",category="Raids"},
+  {id="title_scarab_lord",name="Scarab Lord",achievement="raid_aq40_cthun",prefix=false,icon="Interface\\Icons\\Spell_Shadow_Charm"},
+  {id="title_qiraji_slayer",name="Qiraji Slayer",achievement="raid_aq40_cthun",prefix=false,icon="Interface\\Icons\\Spell_Shadow_Charm"},
+  {id="title_bug_squasher",name="Bug Squasher",achievement="raid_aq40_bug_trio",prefix=false,icon="Interface\\Icons\\INV_Misc_AhnQirajTrinket_02"},
+  {id="title_twin_emperor",name="Twin Emperor",achievement="raid_aq40_twins",prefix=false,icon="Interface\\Icons\\INV_Jewelry_Ring_AhnQiraj_04"},
+  {id="title_viscidus_slayer",name="Viscidus Slayer",achievement="raid_aq40_viscidus",prefix=false,icon="Interface\\Icons\\Spell_Nature_Acid_01"},
+  {id="title_the_prophet",name="the Prophet",achievement="raid_aq40_skeram",prefix=false,icon="Interface\\Icons\\Spell_Shadow_MindSteal"},
   
   -- Naxxramas Titles
-  {id="title_death_demise",name="of the Ashen Verdict",achievement="raid_naxx_kelthuzad",prefix=false,icon="Interface\\Icons\\Spell_Shadow_SoulGem",category="Raids"},
-  {id="title_immortal",name="the Immortal",achievement="elite_flawless_kt",prefix=false,icon="Interface\\Icons\\Spell_Holy_DivineIntervention",category="Elite"},
-  {id="title_undying",name="the Undying",achievement="elite_no_wipe_naxx",prefix=false,icon="Interface\\Icons\\Spell_Shadow_RaiseDead",category="Elite"},
-  {id="title_patient",name="the Patient",achievement="elite_no_wipe_naxx",prefix=false,icon="Interface\\Icons\\Spell_Nature_TimeStop",category="Elite"},
-  {id="title_lich_hunter",name="Lich Hunter",achievement="raid_naxx_kelthuzad",prefix=false,icon="Interface\\Icons\\Spell_Shadow_SoulGem",category="Raids"},
-  {id="title_plaguebearer",name="Plaguebearer",achievement="raid_naxx_loatheb",prefix=false,icon="Interface\\Icons\\Spell_Shadow_CallofBone",category="Raids"},
-  {id="title_spore_bane",name="Spore Bane",achievement="raid_naxx_loatheb",prefix=false,icon="Interface\\Icons\\Spell_Shadow_CallofBone",category="Raids"},
-  {id="title_frost_wyrm",name="Frost Wyrm Slayer",achievement="raid_naxx_sapphiron",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Blue",category="Raids"},
-  {id="title_arachnid_slayer",name="Arachnid Slayer",achievement="raid_naxx_maexxna",prefix=false,icon="Interface\\Icons\\INV_Misc_MonsterSpiderCarapace_01",category="Raids"},
-  {id="title_four_horsemen",name="of the Four Horsemen",achievement="raid_naxx_four_horsemen",prefix=false,icon="Interface\\Icons\\Spell_DeathKnight_ClassIcon",category="Raids"},
-  {id="title_death_knight",name="Death Knight",achievement="raid_naxx_four_horsemen",prefix=false,icon="Interface\\Icons\\Spell_DeathKnight_ClassIcon",category="Raids"},
+  {id="title_death_demise",name="of the Ashen Verdict",achievement="raid_naxx_kelthuzad",prefix=false,icon="Interface\\Icons\\Spell_Shadow_SoulGem"},
+  {id="title_immortal",name="the Immortal",achievement="elite_flawless_kt",prefix=false,icon="Interface\\Icons\\Spell_Holy_DivineIntervention"},
+  {id="title_undying",name="the Undying",achievement="elite_no_wipe_naxx",prefix=false,icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
+  {id="title_patient",name="the Patient",achievement="elite_no_wipe_naxx",prefix=false,icon="Interface\\Icons\\Spell_Nature_TimeStop"},
+  {id="title_lich_hunter",name="Lich Hunter",achievement="raid_naxx_kelthuzad",prefix=false,icon="Interface\\Icons\\Spell_Shadow_SoulGem"},
+  {id="title_plaguebearer",name="Plaguebearer",achievement="raid_naxx_loatheb",prefix=false,icon="Interface\\Icons\\Spell_Shadow_CallofBone"},
+  {id="title_spore_bane",name="Spore Bane",achievement="raid_naxx_loatheb",prefix=false,icon="Interface\\Icons\\Spell_Shadow_CallofBone"},
+  {id="title_frost_wyrm",name="Frost Wyrm Slayer",achievement="raid_naxx_sapphiron",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Blue"},
+  {id="title_arachnid_slayer",name="Arachnid Slayer",achievement="raid_naxx_maexxna",prefix=false,icon="Interface\\Icons\\INV_Misc_MonsterSpiderCarapace_01"},
+  {id="title_four_horsemen",name="of the Four Horsemen",achievement="raid_naxx_four_horsemen",prefix=false,icon="Interface\\Icons\\Spell_DeathKnight_ClassIcon"},
+  {id="title_death_knight",name="Death Knight",achievement="raid_naxx_four_horsemen",prefix=false,icon="Interface\\Icons\\Spell_DeathKnight_ClassIcon"},
   
   -- Elite Raid Titles
-  {id="title_insane",name="the Insane",achievement="elite_naked_rag",prefix=false,icon="Interface\\Icons\\Spell_Shadow_Charm",category="Elite"},
-  {id="title_flawless",name="the Flawless",achievement="elite_flawless_cthun",prefix=false,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",category="Elite"},
-  {id="title_speed_demon",name="Speed Demon",achievement="elite_naxx_speedrun",prefix=false,icon="Interface\\Icons\\Spell_Fire_BurningSpeed",category="Elite"},
-  {id="title_speed_runner",name="the Speed Runner",achievement="elite_mc_speedrun",prefix=false,icon="Interface\\Icons\\Spell_Fire_BurningSpeed",category="Elite"},
-  {id="title_unstoppable",name="the Unstoppable",achievement="elite_no_wipe_bwl",prefix=false,icon="Interface\\Icons\\INV_Misc_Ribbon_01",category="Elite"},
-  {id="title_perfect",name="the Perfect",achievement="elite_flawless_nef",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",category="Elite"},
-  {id="title_flawless_firelord",name="Flawless Firelord",achievement="elite_flawless_rag",prefix=false,icon="Interface\\Icons\\Spell_Fire_LavaSpawn",category="Elite"},
-  {id="title_untouchable",name="the Untouchable",achievement="elite_flawless_kt",prefix=false,icon="Interface\\Icons\\Spell_Shadow_SoulGem",category="Elite"},
+  {id="title_insane",name="the Insane",achievement="elite_naked_rag",prefix=false,icon="Interface\\Icons\\Spell_Shadow_Charm"},
+  {id="title_flawless",name="the Flawless",achievement="elite_flawless_cthun",prefix=false,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength"},
+  {id="title_speed_demon",name="Speed Demon",achievement="elite_naxx_speedrun",prefix=false,icon="Interface\\Icons\\Spell_Fire_BurningSpeed"},
+  {id="title_speed_runner",name="the Speed Runner",achievement="elite_mc_speedrun",prefix=false,icon="Interface\\Icons\\Spell_Fire_BurningSpeed"},
+  {id="title_unstoppable",name="the Unstoppable",achievement="elite_no_wipe_bwl",prefix=false,icon="Interface\\Icons\\INV_Misc_Ribbon_01"},
+  {id="title_perfect",name="the Perfect",achievement="elite_flawless_nef",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black"},
+  {id="title_flawless_firelord",name="Flawless Firelord",achievement="elite_flawless_rag",prefix=false,icon="Interface\\Icons\\Spell_Fire_LavaSpawn"},
+  {id="title_untouchable",name="the Untouchable",achievement="elite_flawless_kt",prefix=false,icon="Interface\\Icons\\Spell_Shadow_SoulGem"},
   
   -- Elite Achievement Titles
-  {id="title_ironman",name="the Ironman",achievement="elite_ironman",prefix=false,icon="Interface\\Icons\\INV_Helmet_74",category="Elite"},
-  {id="title_guild_pioneer",name="Guild Pioneer",achievement="elite_guild_first_mc",prefix=false,icon="Interface\\Icons\\INV_Misc_Trophy_03",category="Elite"},
-  {id="title_legendary",name="the Legendary",achievement="elite_guild_first_naxx",prefix=false,icon="Interface\\Icons\\INV_Misc_Trophy_03",category="Elite"},
-  {id="title_undergeared",name="the Undergeared",achievement="elite_undergeared_rag",prefix=false,icon="Interface\\Icons\\INV_Chest_Cloth_17",category="Elite"},
-  {id="title_self_made",name="the Self-Made",achievement="elite_resource_solo",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_17",category="Elite"},
-  {id="title_raid_marathon",name="Raid Marathoner",achievement="elite_all_raids_one_week",prefix=false,icon="Interface\\Icons\\Spell_Holy_BorrowedTime",category="Elite"},
-  {id="title_purist",name="the Purist",achievement="elite_no_consumables_rag",prefix=false,icon="Interface\\Icons\\INV_Potion_54",category="Elite"},
-  {id="title_one_man_army",name="One Man Army",achievement="elite_tank_solo_5man",prefix=false,icon="Interface\\Icons\\Ability_Warrior_DefensiveStance",category="Elite"},
-  {id="title_perfect_healer",name="Perfect Healer",achievement="elite_heal_no_death",prefix=false,icon="Interface\\Icons\\Spell_Holy_FlashHeal",category="Elite"},
-  {id="title_solo_hero",name="Solo Hero",achievement="elite_solo_ubrs",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01",category="Elite"},
-  {id="title_death_defier",name="Death Defier",achievement="elite_solo_strat",prefix=false,icon="Interface\\Icons\\Spell_Shadow_RaiseDead",category="Elite"},
+  {id="title_ironman",name="the Ironman",achievement="elite_ironman",prefix=false,icon="Interface\\Icons\\INV_Helmet_74"},
+  {id="title_guild_pioneer",name="Guild Pioneer",achievement="elite_guild_first_mc",prefix=false,icon="Interface\\Icons\\INV_Misc_Trophy_Gold"},
+  {id="title_legendary",name="the Legendary",achievement="elite_guild_first_naxx",prefix=false,icon="Interface\\Icons\\INV_Misc_Trophy_Gold"},
+  {id="title_undergeared",name="the Undergeared",achievement="elite_undergeared_rag",prefix=false,icon="Interface\\Icons\\INV_Chest_Cloth_17"},
+  {id="title_self_made",name="the Self-Made",achievement="elite_resource_solo",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_17"},
+  {id="title_raid_marathon",name="Raid Marathoner",achievement="elite_all_raids_one_week",prefix=false,icon="Interface\\Icons\\Spell_Holy_BorrowedTime"},
+  {id="title_purist",name="the Purist",achievement="elite_no_consumables_rag",prefix=false,icon="Interface\\Icons\\INV_Potion_54"},
+  {id="title_one_man_army",name="One Man Army",achievement="elite_tank_solo_5man",prefix=false,icon="Interface\\Icons\\Ability_Warrior_DefensiveStance"},
+  {id="title_perfect_healer",name="Perfect Healer",achievement="elite_heal_no_death",prefix=false,icon="Interface\\Icons\\Spell_Holy_FlashHeal"},
+  {id="title_solo_hero",name="Solo Hero",achievement="elite_solo_ubrs",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
+  {id="title_death_defier",name="Death Defier",achievement="elite_solo_strat",prefix=false,icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
   
   -- PvP Titles
-  {id="title_warlord",name="Warlord",achievement="pvp_hk_5000",prefix=false,icon="Interface\\Icons\\INV_Sword_62",category="PvP"},
-  {id="title_grand_marshal",name="Grand Marshal",achievement="elite_pvp_rank_14",prefix=false,icon="Interface\\Icons\\INV_Sword_39",category="PvP"},
-  {id="title_bloodthirsty",name="the Bloodthirsty",achievement="pvp_hk_10000",prefix=false,icon="Interface\\Icons\\Spell_Shadow_BloodBoil",category="PvP"},
-  {id="title_arena_master",name="Arena Master",achievement="pvp_duel_100",prefix=false,icon="Interface\\Icons\\INV_Sword_62",category="PvP"},
-  {id="title_gladiator",name="Gladiator",achievement="pvp_hk_1000",prefix=false,icon="Interface\\Icons\\INV_Sword_48",category="PvP"},
-  {id="title_duelist",name="the Duelist",achievement="pvp_duel_50",prefix=false,icon="Interface\\Icons\\INV_Sword_39",category="PvP"},
-  {id="title_high_warlord",name="High Warlord",achievement="pvp_hk_10000",prefix=false,icon="Interface\\Icons\\INV_Sword_39",category="PvP"},
-  {id="title_battlemaster",name="Battlemaster",achievement="pvp_wsg_flag_return",prefix=false,icon="Interface\\Icons\\INV_Banner_02",category="PvP"},
+  {id="title_warlord",name="Warlord",achievement="pvp_hk_5000",prefix=true,icon="Interface\\Icons\\INV_Sword_62"},
+  {id="title_grand_marshal",name="Grand Marshal",achievement="elite_pvp_rank_14",prefix=true,icon="Interface\\Icons\\INV_Sword_39"},
+  {id="title_bloodthirsty",name="the Bloodthirsty",achievement="pvp_hk_10000",prefix=false,icon="Interface\\Icons\\Spell_Shadow_BloodBoil"},
+  {id="title_arena_master",name="Arena Master",achievement="pvp_duel_100",prefix=false,icon="Interface\\Icons\\INV_Sword_62"},
+  {id="title_gladiator",name="Gladiator",achievement="pvp_hk_1000",prefix=false,icon="Interface\\Icons\\INV_Sword_48"},
+  {id="title_duelist",name="the Duelist",achievement="pvp_duel_50",prefix=false,icon="Interface\\Icons\\INV_Sword_39"},
+  {id="title_high_warlord",name="High Warlord",achievement="pvp_hk_10000",prefix=true,icon="Interface\\Icons\\INV_Sword_39"},
+  {id="title_battlemaster",name="Battlemaster",achievement="pvp_wsg_flag_return",prefix=false,icon="Interface\\Icons\\INV_Banner_02"},
   
   -- Profession Titles
-  {id="title_master_alchemist",name="Master Alchemist",achievement="prof_alchemy_300",prefix=false,icon="Interface\\Icons\\Trade_Alchemy",category="Profession"},
-  {id="title_master_blacksmith",name="Master Blacksmith",achievement="prof_blacksmithing_300",prefix=false,icon="Interface\\Icons\\Trade_BlackSmithing",category="Profession"},
-  {id="title_master_enchanter",name="Master Enchanter",achievement="prof_enchanting_300",prefix=false,icon="Interface\\Icons\\Trade_Engraving",category="Profession"},
-  {id="title_master_engineer",name="Master Engineer",achievement="prof_engineering_300",prefix=false,icon="Interface\\Icons\\Trade_Engineering",category="Profession"},
-  {id="title_artisan",name="the Artisan",achievement="prof_dual_artisan",prefix=false,icon="Interface\\Icons\\INV_Misc_Note_06",category="Profession"},
+  {id="title_master_alchemist",name="Master Alchemist",achievement="prof_alchemy_300",prefix=false,icon="Interface\\Icons\\Trade_Alchemy"},
+  {id="title_master_blacksmith",name="Master Blacksmith",achievement="prof_blacksmithing_300",prefix=false,icon="Interface\\Icons\\Trade_BlackSmithing"},
+  {id="title_master_enchanter",name="Master Enchanter",achievement="prof_enchanting_300",prefix=false,icon="Interface\\Icons\\Trade_Engraving"},
+  {id="title_master_engineer",name="Master Engineer",achievement="prof_engineering_300",prefix=false,icon="Interface\\Icons\\Trade_Engineering"},
+  {id="title_artisan",name="the Artisan",achievement="prof_dual_artisan",prefix=false,icon="Interface\\Icons\\INV_Misc_Note_06"},
   
   -- Casual Titles
-  {id="title_explorer",name="the Explorer",achievement="explore_kalimdor",prefix=false,icon="Interface\\Icons\\INV_Misc_Map_01",category="Exploration"},
-  {id="title_loremaster",name="Loremaster",achievement="casual_quest_1000",prefix=false,icon="Interface\\Icons\\INV_Misc_Book_09",category="Casual"},
-  {id="title_angler",name="the Master Angler",achievement="casual_fish_1000",prefix=false,icon="Interface\\Icons\\Trade_Fishing",category="Casual"},
-  {id="title_pet_collector",name="the Pet Collector",achievement="casual_pet_fanatic",prefix=false,icon="Interface\\Icons\\INV_Box_PetCarrier_01",category="Casual"},
-  {id="title_merchant",name="the Merchant",achievement="casual_ah_sell",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_05",category="Casual"},
-  {id="title_banker",name="the Banker",achievement="gold_5000",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_17",category="Gold"},
-  {id="title_socialite",name="the Socialite",achievement="casual_friend_emote",prefix=false,icon="Interface\\Icons\\INV_Misc_Toy_07",category="Casual"},
-  {id="title_death_prone",name="Death-Prone",achievement="casual_deaths_100",prefix=false,icon="Interface\\Icons\\Spell_Shadow_DeathScream",category="Casual"},
-  {id="title_clumsy",name="the Clumsy",achievement="casual_fall_death",prefix=false,icon="Interface\\Icons\\Ability_Rogue_FeintedStrike",category="Casual"},
+  {id="title_explorer",name="the Explorer",achievement="explore_kalimdor",prefix=false,icon="Interface\\Icons\\INV_Misc_Map_01"},
+  {id="title_loremaster",name="Loremaster",achievement="casual_quest_1000",prefix=false,icon="Interface\\Icons\\INV_Misc_Book_09"},
+  {id="title_angler",name="the Master Angler",achievement="casual_fish_1000",prefix=false,icon="Interface\\Icons\\Trade_Fishing"},
+  {id="title_pet_collector",name="the Pet Collector",achievement="casual_pet_fanatic",prefix=false,icon="Interface\\Icons\\INV_Box_PetCarrier_01"},
+  {id="title_merchant",name="the Merchant",achievement="casual_ah_sell",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_05"},
+  {id="title_banker",name="the Banker",achievement="gold_5000",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_17"},
+  {id="title_socialite",name="the Socialite",achievement="casual_friend_emote",prefix=false,icon="Interface\\Icons\\INV_Misc_Toy_07"},
+  {id="title_death_prone",name="Death-Prone",achievement="casual_deaths_100",prefix=false,icon="Interface\\Icons\\Spell_Shadow_DeathScream"},
+  {id="title_clumsy",name="the Clumsy",achievement="casual_fall_death",prefix=false,icon="Interface\\Icons\\Ability_Rogue_FeintedStrike"},
   
   -- Gold Titles
-  {id="title_wealthy",name="the Wealthy",achievement="gold_1000",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_06",category="Gold"},
-  {id="title_fortune_builder",name="Fortune Builder",achievement="gold_5000",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_17",category="Gold"},
-  {id="title_tycoon",name="the Tycoon",achievement="gold_5000",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_17",category="Gold"},
+  {id="title_wealthy",name="the Wealthy",achievement="gold_1000",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_06"},
+  {id="title_fortune_builder",name="Fortune Builder",achievement="gold_5000",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_17"},
+  {id="title_tycoon",name="the Tycoon",achievement="gold_5000",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_17"},
   
   -- Dungeon Titles (updated to new completion IDs)
-  {id="title_dungeoneer",name="the Dungeoneer",achievement="dung_ubrs_complete",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01",category="Dungeons"},
-  {id="title_undead_slayer",name="Undead Slayer",achievement="dung_strat_complete",prefix=false,icon="Interface\\Icons\\Spell_Shadow_RaiseDead",category="Dungeons"},
-  {id="title_shadow_hunter",name="Shadow Hunter",achievement="dung_scholo_complete",prefix=false,icon="Interface\\Icons\\Spell_Shadow_Charm",category="Dungeons"},
-  {id="title_dungeon_master",name="Dungeon Master",achievement="dung_dmn_complete",prefix=false,icon="Interface\\Icons\\INV_Misc_Key_14",category="Dungeons"},
-
-  -- New tiered kill titles (ordered by kill count; hard difficulty at higher tiers)
-  {id="title_hundred_slayer",name="the Hundred Slayer",achievement="kills_100",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",difficulty="normal",category="Kills"},
-  {id="title_five_hundred",name="Five Hundred Club",achievement="kills_500",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",difficulty="normal",category="Kills"},
-  {id="title_thousand_slayer",name="Thousand Slayer",achievement="kills_1000",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",difficulty="normal",category="Kills"},
-  {id="title_bloodsoaked",name="the Bloodsoaked",achievement="kills_2500",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",difficulty="normal",category="Kills"},
-  {id="title_death_incarnate",name="Death Incarnate",achievement="kills_5000",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",difficulty="hard",category="Kills"},
-  {id="title_annihilator",name="the Annihilator",achievement="kills_10000",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",difficulty="hard",category="Kills"},
-
-  -- New exploration titles
-  {id="title_wanderer",name="the Wanderer",achievement="explore_zones_10",prefix=false,icon="Interface\\Icons\\INV_Misc_Map_01",difficulty="normal",category="Exploration"},
-  {id="title_world_explorer",name="World Explorer",achievement="explore_zones_100",prefix=false,icon="Interface\\Icons\\INV_Misc_Map_02",difficulty="normal",category="Exploration"},
-
-  -- New quest chain titles
-  {id="title_core_seeker",name="Core Seeker",achievement="quest_mc_attunement",prefix=false,icon="Interface\\Icons\\Spell_Fire_LavaSpawn",difficulty="normal",category="Quests"},
-  {id="title_deep_diver",name="Deep Diver",achievement="quest_princess_theradras",prefix=false,icon="Interface\\Icons\\INV_Misc_Root_02",difficulty="normal",category="Quests"},
-
-  -- New hard/elite titles
-  {id="title_raid_conqueror",name="Raid Conqueror",achievement="elite_all_raids_complete",prefix=false,icon="Interface\\Icons\\Spell_Holy_BorrowedTime",difficulty="hard",category="Elite"},
-  {id="title_dungeon_conqueror",name="Dungeon Conqueror",achievement="elite_all_dungeons_complete",prefix=false,icon="Interface\\Icons\\INV_Chest_Cloth_17",difficulty="hard",category="Elite"},
-
-  -- PvP titles for existing trackable achievements
-  {id="title_skirmisher",name="Skirmisher",achievement="pvp_hk_50",prefix=false,icon="Interface\\Icons\\INV_Sword_04",category="PvP"},
-  {id="title_soldier",name="Soldier",achievement="pvp_hk_100",prefix=false,icon="Interface\\Icons\\INV_Sword_27",category="PvP"},
-  {id="title_battle_hardened",name="the Battle-Hardened",achievement="pvp_hk_2500",prefix=false,icon="Interface\\Icons\\INV_Sword_48",category="PvP"},
-  {id="title_veteran_combatant",name="Veteran Combatant",achievement="pvp_hk_250",prefix=false,icon="Interface\\Icons\\INV_Sword_27",category="PvP"},
-  {id="title_dueler",name="the Dueler",achievement="pvp_duel_10",prefix=false,icon="Interface\\Icons\\Ability_Dualwield",category="PvP"},
-  {id="title_dueling_champion",name="Dueling Champion",achievement="pvp_duel_25",prefix=false,icon="Interface\\Icons\\INV_Sword_39",category="PvP"},
-  {id="title_master_duelist2",name="Master Duelist",achievement="pvp_duel_75",prefix=false,icon="Interface\\Icons\\INV_Sword_39",category="PvP"},
-  {id="title_flag_defender",name="Flag Defender",achievement="pvp_wsg_flag_return",prefix=false,icon="Interface\\Icons\\INV_Banner_02",category="PvP"},
-
-  -- Exploration titles for existing trackable achievements
-  {id="title_kingdom_explorer",name="Kingdom Explorer",achievement="explore_eastern_kingdoms",prefix=false,icon="Interface\\Icons\\INV_Misc_Map_02",category="Exploration"},
-  {id="title_pathfinder",name="Pathfinder",achievement="explore_zones_25",prefix=false,icon="Interface\\Icons\\INV_Misc_Map_01",category="Exploration"},
-  {id="title_adventurer",name="the Adventurer",achievement="explore_zones_50",prefix=false,icon="Interface\\Icons\\INV_Misc_Map_02",category="Exploration"},
-
-  -- Casual titles for existing trackable achievements
-  {id="title_fisherman",name="the Fisherman",achievement="casual_fish_100",prefix=false,icon="Interface\\Icons\\Trade_Fishing",category="Casual"},
-  {id="title_master_fisher",name="Master Fisher",achievement="casual_fish_1000",prefix=false,icon="Interface\\Icons\\Trade_Fishing",category="Casual"},
-  {id="title_rider",name="the Rider",achievement="casual_mount_60",prefix=false,icon="Interface\\Icons\\Ability_Mount_Raptor",category="Casual"},
-  {id="title_seasoned",name="the Seasoned",achievement="casual_deaths_50",prefix=false,icon="Interface\\Icons\\INV_Misc_Spyglass_03",category="Casual"},
-  {id="title_traveler",name="the Traveler",achievement="casual_hearthstone_100",prefix=false,icon="Interface\\Icons\\INV_Misc_Rune_01",category="Casual"},
-  {id="title_trader",name="the Trader",achievement="casual_ah_sell",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_05",category="Casual"},
-
-  -- Raid titles for full-clear achievements
-  {id="title_mc_champion",name="Champion of the Core",achievement="raid_mc_complete",prefix=false,icon="Interface\\Icons\\Spell_Fire_LavaSpawn",category="Raids"},
-  {id="title_bwl_champion",name="Champion of Blackwing",achievement="raid_bwl_complete",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",category="Raids"},
-  {id="title_zg_champion",name="Champion of Zul'Gurub",achievement="raid_zg_complete",prefix=false,icon="Interface\\Icons\\Spell_Shadow_PainSpike",category="Raids"},
-  {id="title_naxx_champion",name="Champion of Naxxramas",achievement="raid_naxx_complete",prefix=false,icon="Interface\\Icons\\Spell_Shadow_SoulGem",category="Raids"},
-  {id="title_aq20_champion",name="Champion of Ruins",achievement="raid_aq20_complete",prefix=false,icon="Interface\\Icons\\INV_Qiraj_JewelBlessed",category="Raids"},
-  {id="title_aq40_champion",name="Champion of Ahn'Qiraj",achievement="raid_aq40_complete",prefix=false,icon="Interface\\Icons\\Spell_Shadow_Charm",category="Raids"},
-
-  -- Kill titles for existing trackable kill achievements
-  {id="title_combatant",name="the Combatant",achievement="kills_100",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",category="Kills"},
-  {id="title_slayer",name="the Slayer",achievement="kills_1000",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",category="Kills"},
-  {id="title_mass_murderer",name="Mass Murderer",achievement="kills_5000",prefix=false,icon="Interface\\Icons\\Ability_Warrior_Rampage",difficulty="hard",category="Kills"},
-  {id="title_boss_hunter",name="Boss Hunter",achievement="elite_50_unique_bosses",prefix=false,icon="Interface\\Icons\\Spell_Holy_FlashHeal",category="Elite"},
-  {id="title_boss_explorer",name="Boss Explorer",achievement="elite_25_unique_bosses",prefix=false,icon="Interface\\Icons\\Ability_Warrior_DefensiveStance",category="Elite"},
+  {id="title_dungeoneer",name="the Dungeoneer",achievement="dung_ubrs_complete",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
+  {id="title_undead_slayer",name="Undead Slayer",achievement="dung_strat_complete",prefix=false,icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
+  {id="title_shadow_hunter",name="Shadow Hunter",achievement="dung_scholo_complete",prefix=false,icon="Interface\\Icons\\Spell_Shadow_Charm"},
+  {id="title_dungeon_master",name="Dungeon Master",achievement="dung_dmn_complete",prefix=false,icon="Interface\\Icons\\INV_Misc_Key_14"},
 }
 
 -- ==========================================
@@ -799,45 +590,65 @@ end
 -- PUBLIC API FOR OTHER ADDONS
 -- ==========================================
 
--- Fallback pool used when an achievement has no explicit icon.
-local FALLBACK_ICON_POOL = {
-  "Interface\\Icons\\INV_Misc_Map_01",
-  "Interface\\Icons\\INV_Misc_Map_02",
-  "Interface\\Icons\\INV_Misc_Coin_01",
-  "Interface\\Icons\\INV_Misc_Coin_05",
-  "Interface\\Icons\\INV_Misc_Trophy_03",
-  "Interface\\Icons\\Spell_Holy_BlessingOfStrength",
-  "Interface\\Icons\\Ability_Warrior_Rampage",
-  "Interface\\Icons\\Spell_Nature_ResistNature",
-}
-
--- Deterministic hash of a string achId: sum of (byte * position) mod pool length.
-local function HashAchId(achId)
-  local s = tostring(achId)
-  local h = 0
-  for i = 1, string.len(s) do
-    h = h + string.byte(s, i) * i
-  end
-  return h
-end
-
 local function GetAchievementIcon(achId)
-  -- 1. Use the explicitly configured icon if present.
+  if not achId then return "Interface\\Icons\\INV_Misc_QuestionMark" end
+  
+  -- Check ACHIEVEMENTS table first
   local achData = ACHIEVEMENTS[achId]
-  if achData and achData.icon then return achData.icon end
-  -- 2. Re-use a previously cached fallback so it never changes.
-  if LeafVE_AchTest_DB and LeafVE_AchTest_DB.iconCache then
-    local cached = LeafVE_AchTest_DB.iconCache[achId]
-    if cached then return cached end
+  if achData and achData.icon then
+    return achData.icon
   end
-  -- 3. Compute a deterministic fallback and store it.
-  local poolLen = table.getn(FALLBACK_ICON_POOL)
-  local idx = (HashAchId(achId) % poolLen) + 1
-  local icon = FALLBACK_ICON_POOL[idx]
-  if LeafVE_AchTest_DB and LeafVE_AchTest_DB.iconCache then
-    LeafVE_AchTest_DB.iconCache[achId] = icon
+  
+  -- Fallback icons based on achievement ID pattern
+  local lowerAchId = string.lower(achId)
+  
+  -- Leveling icons
+  if string.find(lowerAchId, "^lvl_") then
+    return "Interface\\Icons\\INV_Misc_Book_09"
   end
-  return icon
+  
+  -- Profession icons
+  if string.find(lowerAchId, "^prof_") then
+    return "Interface\\Icons\\Trade_Engineering"
+  end
+  
+  -- Gold icons
+  if string.find(lowerAchId, "^gold_") then
+    return "Interface\\Icons\\INV_Misc_Coin_01"
+  end
+  
+  -- Dungeon icons
+  if string.find(lowerAchId, "^dung_") then
+    return "Interface\\Icons\\INV_Misc_Key_14"
+  end
+  
+  -- Raid icons
+  if string.find(lowerAchId, "^raid_") then
+    return "Interface\\Icons\\INV_Misc_Head_Dragon_01"
+  end
+  
+  -- PvP icons
+  if string.find(lowerAchId, "^pvp_") then
+    return "Interface\\Icons\\INV_Sword_48"
+  end
+  
+  -- Elite icons
+  if string.find(lowerAchId, "^elite_") then
+    return "Interface\\Icons\\INV_Misc_Trophy_Gold"
+  end
+  
+  -- Casual icons
+  if string.find(lowerAchId, "^casual_") then
+    return "Interface\\Icons\\INV_Misc_Gift_01"
+  end
+  
+  -- Exploration icons
+  if string.find(lowerAchId, "^explore_") then
+    return "Interface\\Icons\\INV_Misc_Map_01"
+  end
+  
+  -- Default fallback
+  return "Interface\\Icons\\INV_Misc_QuestionMark"
 end
 
 -- ==========================================
@@ -949,7 +760,6 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   -- PvP HKs: read live from the API
   pvp_hk_50    = {api="hk", goal=50},
   pvp_hk_100   = {api="hk", goal=100},
-  pvp_hk_250   = {api="hk", goal=250},
   pvp_hk_1000  = {api="hk", goal=1000},
   pvp_hk_2500  = {api="hk", goal=2500},
   pvp_hk_5000  = {api="hk", goal=5000},
@@ -958,7 +768,6 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   pvp_duel_10  = {counter="duels", goal=10},
   pvp_duel_25  = {counter="duels", goal=25},
   pvp_duel_50  = {counter="duels", goal=50},
-  pvp_duel_75  = {counter="duels", goal=75},
   pvp_duel_100 = {counter="duels", goal=100},
   -- Gold: read live from the API
   gold_10   = {api="gold", goal=10},
@@ -1018,30 +827,6 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   elite_50_raids     = {counter="raidRuns",    goal=50},
   -- Ironman: deaths must remain 0 to hit level 60
   elite_ironman = {counter="deaths", goal=0},
-
-  -- Generic kill milestones (tracked via "genericKills" counter)
-  kill_01      = {counter="genericKills", goal=1},
-  kill_05      = {counter="genericKills", goal=5},
-  kill_10      = {counter="genericKills", goal=10},
-  kill_50      = {counter="genericKills", goal=50},
-  kill_100     = {counter="genericKills", goal=100},
-  kill_200     = {counter="genericKills", goal=200},
-  kill_500     = {counter="genericKills", goal=500},
-  kill_1000    = {counter="genericKills", goal=1000},
-  kill_10000   = {counter="genericKills", goal=10000},
-  kills_100    = {counter="genericKills", goal=100},
-  kills_500    = {counter="genericKills", goal=500},
-  kills_1000   = {counter="genericKills", goal=1000},
-  kills_2500   = {counter="genericKills", goal=2500},
-  kills_5000   = {counter="genericKills", goal=5000},
-  kills_10000  = {counter="genericKills", goal=10000},
-  -- Zone-exploration count achievements
-  explore_zones_10  = {counter="wandererCount",    goal=10},
-  explore_zones_25  = {counter="exploredZoneCount", goal=25},
-  explore_zones_50  = {counter="exploredZoneCount", goal=50},
-  -- Continent exploration progress
-  explore_kalimdor          = {counter="kalimdorSubzoneCount", goal=KALIMDOR_REQUIRED_TOTAL},
-  explore_eastern_kingdoms  = {counter="ekSubzoneCount",       goal=EK_REQUIRED_TOTAL},
 }
 
 -- Returns {current, goal} or nil if no progress data exists for this achievement.
@@ -1090,185 +875,10 @@ local function IncrCounter(playerName, counterName, amount)
   return c[counterName]
 end
 
--- ============================================================
--- GetTitleColor: returns WoW color code for a title difficulty.
--- |cFFFF7F00 = orange  (normal);  |cFFB00000 = dark red  (hard)
--- ============================================================
-local function GetTitleColor(difficulty)
-  if difficulty == "hard" then
-    return "|cFFB00000"
-  end
-  return "|cFFFF7F00"
-end
-
--- GetTitleColorRGB: returns r,g,b float tuple matching GetTitleColor hex.
-local function GetTitleColorRGB(difficulty)
-  if difficulty == "hard" then
-    return 0.69, 0, 0    -- #B00000
-  end
-  return THEME.orange[1], THEME.orange[2], THEME.orange[3]  -- #FF7F00
-end
-
--- ============================================================
--- Zone exploration helper
--- ============================================================
-local function CheckZoneExplorationAchievements(me, zoneCount)
-  EnsureDB()
-  if not LeafVE_AchTest_DB.progressCounters[me] then LeafVE_AchTest_DB.progressCounters[me] = {} end
-  LeafVE_AchTest_DB.progressCounters[me]["exploredZoneCount"] = zoneCount
-  if zoneCount >= 25  then LeafVE_AchTest:AwardAchievement("explore_zones_25",  true) end
-  if zoneCount >= 50  then LeafVE_AchTest:AwardAchievement("explore_zones_50",  true) end
-end
-
--- Updates wandererCount (counted subzones only) and awards Wanderer achievement.
-local function CheckWandererAchievement(me)
-  EnsureDB()
-  if not LeafVE_AchTest_DB.progressCounters[me] then LeafVE_AchTest_DB.progressCounters[me] = {} end
-  local explored = LeafVE_AchTest_DB.exploredZones and LeafVE_AchTest_DB.exploredZones[me]
-  if not explored then return end
-  local count = 0
-  for sz in pairs(explored) do
-    if COUNTED_WANDERER_SUBZONES[sz] then count = count + 1 end
-  end
-  LeafVE_AchTest_DB.progressCounters[me]["wandererCount"] = count
-  if count >= 10 then LeafVE_AchTest:AwardAchievement("explore_zones_10", true) end
-end
-
--- Checks and awards Explore Kalimdor / Explore Eastern Kingdoms and World Explorer.
-local function CheckContinentAchievements(me)
-  EnsureDB()
-  if not LeafVE_AchTest_DB.progressCounters[me] then LeafVE_AchTest_DB.progressCounters[me] = {} end
-  local explored = LeafVE_AchTest_DB.exploredZones and LeafVE_AchTest_DB.exploredZones[me]
-  if not explored then return end
-  -- Kalimdor progress
-  local kalCount = 0
-  for sz in pairs(KALIMDOR_SUBZONE_SET) do if explored[sz] then kalCount = kalCount + 1 end end
-  LeafVE_AchTest_DB.progressCounters[me]["kalimdorSubzoneCount"] = kalCount
-  if kalCount >= KALIMDOR_REQUIRED_TOTAL then
-    LeafVE_AchTest:AwardAchievement("explore_kalimdor", true)
-  end
-  -- Eastern Kingdoms progress
-  local ekCount = 0
-  for sz in pairs(EK_SUBZONE_SET) do if explored[sz] then ekCount = ekCount + 1 end end
-  LeafVE_AchTest_DB.progressCounters[me]["ekSubzoneCount"] = ekCount
-  if ekCount >= EK_REQUIRED_TOTAL then
-    LeafVE_AchTest:AwardAchievement("explore_eastern_kingdoms", true)
-  end
-  -- World Explorer: requires both continents + all TW zone-group achievements
-  if LeafVE_AchTest:HasAchievement(me, "explore_kalimdor") and
-     LeafVE_AchTest:HasAchievement(me, "explore_eastern_kingdoms") then
-    local allTW = true
-    for _, twId in ipairs(WORLD_EXPLORER_TW_IDS) do
-      if not LeafVE_AchTest:HasAchievement(me, twId) then allTW = false; break end
-    end
-    if allTW then LeafVE_AchTest:AwardAchievement("explore_zones_100", true) end
-  end
-end
-
--- ============================================================
--- Kill tracking: RecordKill with debounce
--- ============================================================
-
--- Kill-milestone ID list.
--- kill_* entries are older achievements defined in LeafVE_Ach_Kills.lua;
--- kills_* are newer tiered achievements added in the ACHIEVEMENTS table.
--- Both share the same genericKills counter so players earn both at each threshold.
-local KILL_MILESTONE_LIST = {
-  {value=1,     id="kill_01"},
-  {value=5,     id="kill_05"},
-  {value=10,    id="kill_10"},
-  {value=50,    id="kill_50"},
-  {value=100,   id="kill_100"},
-  {value=200,   id="kill_200"},
-  {value=500,   id="kill_500"},
-  {value=1000,  id="kill_1000"},
-  {value=10000, id="kill_10000"},
-  {value=100,   id="kills_100"},
-  {value=500,   id="kills_500"},
-  {value=1000,  id="kills_1000"},
-  {value=2500,  id="kills_2500"},
-  {value=5000,  id="kills_5000"},
-  {value=10000, id="kills_10000"},
-}
-
-local killDebounce_mob  = ""
-local killDebounce_time = 0
--- 0.3s window covers the typical gap between CHAT_MSG_COMBAT_HOSTILE_DEATH and
--- CHAT_MSG_COMBAT_XP_GAIN / COMBAT_TEXT_UPDATE for the same kill event.
-local KILL_DEBOUNCE_SEC = 0.3
-
-local function UpdateKillAchievements(me, total)
-  for _, m in ipairs(KILL_MILESTONE_LIST) do
-    if total >= m.value and ACHIEVEMENTS[m.id] then
-      LeafVE_AchTest:AwardAchievement(m.id, true)
-    end
-  end
-end
-
-local function RecordKill(mobName)
-  local me = ShortName(UnitName("player"))
-  if not me then return end
-  local now = GetTime and GetTime() or 0
-  local mkey = mobName or ""
-  -- Debounce: same mob within the window, or any unnamed kill within the window
-  if (now - killDebounce_time) < KILL_DEBOUNCE_SEC then
-    if mkey == "" or mkey == killDebounce_mob then
-      return
-    end
-  end
-  killDebounce_mob  = mkey
-  killDebounce_time = now
-  local total = IncrCounter(me, "genericKills")
-  Debug("Kill recorded: "..(mkey ~= "" and mkey or "unknown").." total="..tostring(total))
-  UpdateKillAchievements(me, total)
-end
-
--- ============================================================
--- CheckGuildMemberAchievement
--- ============================================================
-local function CheckGuildMemberAchievement()
-  if not IsInGuild or not IsInGuild() then return end
-  local me = ShortName(UnitName("player"))
-  if not me then return end
-  if not LeafVE_AchTest:HasAchievement(me, "casual_guild_join") then
-    LeafVE_AchTest:AwardAchievement("casual_guild_join", true)
-  end
-end
-
--- ============================================================
--- ScanProfessionsAndAward
--- ============================================================
--- Primary professions only (exclude secondary: First Aid, Fishing, Cooking)
-local PRIMARY_PROFESSION_NAMES = {
-  ["Alchemy"]=true, ["Blacksmithing"]=true, ["Enchanting"]=true,
-  ["Engineering"]=true, ["Herbalism"]=true, ["Leatherworking"]=true,
-  ["Mining"]=true, ["Skinning"]=true, ["Tailoring"]=true,
-  ["Jewelcrafting"]=true,
-}
-
-function LeafVE_AchTest.ScanProfessionsAndAward()
-  LeafVE_AchTest:CheckProfessionAchievements()
-end
-
--- Explicit alias used by data files and external callers.
-function LeafVE_AchTest.ScanProfessions()
-  LeafVE_AchTest:CheckProfessionAchievements()
-end
-
--- Ensure all quest-chain achievements are inserted into the ACHIEVEMENTS table.
--- Safe to call multiple times; AddAchievement is idempotent (last write wins).
-function LeafVE_AchTest.EnsureQuestCategoryRegistered()
-  -- Quest chain achievements are registered by LeafVE_Ach_Quests.lua on ADDON_LOADED.
-  -- This no-op stub exists so external code can call it defensively.
-end
-
 -- Expose helpers so separate achievement module files loaded after this file
 -- can add achievements and interact with the DB without duplicating locals.
-LeafVE_AchTest.ShortName          = ShortName
-LeafVE_AchTest.IncrCounter        = IncrCounter
-LeafVE_AchTest.RecordKill         = RecordKill
-LeafVE_AchTest.GetTitleColor      = GetTitleColor
-LeafVE_AchTest.UpdateKillAchievements = UpdateKillAchievements
+LeafVE_AchTest.ShortName   = ShortName
+LeafVE_AchTest.IncrCounter = IncrCounter
 function LeafVE_AchTest:AddAchievement(id, data)
   ACHIEVEMENTS[id] = data
 end
@@ -1277,14 +887,8 @@ function LeafVE_AchTest:RegisterProgressDef(achId, def)
   ACHIEVEMENT_PROGRESS_DEF[achId] = def
 end
 -- Allow external modules to add titles.
--- AddTitle inserts a title into the TITLES list.
--- Always forces prefix=false (suffix-only) and defaults category to "Quests".
 function LeafVE_AchTest:AddTitle(titleData)
-  local td = {}
-  for k, v in pairs(titleData) do td[k] = v end
-  if not td.category then td.category = "Quests" end
-  td.prefix = false
-  table.insert(TITLES, td)
+  table.insert(TITLES, titleData)
 end
 
 -- Check and award quest-count achievements using GetNumQuestsCompleted() or the stored counter
@@ -1300,9 +904,7 @@ function LeafVE_AchTest:CheckQuestAchievements()
     total = (pc and pc.quests) or 0
   end
   if total >= 100  then self:AwardAchievement("casual_quest_100",  true) end
-  if total >= 250  then self:AwardAchievement("casual_quest_250",  true) end
   if total >= 500  then self:AwardAchievement("casual_quest_500",  true) end
-  if total >= 750  then self:AwardAchievement("casual_quest_750",  true) end
   if total >= 1000 then self:AwardAchievement("casual_quest_1000", true) end
 end
 
@@ -1543,6 +1145,7 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
   local me = ShortName(playerName)
   if not me or me == "" then return end
   if self:HasAchievement(me, achievementID) then
+    Print("You already have this achievement!")
     return
   end
   local achievement = ACHIEVEMENTS[achievementID]
@@ -1563,12 +1166,7 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
 
     -- Build message: [Title] [LeafVE Achievement] earned [Achievement]
     if currentTitle then
-      local titleDiff = "normal"
-      for _, td in ipairs(TITLES) do
-        if td.id == currentTitle.id then titleDiff = td.difficulty or "normal"; break end
-      end
-      local titleColor = GetTitleColor(titleDiff)
-      guildMsg = titleColor.."["..currentTitle.name.."]|r |cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+      guildMsg = "|cFFFF7F00["..currentTitle.name.."]|r |cFF2DD35C[LeafVE Achievement]|r earned "..achLink
     else
       guildMsg = "|cFF2DD35C[LeafVE Achievement]|r earned "..achLink
     end
@@ -1617,13 +1215,12 @@ function LeafVE_AchTest:GetCurrentTitle(playerName)
   end
   for _, title in ipairs(TITLES) do
     if title.id == titleID then
-      return {id=title.id,name=title.name,achievement=title.achievement,prefix=false}
+      return {id=title.id,name=title.name,achievement=title.achievement,prefix=asPrefix}
     end
   end
   return nil
 end
 
--- usePrefix is accepted for backwards compatibility but is always ignored; titles are always suffix.
 function LeafVE_AchTest:SetTitle(playerName, titleID, usePrefix)
   EnsureDB()
   playerName = ShortName(playerName or UnitName("player"))
@@ -1635,8 +1232,8 @@ function LeafVE_AchTest:SetTitle(playerName, titleID, usePrefix)
   end
   if not titleData then return end
   if self:HasAchievement(playerName, titleData.achievement) then
-    LeafVE_AchTest_DB.selectedTitles[playerName] = {id=titleID,asPrefix=false}
-    local displayText = playerName.." "..titleData.name
+    LeafVE_AchTest_DB.selectedTitles[playerName] = {id=titleID,asPrefix=usePrefix or false}
+    local displayText = usePrefix and (titleData.name.." "..playerName) or (playerName.." "..titleData.name)
     Print("Title set to: |cFFFF7F00"..displayText.."|r")
     if LeafVE_AchTest.UI and LeafVE_AchTest.UI.Refresh then
       LeafVE_AchTest.UI:Refresh()
@@ -1668,7 +1265,6 @@ end
 LeafVE_AchTest.UI = {}
 LeafVE_AchTest.UI.currentView = "achievements"
 LeafVE_AchTest.UI.selectedCategory = "All"
-LeafVE_AchTest.UI.selectedTitleCategory = "All"
 LeafVE_AchTest.UI.searchText = ""
 LeafVE_AchTest.UI.titleSearchText = ""
 
@@ -1881,18 +1477,6 @@ function LeafVE_AchTest:CheckBacklogAchievements()
   -- Re-check meta achievements based on what has been awarded so far
   self:CheckMetaAchievements()
 
-  -- Check honorable kill milestones via API (triggers on login/backlog)
-  if GetPVPLifetimeHonorableKills then
-    local hkTotal = GetPVPLifetimeHonorableKills() or 0
-    if hkTotal >= 50    then self:AwardAchievement("pvp_hk_50",    true) end
-    if hkTotal >= 100   then self:AwardAchievement("pvp_hk_100",   true) end
-    if hkTotal >= 250   then self:AwardAchievement("pvp_hk_250",   true) end
-    if hkTotal >= 1000  then self:AwardAchievement("pvp_hk_1000",  true) end
-    if hkTotal >= 2500  then self:AwardAchievement("pvp_hk_2500",  true) end
-    if hkTotal >= 5000  then self:AwardAchievement("pvp_hk_5000",  true) end
-    if hkTotal >= 10000 then self:AwardAchievement("pvp_hk_10000", true) end
-  end
-
   -- Scan LeafVE_DB point history for previously tracked instance completions.
   -- If LeafVillageLegends recorded "Instance completion: <Zone>", credit the
   -- corresponding dungeon clear achievement (the run was validated by that addon).
@@ -1934,9 +1518,7 @@ function LeafVE_AchTest:CheckProfessionAchievements()
       local achId = profMap[skillName]
       if achId and skillRank and skillRank >= 300 then
         self:AwardAchievement(achId, true)
-        if PRIMARY_PROFESSION_NAMES[skillName] then
-          artisanCount = artisanCount + 1
-        end
+        artisanCount = artisanCount + 1
       end
     end
   end
@@ -2055,379 +1637,50 @@ function LeafVE_AchTest:CheckBossKill(bossName)
 end
 
 -- Virtual-scroll constants for the achievement list.
--- Card row color constants (shared by CreateAchievementRow and UpdateVisibleAchievements)
-local CARD_BG_D     = {0.06, 0.06, 0.06, 0.90}   -- default card bg
-local CARD_BG_H     = {0.11, 0.10, 0.07, 0.95}   -- hover card bg
-local CARD_BORD_CMP = {0.85, 0.70, 0.25, 0.95}   -- completed border (soft gold)
-local CARD_BORD_INC = {0.25, 0.40, 0.25, 0.90}   -- incomplete border (muted green)
-local CARD_BORD_CH  = {1.00, 0.85, 0.30, 1.00}   -- completed hover border
-local CARD_BORD_IH  = {0.35, 0.55, 0.35, 1.00}   -- incomplete hover border
-
--- Apply a flat backdrop style to a tab/filter button.
--- isActive=true → gold border; false → grey border.
-local function StyleTabFlat(btn, isActive)
-  if not btn then return end
-  local nt = btn:GetNormalTexture()
-  local pt = btn:GetPushedTexture()
-  local ht = btn:GetHighlightTexture()
-  if nt then nt:SetAlpha(0) end
-  if pt then pt:SetAlpha(0) end
-  if ht then ht:SetAlpha(0) end
-  btn:SetBackdrop({
-    bgFile   = "Interface\\DialogFrame\\UI-DialogBox-Background",
-    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-    tile = true, tileSize = 8, edgeSize = 8,
-    insets = {left=2, right=2, top=2, bottom=2}
-  })
-  btn:SetBackdropColor(0.06, 0.06, 0.06, 0.90)
-  if isActive then
-    btn:SetBackdropBorderColor(0.85, 0.70, 0.25, 0.95)
-  else
-    btn:SetBackdropBorderColor(0.28, 0.28, 0.30, 0.90)
-  end
-end
-
--- Public alias so external callers can also invoke it.
-LeafVE_StyleTabButton = StyleTabFlat
-
--- ── Shared modern backdrop definition (panel/button style) ───────────────
-local MODERN_BD_PANEL = {
-  bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-  edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-  tile = true, tileSize = 16, edgeSize = 8,
-  insets = {left=3, right=3, top=3, bottom=3},
-}
-
--- ── LeafVE_ApplyModernBackdrop: apply a named backdrop style to any frame ─
--- styleKey is reserved for future backdrop variants; currently always applies
--- the shared dark panel style.
-function LeafVE_ApplyModernBackdrop(frame, styleKey)
-  if not frame then return end
-  frame:SetBackdrop(MODERN_BD_PANEL)
-end
-
--- ── LeafVE_StyleButton: flat modern nav/action button with hover effect ───
--- isActive=true → gold border + slightly brighter bg
--- isActive=false → grey border + dark bg
-local BTN_ACT_BG      = {0.10, 0.09, 0.05, 0.95}
-local BTN_ACT_BORD    = {0.85, 0.70, 0.25, 0.95}
-local BTN_ACT_BG_H    = {0.14, 0.12, 0.06, 0.95}
-local BTN_ACT_BORD_H  = {1.00, 0.85, 0.35, 1.00}
-local BTN_INACT_BG    = {0.06, 0.06, 0.07, 0.90}
-local BTN_INACT_BORD  = {0.28, 0.28, 0.30, 0.90}
-local BTN_INACT_BG_H  = {0.10, 0.10, 0.12, 0.95}
-local BTN_INACT_BORD_H = {0.45, 0.45, 0.48, 1.00}
-
-function LeafVE_StyleButton(btn, isActive)
-  if not btn then return end
-  local nt = btn:GetNormalTexture()
-  local pt = btn:GetPushedTexture()
-  local ht = btn:GetHighlightTexture()
-  if nt then nt:SetAlpha(0) end
-  if pt then pt:SetAlpha(0) end
-  if ht then ht:SetAlpha(0) end
-  btn:SetBackdrop(MODERN_BD_PANEL)
-  btn._leafveActive = isActive
-  if isActive then
-    btn:SetBackdropColor(BTN_ACT_BG[1],   BTN_ACT_BG[2],   BTN_ACT_BG[3],   BTN_ACT_BG[4])
-    btn:SetBackdropBorderColor(BTN_ACT_BORD[1], BTN_ACT_BORD[2], BTN_ACT_BORD[3], BTN_ACT_BORD[4])
-  else
-    btn:SetBackdropColor(BTN_INACT_BG[1],   BTN_INACT_BG[2],   BTN_INACT_BG[3],   BTN_INACT_BG[4])
-    btn:SetBackdropBorderColor(BTN_INACT_BORD[1], BTN_INACT_BORD[2], BTN_INACT_BORD[3], BTN_INACT_BORD[4])
-  end
-  btn:SetScript("OnEnter", function()
-    if this._leafveActive then
-      this:SetBackdropColor(BTN_ACT_BG_H[1],   BTN_ACT_BG_H[2],   BTN_ACT_BG_H[3],   BTN_ACT_BG_H[4])
-      this:SetBackdropBorderColor(BTN_ACT_BORD_H[1], BTN_ACT_BORD_H[2], BTN_ACT_BORD_H[3], BTN_ACT_BORD_H[4])
-    else
-      this:SetBackdropColor(BTN_INACT_BG_H[1],   BTN_INACT_BG_H[2],   BTN_INACT_BG_H[3],   BTN_INACT_BG_H[4])
-      this:SetBackdropBorderColor(BTN_INACT_BORD_H[1], BTN_INACT_BORD_H[2], BTN_INACT_BORD_H[3], BTN_INACT_BORD_H[4])
-    end
-  end)
-  btn:SetScript("OnLeave", function()
-    if this._leafveActive then
-      this:SetBackdropColor(BTN_ACT_BG[1],   BTN_ACT_BG[2],   BTN_ACT_BG[3],   BTN_ACT_BG[4])
-      this:SetBackdropBorderColor(BTN_ACT_BORD[1], BTN_ACT_BORD[2], BTN_ACT_BORD[3], BTN_ACT_BORD[4])
-    else
-      this:SetBackdropColor(BTN_INACT_BG[1],   BTN_INACT_BG[2],   BTN_INACT_BG[3],   BTN_INACT_BG[4])
-      this:SetBackdropBorderColor(BTN_INACT_BORD[1], BTN_INACT_BORD[2], BTN_INACT_BORD[3], BTN_INACT_BORD[4])
-    end
-  end)
-end
-
--- ── LeafVE_StyleInputBox: modern dark styled edit box ────────────────────
-function LeafVE_StyleInputBox(editBox)
-  if not editBox then return end
-  editBox:SetBackdrop({
-    bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-    tile = true, tileSize = 16, edgeSize = 8,
-    insets = {left=4, right=4, top=3, bottom=3},
-  })
-  editBox:SetBackdropColor(0.03, 0.03, 0.04, 0.95)
-  editBox:SetBackdropBorderColor(0.35, 0.35, 0.38, 0.90)
-  editBox:SetTextInsets(8, 8, 0, 0)
-end
-
--- ── LeafVE_StyleScrollBar: dark modern scrollbar track + thumb ────────────
-function LeafVE_StyleScrollBar(scrollBar)
-  if not scrollBar then return end
-  scrollBar:SetBackdrop({
-    bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-    tile = true, tileSize = 16, edgeSize = 8,
-    insets = {left=2, right=2, top=2, bottom=2},
-  })
-  scrollBar:SetBackdropColor(0.04, 0.04, 0.05, 0.90)
-  scrollBar:SetBackdropBorderColor(0.22, 0.22, 0.24, 0.75)
-  scrollBar:SetThumbTexture("Interface\\Buttons\\UI-ScrollBar-Knob")
-  local thumb = scrollBar:GetThumbTexture()
-  if thumb then
-    thumb:SetVertexColor(0.50, 0.50, 0.55, 0.85)
-  end
-end
-
--- ── LeafVE_StyleCategoryButton: sidebar filter row with left accent bar ───
--- Creates (once) a 3-px accent bar on the left edge and manages active state.
-function LeafVE_StyleCategoryButton(btn, isActive)
-  if not btn then return end
-  if not btn._accentBar then
-    local bar = btn:CreateTexture(nil, "OVERLAY")
-    bar:SetWidth(3)
-    bar:SetPoint("TOPLEFT",    btn, "TOPLEFT",  0, 0)
-    bar:SetPoint("BOTTOMLEFT", btn, "BOTTOMLEFT", 0, 0)
-    bar:SetTexture(1, 1, 1, 1)
-    btn._accentBar = bar
-  end
-  if isActive then
-    btn:SetBackdropColor(0.10, 0.42, 0.16, 0.60)
-    btn.label:SetTextColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3])
-    btn._accentBar:SetVertexColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3], 0.90)
-    btn._accentBar:Show()
-  else
-    btn:SetBackdropColor(0, 0, 0, 0)
-    btn.label:SetTextColor(0.78, 0.78, 0.78)
-    btn._accentBar:Hide()
-  end
-end
-
 -- ACH_ROW_H: pixel height of each achievement row.
 -- ACH_POOL:  number of recycled frame slots (covers visible area + buffer).
-local ACH_ROW_H = 64
+local ACH_ROW_H = 65
 local ACH_POOL  = 14
 
--- Enable/disable the gold shimmer pulse on a badge frame.
--- Only call with enable=true for completed achievements with points >= 20.
-local function ShimmerOnUpdate()
-  this._shimmerElapsed = (this._shimmerElapsed or 0) + arg1
-  local alpha = 0.20 + 0.15 * math.sin(this._shimmerElapsed * math.pi)
-  this.Shimmer:SetAlpha(alpha)
-end
-
-local function SetBadgeShimmer(badge, enable)
-  if enable then
-    if not badge._shimmerElapsed then badge._shimmerElapsed = 0 end
-    badge:SetScript("OnUpdate", ShimmerOnUpdate)
-  else
-    badge:SetScript("OnUpdate", nil)
-    badge.Shimmer:SetAlpha(0)
-    badge._shimmerElapsed = nil
-  end
-end
-
--- Create one card-style achievement row frame attached to `parent`.
+-- Create one unstyled achievement row frame attached to `parent`.
 local function CreateAchievementRow(parent)
   local frame = CreateFrame("Frame", nil, parent)
   frame:SetWidth(660)
   frame:SetHeight(60)
   frame:SetBackdrop({
-    bgFile   = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-    tile = true, tileSize = 16, edgeSize = 12,
-    insets = {left=3, right=3, top=3, bottom=3}
+    tile = true, tileSize = 16, edgeSize = 8,
+    insets = {left = 2, right = 2, top = 2, bottom = 2}
   })
-  frame:SetBackdropColor(CARD_BG_D[1], CARD_BG_D[2], CARD_BG_D[3], CARD_BG_D[4])
-  frame:SetBackdropBorderColor(0.25, 0.25, 0.25, 0.90)
-
-  -- Icon (left, 38px with cropped texcoords)
+  frame:SetBackdropColor(0.1, 0.1, 0.1, 0.6)
   local icon = frame:CreateTexture(nil, "ARTWORK")
-  icon:SetWidth(38)
-  icon:SetHeight(38)
-  icon:SetPoint("LEFT", frame, "LEFT", 10, 2)
-  icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+  icon:SetWidth(40)
+  icon:SetHeight(40)
+  icon:SetPoint("LEFT", frame, "LEFT", 8, 0)
+  icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
   frame.icon = icon
-
-  -- Checkmark overlay
   local checkmark = frame:CreateTexture(nil, "OVERLAY")
-  checkmark:SetWidth(18)
-  checkmark:SetHeight(18)
+  checkmark:SetWidth(20)
+  checkmark:SetHeight(20)
   checkmark:SetPoint("CENTER", icon, "TOPRIGHT", -2, -2)
   checkmark:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
   frame.checkmark = checkmark
-
-  -- Title FontString (top-left of text area, bright)
-  local name = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-  name:SetPoint("TOPLEFT", icon, "TOPRIGHT", 8, -4)
-  name:SetWidth(460)
+  local name = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  name:SetPoint("TOPLEFT", icon, "TOPRIGHT", 8, -5)
+  name:SetWidth(555)
   name:SetJustifyH("LEFT")
   frame.name = name
-
-  -- Description FontString (below title, slightly brighter)
-  local desc = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-  desc:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -2)
-  desc:SetWidth(460)
+  local desc = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+  desc:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -3)
+  desc:SetWidth(555)
   desc:SetJustifyH("LEFT")
   frame.desc = desc
-
-  -- Points badge (right side, 44x44 golden badge icon with "X pts" text)
-  local badge = CreateFrame("Frame", nil, frame)
-  badge:SetWidth(44)
-  badge:SetHeight(44)
-  badge:SetPoint("RIGHT", frame, "RIGHT", -12, 0)
-  badge:SetFrameLevel(frame:GetFrameLevel() + 3)
-  frame.badge = badge
-  frame.PointBadge = badge
-
-  local badgeIcon = badge:CreateTexture(nil, "ARTWORK")
-  badgeIcon:SetAllPoints()
-  badgeIcon:SetTexture("Interface\\Icons\\Spell_Nature_ResistNature")
-  badgeIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-  badgeIcon:SetDrawLayer("ARTWORK", 2)
-  badge.Icon = badgeIcon
-
-  local badgeText = badge:CreateFontString(nil, "OVERLAY")
-  badgeText:SetFont(STANDARD_TEXT_FONT, 8, "OUTLINE")
-  badgeText:SetPoint("CENTER", badge, "CENTER", 0, 0)
-  badgeText:SetJustifyH("CENTER")
-  badgeText:SetDrawLayer("OVERLAY", 7)
-  badge.Text = badgeText
-
-  -- Shimmer texture for high-value (>= 20 pts) completed achievements
-  local shimmer = badge:CreateTexture(nil, "OVERLAY")
-  shimmer:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
-  shimmer:SetBlendMode("ADD")
-  shimmer:SetAlpha(0)
-  shimmer:SetPoint("CENTER", badge, "CENTER", 0, 0)
-  shimmer:SetWidth(58)
-  shimmer:SetHeight(58)
-  shimmer:SetDrawLayer("OVERLAY", 6)
-  badge.Shimmer = shimmer
-
-  -- Stop shimmer when badge (and its parent row) is hidden
-  badge:SetScript("OnHide", function()
-    this:SetScript("OnUpdate", nil)
-    this.Shimmer:SetAlpha(0)
-    this._shimmerElapsed = nil
-  end)
-
-  -- Status text (right-aligned, below badge)
-  local status = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-  status:SetPoint("TOPRIGHT", badge, "BOTTOMRIGHT", 0, -2)
-  status:SetJustifyH("RIGHT")
-  frame.status = status
-
-  -- Progress bar background texture
-  local barBg = frame:CreateTexture(nil, "BACKGROUND")
-  barBg:SetHeight(10)
-  barBg:SetPoint("BOTTOMLEFT", icon, "BOTTOMRIGHT", 8, 6)
-  barBg:SetPoint("BOTTOMRIGHT", badge, "BOTTOMLEFT", -4, 6)
-  barBg:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
-  barBg:SetVertexColor(0.08, 0.08, 0.08, 0.85)
-  barBg:Hide()
-  frame.barBg = barBg
-
-  -- Progress bar (StatusBar, for rep/progress achievements)
-  local bar = CreateFrame("StatusBar", nil, frame)
-  bar:SetHeight(10)
-  bar:SetPoint("BOTTOMLEFT", icon, "BOTTOMRIGHT", 8, 6)
-  bar:SetPoint("BOTTOMRIGHT", badge, "BOTTOMLEFT", -4, 6)
-  bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
-  bar:SetStatusBarColor(0.3, 0.7, 0.3, 1)
-  bar:SetMinMaxValues(0, 1)
-  bar:SetValue(0)
-  bar:Hide()
-  frame.bar = bar
-
-  -- Progress text (right-aligned on bar)
-  local barText = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-  barText:SetAllPoints(bar)
-  barText:SetJustifyH("RIGHT")
-  barText:SetJustifyV("MIDDLE")
-  barText:Hide()
-  frame.barText = barText
-
-  -- ── Row API methods ──────────────────────────────────────────────────────
-  frame.SetData = function(self, data)
-    self.achData = data
-    self.icon:SetTexture(data.iconTexture or data.icon)
-    self.name:SetText(data.title or data.name or "")
-    self.desc:SetText(data.description or data.desc or "")
-    self.badge.Text:SetText(tostring(data.points or 0).." pts")
-    self:SetCompleted(data.isCompleted or false)
-    if data.progressCur and data.progressMax and data.progressMax > 0 then
-      self:SetProgress(data.progressCur, data.progressMax, true)
-    else
-      self:SetProgress(nil, nil, false)
-    end
-  end
-
-  frame.SetCompleted = function(self, completed)
-    self.achCompleted = completed
-    if completed then
-      self.icon:SetDesaturated(false)
-      self.icon:SetAlpha(1)
-      self.checkmark:Show()
-      self:SetBackdropColor(CARD_BG_D[1], CARD_BG_D[2], CARD_BG_D[3], CARD_BG_D[4])
-      self:SetBackdropBorderColor(CARD_BORD_CMP[1], CARD_BORD_CMP[2], CARD_BORD_CMP[3], CARD_BORD_CMP[4])
-      self.badge.Icon:SetVertexColor(THEME.gold[1], THEME.gold[2], THEME.gold[3])
-      self.name:SetTextColor(1.00, 0.95, 0.70)
-      self.desc:SetTextColor(0.80, 0.80, 0.80)
-      self.status:SetText("Completed")
-      self.status:SetTextColor(0.4, 0.8, 0.4)
-    else
-      self.icon:SetDesaturated(true)
-      self.icon:SetAlpha(0.5)
-      self.checkmark:Hide()
-      self:SetBackdropColor(CARD_BG_D[1], CARD_BG_D[2], CARD_BG_D[3], CARD_BG_D[4])
-      self:SetBackdropBorderColor(CARD_BORD_INC[1], CARD_BORD_INC[2], CARD_BORD_INC[3], CARD_BORD_INC[4])
-      self.badge.Icon:SetVertexColor(0.5, 0.5, 0.5)
-      self.name:SetTextColor(0.70, 0.70, 0.70)
-      self.desc:SetTextColor(0.50, 0.50, 0.50)
-      self.status:SetText("In Progress")
-      self.status:SetTextColor(0.55, 0.55, 0.55)
-    end
-  end
-
-  frame.SetProgress = function(self, cur, max, showText)
-    if not max or max <= 0 then
-      self.bar:Hide()
-      self.barBg:Hide()
-      self.barText:Hide()
-      return
-    end
-    self.barBg:Show()
-    self.bar:Show()
-    self.bar:SetMinMaxValues(0, max)
-    self.bar:SetValue(math.min(cur or 0, max))
-    local pct = (cur or 0) / max
-    self.bar:SetStatusBarColor(0.20 + pct * 0.60, 0.55, 0.20, 1)
-    if showText then
-      self.barText:Show()
-      self.barText:SetText(tostring(cur or 0).." / "..tostring(max))
-    else
-      self.barText:Hide()
-    end
-  end
-
-  -- ── Hover effect (cheap: backdrop color only, no OnUpdate) ───────────────
+  local points = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+  points:SetPoint("BOTTOMLEFT", icon, "BOTTOMRIGHT", 8, 0)
+  frame.points = points
   frame:EnableMouse(true)
   frame:SetScript("OnEnter", function()
-    this:SetBackdropColor(CARD_BG_H[1], CARD_BG_H[2], CARD_BG_H[3], CARD_BG_H[4])
-    if this.achCompleted then
-      this:SetBackdropBorderColor(CARD_BORD_CH[1], CARD_BORD_CH[2], CARD_BORD_CH[3], CARD_BORD_CH[4])
-    else
-      this:SetBackdropBorderColor(CARD_BORD_IH[1], CARD_BORD_IH[2], CARD_BORD_IH[3], CARD_BORD_IH[4])
-    end
     local ad = this.achData
     local me = this.achPlayerName
     if not ad then return end
@@ -2541,61 +1794,6 @@ local function CreateAchievementRow(parent)
         GameTooltip:AddLine(string.format("Discovered: %d / %d locations", found, total), 1.0, 0.82, 0.2)
       end
     end
-    -- ── Continent exploration criteria (Kalimdor / Eastern Kingdoms) ──────
-    if ad.criteria_type == "continent" and ad.criteria_key then
-      local reqZones, reqSet, reqTotal
-      if ad.criteria_key == "kalimdor" then
-        reqZones = REQUIRED_KALIMDOR_ZONES; reqSet = KALIMDOR_SUBZONE_SET; reqTotal = KALIMDOR_REQUIRED_TOTAL
-      elseif ad.criteria_key == "eastern_kingdoms" then
-        reqZones = REQUIRED_EK_ZONES; reqSet = EK_SUBZONE_SET; reqTotal = EK_REQUIRED_TOTAL
-      end
-      if reqZones and reqSet then
-        local pz = LeafVE_AchTest_DB and LeafVE_AchTest_DB.exploredZones
-        local myZones = pz and pz[me]
-        local found = 0
-        GameTooltip:AddLine(" ", 1, 1, 1)
-        -- Show per-zone progress (grouped)
-        for zoneName, subzones in pairs(reqZones) do
-          local zFound, zTotal = 0, table.getn(subzones)
-          for _, sz in ipairs(subzones) do
-            if myZones and myZones[sz] then zFound = zFound + 1; found = found + 1 end
-          end
-          local color = (zFound == zTotal) and "|cFF00CC00" or "|cFFFF8800"
-          GameTooltip:AddLine(color..zoneName..": "..zFound.."/"..zTotal.."|r", 0.9, 0.9, 0.9)
-        end
-        GameTooltip:AddLine(string.format("Discovered: %d / %d locations", found, reqTotal), 1.0, 0.82, 0.2)
-      end
-    end
-    -- ── World Explorer meta criteria ───────────────────────────────────────
-    if ad.criteria_type == "world_explorer_meta" then
-      GameTooltip:AddLine(" ", 1, 1, 1)
-      local done, total = 0, 2 + table.getn(WORLD_EXPLORER_TW_IDS)
-      -- Continent achievements
-      for _, contId in ipairs({"explore_kalimdor","explore_eastern_kingdoms"}) do
-        local cach = ACHIEVEMENTS[contId]
-        if cach then
-          if LeafVE_AchTest:HasAchievement(me, contId) then
-            done = done + 1
-            GameTooltip:AddLine("|cFF00CC00[x]|r "..cach.name, 0.9, 0.9, 0.9)
-          else
-            GameTooltip:AddLine("|cFF666666[ ]|r "..cach.name, 0.5, 0.5, 0.5)
-          end
-        end
-      end
-      -- TW zone-group achievements
-      for _, twId in ipairs(WORLD_EXPLORER_TW_IDS) do
-        local tach = ACHIEVEMENTS[twId]
-        if tach then
-          if LeafVE_AchTest:HasAchievement(me, twId) then
-            done = done + 1
-            GameTooltip:AddLine("|cFF00CC00[x]|r "..tach.name, 0.9, 0.9, 0.9)
-          else
-            GameTooltip:AddLine("|cFF666666[ ]|r "..tach.name, 0.5, 0.5, 0.5)
-          end
-        end
-      end
-      GameTooltip:AddLine(string.format("Criteria: %d / %d", done, total), 1.0, 0.82, 0.2)
-    end
     -- ── Quest chain step criteria ─────────────────────────────────────────
     if ad._questSteps then
       local cq = LeafVE_AchTest_DB and LeafVE_AchTest_DB.completedQuests
@@ -2615,21 +1813,9 @@ local function CreateAchievementRow(parent)
     GameTooltip:Show()
   end)
   frame:SetScript("OnLeave", function()
-    this:SetBackdropColor(CARD_BG_D[1], CARD_BG_D[2], CARD_BG_D[3], CARD_BG_D[4])
-    if this.achCompleted then
-      this:SetBackdropBorderColor(CARD_BORD_CMP[1], CARD_BORD_CMP[2], CARD_BORD_CMP[3], CARD_BORD_CMP[4])
-    else
-      this:SetBackdropBorderColor(CARD_BORD_INC[1], CARD_BORD_INC[2], CARD_BORD_INC[3], CARD_BORD_INC[4])
-    end
     GameTooltip:Hide()
   end)
   return frame
-end
-
--- Public API: create a card row frame.  Accepts an optional `index` argument
--- (ignored internally) so external callers can pass a row index if needed.
-LeafVE_CreateAchievementRow = function(parent, index)
-  return CreateAchievementRow(parent)
 end
 
 function LeafVE_AchTest.UI:Build()
@@ -2658,50 +1844,16 @@ function LeafVE_AchTest.UI:Build()
   f:SetBackdropColor(THEME.bg[1], THEME.bg[2], THEME.bg[3], THEME.bg[4])
   f:SetBackdropBorderColor(THEME.border[1], THEME.border[2], THEME.border[3], 1)
   
-  -- Header background bar (fully opaque, dark green tint)
-  local headerBG = f:CreateTexture(nil, "BACKGROUND")
-  headerBG:SetTexture("Interface\\Tooltips\\UI-Tooltip-Background")
-  headerBG:SetPoint("TOPLEFT",  f, "TOPLEFT",  0,  0)
-  headerBG:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0,  0)
-  headerBG:SetHeight(56)
-  headerBG:SetVertexColor(0.04, 0.08, 0.05, 1)
-
-  -- Leaf-coloured accent line at the bottom of the header bar
-  local headerAccent = f:CreateTexture(nil, "ARTWORK")
-  headerAccent:SetTexture("Interface\\Tooltips\\UI-Tooltip-Separator")
-  headerAccent:SetHeight(2)
-  headerAccent:SetPoint("TOPLEFT",  f, "TOPLEFT",  0, -54)
-  headerAccent:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, -54)
-  headerAccent:SetVertexColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3], 1)
-
-  -- Title shadow (depth effect — drawn first so it sits beneath the main title)
-  local titleShadow = f:CreateFontString(nil, "OVERLAY")
-  titleShadow:SetFont("Fonts\\MORPHEUS.ttf", 20)
-  titleShadow:SetPoint("TOP", f, "TOP", 0, -17)
-  titleShadow:SetText("LeafVE Achievement System")
-  titleShadow:SetTextColor(0, 0, 0, 0.85)
-
-  -- Main title (OUTLINE flag adds letter-edge depth on top of the shadow)
-  local title = f:CreateFontString(nil, "OVERLAY")
-  title:SetFont("Fonts\\MORPHEUS.ttf", 20, "OUTLINE")
+  local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
   title:SetPoint("TOP", f, "TOP", 0, -15)
   title:SetText("LeafVE Achievement System")
-  title:SetTextColor(THEME.gold[1], THEME.gold[2], THEME.gold[3])
-
-  self.pointsLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-  self.pointsLabel:SetPoint("TOP", f, "TOP", 0, -38)
-  self.pointsLabel:SetTextColor(0.70, 0.70, 0.72)
-
-  -- Divider line beneath the header (fully opaque, full-width to match header)
-  local divider = f:CreateTexture(nil, "ARTWORK")
-  divider:SetTexture("Interface\\Tooltips\\UI-Tooltip-Separator")
-  divider:SetHeight(16)
-  divider:SetPoint("TOPLEFT",  f, "TOPLEFT",  0, -56)
-  divider:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, -56)
-
-  -- Close button aligned top-right, clear of the header text
+  title:SetTextColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3])
+  
   local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
   close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -6, -6)
+  
+  self.pointsLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  self.pointsLabel:SetPoint("TOP", f, "TOP", 0, -45)
   
   local achTab = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
   achTab:SetPoint("TOPLEFT", f, "TOPLEFT", 20, -75)
@@ -2724,10 +1876,6 @@ function LeafVE_AchTest.UI:Build()
     LeafVE_AchTest.UI:Refresh()
   end)
   self.titlesTab = titlesTab
-
-  -- Apply modern flat style to tabs (Achievements = active by default)
-  LeafVE_StyleButton(achTab, true)
-  LeafVE_StyleButton(titlesTab, false)
 
   -- Award / Reset buttons (placed directly after the Titles tab)
   local awardBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
@@ -2752,7 +1900,6 @@ function LeafVE_AchTest.UI:Build()
       Print("You already have all achievements!")
     end
   end)
-  LeafVE_StyleButton(awardBtn, false)
   self.awardBtn = awardBtn
 
   local resetBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
@@ -2766,7 +1913,6 @@ function LeafVE_AchTest.UI:Build()
     Print("Reset complete!")
     LeafVE_AchTest.UI:Refresh()
   end)
-  LeafVE_StyleButton(resetBtn, false)
 
   -- ── Left sidebar: category navigation ───────────────────────────────────
   local sidebarFrame = CreateFrame("Frame", nil, f)
@@ -2805,9 +1951,9 @@ function LeafVE_AchTest.UI:Build()
   for i, cat in ipairs(SIDEBAR_CATS) do
     local filterVal = cat.filter
     local btn = CreateFrame("Frame", nil, sidebarFrame)
-    btn:SetPoint("TOPLEFT", sidebarFrame, "TOPLEFT", 4, -(i-1)*26 - 6)
+    btn:SetPoint("TOPLEFT", sidebarFrame, "TOPLEFT", 4, -(i-1)*27 - 4)
     btn:SetWidth(122)
-    btn:SetHeight(22)
+    btn:SetHeight(24)
     btn:EnableMouse(true)
     btn:SetBackdrop({
       bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -2816,11 +1962,10 @@ function LeafVE_AchTest.UI:Build()
     })
     btn:SetBackdropColor(0, 0, 0, 0)
     local lbl = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    lbl:SetPoint("TOPLEFT",     btn, "TOPLEFT",  9, 0)
-    lbl:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", 2, 0)
-    lbl:SetJustifyH("LEFT")
+    lbl:SetAllPoints(btn)
+    lbl:SetJustifyH("CENTER")
     lbl:SetText(cat.display)
-    lbl:SetTextColor(0.78, 0.78, 0.78)
+    lbl:SetTextColor(0.8, 0.8, 0.8)
     btn.label     = lbl
     btn.filterValue = filterVal
     btn:SetScript("OnMouseDown", function()
@@ -2829,7 +1974,7 @@ function LeafVE_AchTest.UI:Build()
     end)
     btn:SetScript("OnEnter", function()
       if this.filterValue ~= LeafVE_AchTest.UI.selectedCategory then
-        this:SetBackdropColor(0.14, 0.14, 0.17, 0.65)
+        this:SetBackdropColor(0.15, 0.15, 0.18, 0.6)
       end
     end)
     btn:SetScript("OnLeave", function()
@@ -2837,80 +1982,10 @@ function LeafVE_AchTest.UI:Build()
         this:SetBackdropColor(0, 0, 0, 0)
       end
     end)
-    LeafVE_StyleCategoryButton(btn, false)
     table.insert(self.categoryButtons, btn)
   end
-
-  -- ── Title Category Sidebar ───────────────────────────────────────────────
-  local titleSidebarFrame = CreateFrame("Frame", nil, f)
-  titleSidebarFrame:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -145)
-  titleSidebarFrame:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 8, 10)
-  titleSidebarFrame:SetWidth(130)
-  titleSidebarFrame:SetBackdrop({
-    bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
-    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-    tile = true, tileSize = 16, edgeSize = 8,
-    insets = {left=2, right=2, top=2, bottom=2},
-  })
-  titleSidebarFrame:SetBackdropColor(0.07, 0.07, 0.08, 0.92)
-  titleSidebarFrame:SetBackdropBorderColor(0.28, 0.28, 0.30, 0.8)
-  titleSidebarFrame:Hide()
-  self.titleSidebarFrame = titleSidebarFrame
-
-  local TITLE_CATS = {
-    {display="All",         filter="All"},
-    {display="Obtained",    filter="Obtained"},
-    {display="Leveling",    filter="Leveling"},
-    {display="Raids",       filter="Raids"},
-    {display="Elite",       filter="Elite"},
-    {display="PvP",         filter="PvP"},
-    {display="Profession",  filter="Profession"},
-    {display="Dungeons",    filter="Dungeons"},
-    {display="Kills",       filter="Kills"},
-    {display="Exploration", filter="Exploration"},
-    {display="Casual",      filter="Casual"},
-    {display="Gold",        filter="Gold"},
-    {display="Quests",      filter="Quests"},
-  }
-  self.titleCategoryButtons = {}
-  for i, cat in ipairs(TITLE_CATS) do
-    local filterVal = cat.filter
-    local tbtn = CreateFrame("Frame", nil, titleSidebarFrame)
-    tbtn:SetPoint("TOPLEFT", titleSidebarFrame, "TOPLEFT", 4, -(i-1)*26 - 6)
-    tbtn:SetWidth(122)
-    tbtn:SetHeight(22)
-    tbtn:EnableMouse(true)
-    tbtn:SetBackdrop({
-      bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-      tile = true, tileSize = 8,
-      insets = {left=2, right=2, top=2, bottom=2},
-    })
-    tbtn:SetBackdropColor(0, 0, 0, 0)
-    local tlbl = tbtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    tlbl:SetPoint("TOPLEFT",     tbtn, "TOPLEFT",  9, 0)
-    tlbl:SetPoint("BOTTOMRIGHT", tbtn, "BOTTOMRIGHT", 2, 0)
-    tlbl:SetJustifyH("LEFT")
-    tlbl:SetText(cat.display)
-    tlbl:SetTextColor(0.78, 0.78, 0.78)
-    tbtn.label       = tlbl
-    tbtn.filterValue = filterVal
-    tbtn:SetScript("OnMouseDown", function()
-      LeafVE_AchTest.UI.selectedTitleCategory = this.filterValue
-      LeafVE_AchTest.UI:Refresh()
-    end)
-    tbtn:SetScript("OnEnter", function()
-      if this.filterValue ~= LeafVE_AchTest.UI.selectedTitleCategory then
-        this:SetBackdropColor(0.14, 0.14, 0.17, 0.65)
-      end
-    end)
-    tbtn:SetScript("OnLeave", function()
-      if this.filterValue ~= LeafVE_AchTest.UI.selectedTitleCategory then
-        this:SetBackdropColor(0, 0, 0, 0)
-      end
-    end)
-    LeafVE_StyleCategoryButton(tbtn, false)
-    table.insert(self.titleCategoryButtons, tbtn)
-  end
+  
+  -- Achievement Search Bar
   local searchLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
   searchLabel:SetPoint("TOPLEFT", f, "TOPLEFT", 155, -110)
   searchLabel:SetText("Search:")
@@ -2919,10 +1994,18 @@ function LeafVE_AchTest.UI:Build()
   local searchBox = CreateFrame("EditBox", nil, f)
   searchBox:SetPoint("LEFT", searchLabel, "RIGHT", 5, 0)
   searchBox:SetWidth(200)
-  searchBox:SetHeight(22)
+  searchBox:SetHeight(25)
   searchBox:SetAutoFocus(false)
   searchBox:SetFontObject("GameFontHighlight")
-  LeafVE_StyleInputBox(searchBox)
+  searchBox:SetBackdrop({
+    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true, tileSize = 16, edgeSize = 16,
+    insets = {left = 4, right = 4, top = 4, bottom = 4}
+  })
+  searchBox:SetBackdropColor(0, 0, 0, 0.8)
+  searchBox:SetBackdropBorderColor(0.4, 0.4, 0.4, 1)
+  searchBox:SetTextInsets(8, 8, 0, 0)
   searchBox:SetScript("OnEscapePressed", function() this:ClearFocus() end)
   searchBox:SetScript("OnEnterPressed", function() this:ClearFocus() end)
   searchBox:SetScript("OnTextChanged", function()
@@ -2932,16 +2015,15 @@ function LeafVE_AchTest.UI:Build()
   self.searchBox = searchBox
   
   local clearBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-  clearBtn:SetPoint("LEFT", searchBox, "RIGHT", 4, 0)
-  clearBtn:SetWidth(22)
-  clearBtn:SetHeight(22)
-  clearBtn:SetText("x")
+  clearBtn:SetPoint("LEFT", searchBox, "RIGHT", 5, 0)
+  clearBtn:SetWidth(50)
+  clearBtn:SetHeight(25)
+  clearBtn:SetText("Clear")
   clearBtn:SetScript("OnClick", function()
     searchBox:SetText("")
     LeafVE_AchTest.UI.searchText = ""
     LeafVE_AchTest.UI:Refresh()
   end)
-  LeafVE_StyleButton(clearBtn, false)
   self.clearBtn = clearBtn
   
   -- Title Search Bar (hidden by default)
@@ -2954,10 +2036,18 @@ function LeafVE_AchTest.UI:Build()
   local titleSearchBox = CreateFrame("EditBox", nil, f)
   titleSearchBox:SetPoint("LEFT", titleSearchLabel, "RIGHT", 5, 0)
   titleSearchBox:SetWidth(200)
-  titleSearchBox:SetHeight(22)
+  titleSearchBox:SetHeight(25)
   titleSearchBox:SetAutoFocus(false)
   titleSearchBox:SetFontObject("GameFontHighlight")
-  LeafVE_StyleInputBox(titleSearchBox)
+  titleSearchBox:SetBackdrop({
+    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true, tileSize = 16, edgeSize = 16,
+    insets = {left = 4, right = 4, top = 4, bottom = 4}
+  })
+  titleSearchBox:SetBackdropColor(0, 0, 0, 0.8)
+  titleSearchBox:SetBackdropBorderColor(0.4, 0.4, 0.4, 1)
+  titleSearchBox:SetTextInsets(8, 8, 0, 0)
   titleSearchBox:SetScript("OnEscapePressed", function() this:ClearFocus() end)
   titleSearchBox:SetScript("OnEnterPressed", function() this:ClearFocus() end)
   titleSearchBox:SetScript("OnTextChanged", function()
@@ -2968,16 +2058,15 @@ function LeafVE_AchTest.UI:Build()
   self.titleSearchBox = titleSearchBox
   
   local titleClearBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-  titleClearBtn:SetPoint("LEFT", titleSearchBox, "RIGHT", 4, 0)
-  titleClearBtn:SetWidth(22)
-  titleClearBtn:SetHeight(22)
-  titleClearBtn:SetText("x")
+  titleClearBtn:SetPoint("LEFT", titleSearchBox, "RIGHT", 5, 0)
+  titleClearBtn:SetWidth(50)
+  titleClearBtn:SetHeight(25)
+  titleClearBtn:SetText("Clear")
   titleClearBtn:SetScript("OnClick", function()
     titleSearchBox:SetText("")
     LeafVE_AchTest.UI.titleSearchText = ""
     LeafVE_AchTest.UI:Refresh()
   end)
-  LeafVE_StyleButton(titleClearBtn, false)
   titleClearBtn:Hide()
   self.titleClearBtn = titleClearBtn
   
@@ -2996,9 +2085,16 @@ function LeafVE_AchTest.UI:Build()
   local scrollbar = CreateFrame("Slider", nil, f)
   scrollbar:SetPoint("TOPRIGHT", f, "TOPRIGHT", -15, -145)
   scrollbar:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -15, 15)
-  scrollbar:SetWidth(14)
+  scrollbar:SetWidth(16)
   scrollbar:SetOrientation("VERTICAL")
-  LeafVE_StyleScrollBar(scrollbar)
+  scrollbar:SetThumbTexture("Interface\\Buttons\\UI-ScrollBar-Knob")
+  scrollbar:SetBackdrop({
+    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true, tileSize = 16, edgeSize = 8,
+    insets = {left = 3, right = 3, top = 3, bottom = 3}
+  })
+  scrollbar:SetBackdropColor(0.1, 0.1, 0.1, 0.5)
   scrollbar:SetMinMaxValues(0, 1)
   scrollbar:SetValue(0)
   scrollbar:SetValueStep(20)
@@ -3026,12 +2122,6 @@ function LeafVE_AchTest.UI:Build()
   end)
   
   self:Refresh()
-
-  -- Optional fade-in on first open (safe nil-check for 1.12 compatibility)
-  if UIFrameFadeIn then
-    f:SetAlpha(0)
-    UIFrameFadeIn(f, 0.25, 0, 1)
-  end
 end
 
 function LeafVE_AchTest.UI:Refresh()
@@ -3043,13 +2133,8 @@ function LeafVE_AchTest.UI:Refresh()
   
   if self.pointsLabel then
     if currentTitle then
-      local titleText = me.." "..currentTitle.name
-      local titleDiff = "normal"
-      for _, td in ipairs(TITLES) do
-        if td.id == currentTitle.id then titleDiff = td.difficulty or "normal"; break end
-      end
-      local titleColor = GetTitleColor(titleDiff)
-      self.pointsLabel:SetText(titleColor..titleText.."|r | Points: |cFFFF7F00"..totalPoints.."|r")
+      local titleText = currentTitle.prefix and (currentTitle.name.." "..me) or (me.." "..currentTitle.name)
+      self.pointsLabel:SetText("|cFFFF7F00"..titleText.."|r | Points: |cFFFF7F00"..totalPoints.."|r")
     else
       self.pointsLabel:SetText(me.." | Points: |cFFFF7F00"..totalPoints.."|r")
     end
@@ -3073,8 +2158,6 @@ function LeafVE_AchTest.UI:Refresh()
   if self.currentView == "achievements" then
     if self.achTab then self.achTab:Disable() end
     if self.titlesTab then self.titlesTab:Enable() end
-    LeafVE_StyleButton(self.achTab, true)
-    LeafVE_StyleButton(self.titlesTab, false)
     if self.awardBtn then self.awardBtn:Show() end
     if self.searchLabel then self.searchLabel:Show() end
     if self.searchBox then self.searchBox:Show() end
@@ -3082,20 +2165,23 @@ function LeafVE_AchTest.UI:Refresh()
     if self.titleSearchLabel then self.titleSearchLabel:Hide() end
     if self.titleSearchBox then self.titleSearchBox:Hide() end
     if self.titleClearBtn then self.titleClearBtn:Hide() end
-    -- Show achievement sidebar; hide title sidebar
+    -- Show sidebar and highlight selected category button
     if self.sidebarFrame then self.sidebarFrame:Show() end
-    if self.titleSidebarFrame then self.titleSidebarFrame:Hide() end
     if self.categoryButtons then
       for _, btn in ipairs(self.categoryButtons) do
-        LeafVE_StyleCategoryButton(btn, btn.filterValue == self.selectedCategory)
+        if btn.filterValue == self.selectedCategory then
+          btn:SetBackdropColor(0.12, 0.50, 0.20, 0.55)
+          btn.label:SetTextColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3])
+        else
+          btn:SetBackdropColor(0, 0, 0, 0)
+          btn.label:SetTextColor(0.8, 0.8, 0.8)
+        end
       end
     end
     self:RefreshAchievements()
   else
     if self.achTab then self.achTab:Enable() end
     if self.titlesTab then self.titlesTab:Disable() end
-    LeafVE_StyleButton(self.achTab, false)
-    LeafVE_StyleButton(self.titlesTab, true)
     if self.awardBtn then self.awardBtn:Hide() end
     if self.searchLabel then self.searchLabel:Hide() end
     if self.searchBox then self.searchBox:Hide() end
@@ -3103,14 +2189,7 @@ function LeafVE_AchTest.UI:Refresh()
     if self.titleSearchLabel then self.titleSearchLabel:Show() end
     if self.titleSearchBox then self.titleSearchBox:Show() end
     if self.titleClearBtn then self.titleClearBtn:Show() end
-    -- Hide achievement sidebar; show title sidebar
     if self.sidebarFrame then self.sidebarFrame:Hide() end
-    if self.titleSidebarFrame then self.titleSidebarFrame:Show() end
-    if self.titleCategoryButtons then
-      for _, tbtn in ipairs(self.titleCategoryButtons) do
-        LeafVE_StyleCategoryButton(tbtn, tbtn.filterValue == self.selectedTitleCategory)
-      end
-    end
     self:RefreshTitles()
   end
   
@@ -3154,16 +2233,6 @@ function LeafVE_AchTest.UI:RefreshAchievements()
   -- Store the sorted list for virtual-scroll updates.
   self.currentAchList  = achievementList
   self.currentAchOwner = me
-
-  -- Debug: log category counts for Quest and Skills when DEBUG is enabled
-  if LeafVE_AchTest.DEBUG then
-    local questCount, skillCount = 0, 0
-    for _, entry in ipairs(achievementList) do
-      if entry.data.category == "Quests"     then questCount = questCount + 1 end
-      if entry.data.category == "Skills"     then skillCount = skillCount + 1 end
-    end
-    Debug("RefreshAchievements [cat="..tostring(self.selectedCategory).."] Quests="..questCount.." Skills="..skillCount.." total="..table.getn(achievementList))
-  end
 
   -- Set the scrollChild virtual height so the scrollbar range is correct.
   local totalHeight = math.max(10, table.getn(achievementList) * ACH_ROW_H + 10)
@@ -3221,57 +2290,28 @@ function LeafVE_AchTest.UI:UpdateVisibleAchievements()
     frame.achPlayerName = me
 
     frame.icon:SetTexture(ach.data.icon)
-
-    -- Fetch progress data for this achievement (used by rep/counter achievements)
-    local progCur, progMax
-    local prog = GetAchievementProgress(me, ach.data.id)
-    if prog then
-      progCur = prog.current
-      progMax = prog.goal
-    end
-
     if ach.completed then
       frame.icon:SetDesaturated(false)
       frame.icon:SetAlpha(1)
       frame.checkmark:Show()
-      frame:SetBackdropColor(CARD_BG_D[1], CARD_BG_D[2], CARD_BG_D[3], CARD_BG_D[4])
-      frame:SetBackdropBorderColor(CARD_BORD_CMP[1], CARD_BORD_CMP[2], CARD_BORD_CMP[3], CARD_BORD_CMP[4])
+      frame:SetBackdropBorderColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3], 0.6)
       frame.name:SetText(ach.data.name)
-      frame.name:SetTextColor(1.00, 0.95, 0.70)
+      frame.name:SetTextColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3])
       frame.desc:SetText(ach.data.desc)
-      frame.desc:SetTextColor(0.80, 0.80, 0.80)
-      frame.badge.Icon:SetVertexColor(THEME.gold[1], THEME.gold[2], THEME.gold[3])
-      frame.badge.Text:SetText(tostring(ach.data.points).." pts")
-      frame.status:SetText("Completed")
-      frame.status:SetTextColor(0.4, 0.8, 0.4)
-      frame:SetProgress(nil, nil, false)
-      SetBadgeShimmer(frame.badge, (ach.data.points or 0) >= 20)
+      frame.desc:SetTextColor(0.9, 0.9, 0.9)
+      frame.points:SetText("|cFFFF7F00"..ach.data.points.." pts|r - Completed")
     else
       frame.icon:SetDesaturated(true)
       frame.icon:SetAlpha(0.5)
       frame.checkmark:Hide()
-      frame:SetBackdropColor(CARD_BG_D[1], CARD_BG_D[2], CARD_BG_D[3], CARD_BG_D[4])
-      frame:SetBackdropBorderColor(CARD_BORD_INC[1], CARD_BORD_INC[2], CARD_BORD_INC[3], CARD_BORD_INC[4])
+      frame:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
       frame.name:SetText(ach.data.name)
-      frame.name:SetTextColor(0.70, 0.70, 0.70)
+      frame.name:SetTextColor(0.6, 0.6, 0.6)
       frame.desc:SetText(ach.data.desc)
-      frame.desc:SetTextColor(0.55, 0.55, 0.55)
-      frame.badge.Icon:SetVertexColor(0.5, 0.5, 0.5)
-      frame.badge.Text:SetText(tostring(ach.data.points).." pts")
-      frame.status:SetText("In Progress")
-      frame.status:SetTextColor(0.55, 0.55, 0.55)
-      if progCur and progMax and progMax > 0 then
-        frame:SetProgress(progCur, progMax, true)
-      else
-        frame:SetProgress(nil, nil, false)
-      end
-      SetBadgeShimmer(frame.badge, false)
+      frame.desc:SetTextColor(0.5, 0.5, 0.5)
+      frame.points:SetText("|cFF888888"..ach.data.points.." pts|r")
     end
     frame:Show()
-    -- Golden border highlight when a text search is active (all visible rows are matches)
-    if self.searchText and self.searchText ~= "" then
-      frame:SetBackdropBorderColor(0.92, 0.80, 0.15, 0.85)
-    end
   end
 end
 
@@ -3279,23 +2319,13 @@ function LeafVE_AchTest.UI:RefreshTitles()
   if not self.scrollChild then return end
   local me = ShortName(UnitName("player") or "")
   if not self.titleFrames then self.titleFrames = {} end
-
+  
   -- Build filtered title list
   local filteredTitles = {}
   for i, titleData in ipairs(TITLES) do
-    local earned = LeafVE_AchTest:HasAchievement(me, titleData.achievement)
-
-    -- Category filter ("Obtained" = earned only; otherwise match category field)
-    local matchesCategory = true
-    local selCat = self.selectedTitleCategory or "All"
-    if selCat == "Obtained" then
-      matchesCategory = earned
-    elseif selCat ~= "All" then
-      matchesCategory = (titleData.category or "Other") == selCat
-    end
-
-    -- Search filter
     local matchesSearch = true
+    
+    -- Search filter
     if self.titleSearchText and self.titleSearchText ~= "" then
       local searchLower = string.lower(self.titleSearchText)
       local nameLower = string.lower(titleData.name)
@@ -3303,17 +2333,16 @@ function LeafVE_AchTest.UI:RefreshTitles()
       local achNameLower = achData and string.lower(achData.name) or ""
       matchesSearch = string.find(nameLower, searchLower) or string.find(achNameLower, searchLower)
     end
-
-    if matchesCategory and matchesSearch then
-      table.insert(filteredTitles, {data=titleData, earned=earned})
+    
+    if matchesSearch then
+      table.insert(filteredTitles, titleData)
     end
   end
-
+  
   local yOffset = 0
-  for i, entry in ipairs(filteredTitles) do
-    local titleData = entry.data
-    local earned    = entry.earned
+  for i, titleData in ipairs(filteredTitles) do
     local frame = self.titleFrames[i]
+    local earned = LeafVE_AchTest:HasAchievement(me, titleData.achievement)
     if not frame then
       frame = CreateFrame("Frame", nil, self.scrollChild)
       frame:SetWidth(660)
@@ -3333,22 +2362,27 @@ function LeafVE_AchTest.UI:RefreshTitles()
       frame.icon = icon
       local name = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
       name:SetPoint("LEFT", icon, "RIGHT", 10, 8)
-      name:SetWidth(430)
+      name:SetWidth(330)
       name:SetJustifyH("LEFT")
       frame.name = name
       local requirement = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
       requirement:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -3)
-      requirement:SetWidth(430)
+      requirement:SetWidth(330)
       requirement:SetJustifyH("LEFT")
       frame.requirement = requirement
-      -- Single "Use" button — always applies title as suffix
-      local useBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-      useBtn:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -5, -12)
-      useBtn:SetWidth(60)
-      useBtn:SetHeight(20)
-      useBtn:SetText("Use")
-      frame.useBtn = useBtn
-      -- Tooltip
+      local prefixBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+      prefixBtn:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -70, -12)
+      prefixBtn:SetWidth(60)
+      prefixBtn:SetHeight(20)
+      prefixBtn:SetText("Prefix")
+      frame.prefixBtn = prefixBtn
+      local suffixBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+      suffixBtn:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -5, -12)
+      suffixBtn:SetWidth(60)
+      suffixBtn:SetHeight(20)
+      suffixBtn:SetText("Suffix")
+      frame.suffixBtn = suffixBtn
+      -- Tooltip — same style as Badge tooltip
       frame:EnableMouse(true)
       frame:SetScript("OnEnter", function()
         if not this.titleData then return end
@@ -3381,7 +2415,7 @@ function LeafVE_AchTest.UI:RefreshTitles()
       table.insert(self.titleFrames, frame)
     end
     -- Store per-frame data for the tooltip
-    frame.titleData  = titleData
+    frame.titleData = titleData
     frame.titleEarned = earned
     frame:SetPoint("TOPLEFT", self.scrollChild, "TOPLEFT", 5, -yOffset)
     local achData = ACHIEVEMENTS[titleData.achievement]
@@ -3390,15 +2424,19 @@ function LeafVE_AchTest.UI:RefreshTitles()
       frame:SetBackdropBorderColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3], 0.6)
       frame.icon:SetDesaturated(false)
       frame.icon:SetAlpha(1)
-      local titleDiff = titleData.difficulty or "normal"
-      local r, g, b = GetTitleColorRGB(titleDiff)
       frame.name:SetText(titleData.name)
-      frame.name:SetTextColor(r, g, b)
-      frame.requirement:SetText("From: "..(achData and achData.name or "Complete the associated achievement."))
+      frame.name:SetTextColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3])
+      frame.requirement:SetText("From: "..(achData and achData.name or "Unknown"))
       frame.requirement:SetTextColor(0.9, 0.9, 0.9)
-      frame.useBtn:Enable()
-      frame.useBtn.titleID = titleData.id
-      frame.useBtn:SetScript("OnClick", function()
+      frame.prefixBtn:Enable()
+      frame.suffixBtn:Enable()
+      frame.prefixBtn.titleID = titleData.id
+      frame.prefixBtn:SetScript("OnClick", function()
+        LeafVE_AchTest:SetTitle(me, this.titleID, true)
+        LeafVE_AchTest.UI:Refresh()
+      end)
+      frame.suffixBtn.titleID = titleData.id
+      frame.suffixBtn:SetScript("OnClick", function()
         LeafVE_AchTest:SetTitle(me, this.titleID, false)
         LeafVE_AchTest.UI:Refresh()
       end)
@@ -3408,21 +2446,22 @@ function LeafVE_AchTest.UI:RefreshTitles()
       frame.icon:SetAlpha(0.3)
       frame.name:SetText(titleData.name)
       frame.name:SetTextColor(0.5, 0.5, 0.5)
-      frame.requirement:SetText("Requires: "..(achData and achData.name or "Complete the associated achievement."))
+      frame.requirement:SetText("Requires: "..(achData and achData.name or "Unknown"))
       frame.requirement:SetTextColor(0.6, 0.4, 0.4)
-      frame.useBtn:Disable()
+      frame.prefixBtn:Disable()
+      frame.suffixBtn:Disable()
     end
     frame:Show()
     yOffset = yOffset + 60
   end
-
+  
   -- Hide unused frames
   for i = table.getn(filteredTitles) + 1, table.getn(self.titleFrames) do
     if self.titleFrames[i] then
       self.titleFrames[i]:Hide()
     end
   end
-
+  
   if self.scrollChild then self.scrollChild:SetHeight(yOffset + 10) end
   if self.scrollFrame and self.scrollbar then
     local maxScroll = self.scrollFrame:GetVerticalScrollRange()
@@ -3441,16 +2480,10 @@ ef:RegisterEvent("ADDON_LOADED")
 ef:RegisterEvent("PLAYER_LEVEL_UP")
 ef:RegisterEvent("PLAYER_MONEY")
 ef:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
-ef:RegisterEvent("CHAT_MSG_COMBAT_XP_GAIN")
 ef:RegisterEvent("PLAYER_DEAD")
 ef:RegisterEvent("QUEST_COMPLETE")
 ef:RegisterEvent("PARTY_MEMBERS_CHANGED")
 ef:RegisterEvent("DUEL_WON")
-ef:RegisterEvent("PLAYER_ENTERING_WORLD")
-ef:RegisterEvent("GUILD_ROSTER_UPDATE")
-ef:RegisterEvent("SKILL_LINES_CHANGED")
-ef:RegisterEvent("TRADE_SKILL_SHOW")
-ef:RegisterEvent("CRAFT_SHOW")
 
 ef:SetScript("OnEvent", function()
   if event == "ADDON_LOADED" and arg1 == LeafVE_AchTest.name then
@@ -3464,48 +2497,18 @@ ef:SetScript("OnEvent", function()
     -- Backlog: award completions from previously stored boss kill progress + history
     LeafVE_AchTest:CheckBacklogAchievements()
     Print("Achievement System Loaded! Type /achtest")
-    -- Backlog: sync exploration counters for tiered zone achievements
-    do
-      local me = ShortName(UnitName("player"))
-      if me and LeafVE_AchTest_DB.exploredZones and LeafVE_AchTest_DB.exploredZones[me] then
-        local zoneCount = 0
-        for _ in pairs(LeafVE_AchTest_DB.exploredZones[me]) do zoneCount = zoneCount + 1 end
-        CheckZoneExplorationAchievements(me, zoneCount)
-        CheckWandererAchievement(me)
-        CheckContinentAchievements(me)
-      end
-    end
     Debug("Debug mode is: "..tostring(LeafVE_AchTest.DEBUG))
   end
   if event == "PLAYER_LEVEL_UP" then LeafVE_AchTest:CheckLevelAchievements() end
   if event == "PLAYER_MONEY" then LeafVE_AchTest:CheckGoldAchievements() end
   if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
-    -- Extract mob/boss name from death messages
+    -- Extract boss name from "Bossname dies." or "Bossname is slain!"
     local bossName = string.match(arg1, "^(.+) dies%.$")
                   or string.match(arg1, "^(.+) is slain!$")
                   or string.match(arg1, "^(.+) has been slain%.$")
     if bossName then
       LeafVE_AchTest:CheckBossKill(bossName)
-      RecordKill(bossName)
     end
-  end
-  if event == "CHAT_MSG_COMBAT_XP_GAIN" then
-    -- Fallback kill signal: only count if CHAT_MSG_COMBAT_HOSTILE_DEATH didn't already
-    -- record a kill within the debounce window (avoids inflating from quest XP, etc.)
-    local now = GetTime and GetTime() or 0
-    if (now - killDebounce_time) >= KILL_DEBOUNCE_SEC then
-      RecordKill(nil)
-    end
-  end
-  if event == "PLAYER_ENTERING_WORLD" then
-    CheckGuildMemberAchievement()
-    LeafVE_AchTest.ScanProfessionsAndAward()
-  end
-  if event == "GUILD_ROSTER_UPDATE" then
-    CheckGuildMemberAchievement()
-  end
-  if event == "SKILL_LINES_CHANGED" or event == "TRADE_SKILL_SHOW" or event == "CRAFT_SHOW" then
-    LeafVE_AchTest.ScanProfessionsAndAward()
   end
   if event == "PLAYER_DEAD" then
     local me = ShortName(UnitName("player"))
@@ -3516,7 +2519,6 @@ ef:SetScript("OnEvent", function()
       if total >= 10  then LeafVE_AchTest:AwardAchievement("casual_deaths_10",  true) end
       if total >= 50  then LeafVE_AchTest:AwardAchievement("casual_deaths_50",  true) end
       if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_deaths_100", true) end
-      if total >= 200 then LeafVE_AchTest:AwardAchievement("casual_deaths_200", true) end
       -- Check if death was caused by falling (fall damage fired just before death)
       if GetTime() - lastFallDamageTime < DEATH_CLASSIFY_WINDOW then
         local fallTotal = IncrCounter(me, "fallDeaths")
@@ -3560,9 +2562,7 @@ ef:SetScript("OnEvent", function()
     if me then
       local total = IncrCounter(me, "duels")
       if total >= 10  then LeafVE_AchTest:AwardAchievement("pvp_duel_10",  true) end
-      if total >= 25  then LeafVE_AchTest:AwardAchievement("pvp_duel_25",  true) end
       if total >= 50  then LeafVE_AchTest:AwardAchievement("pvp_duel_50",  true) end
-      if total >= 75  then LeafVE_AchTest:AwardAchievement("pvp_duel_75",  true) end
       if total >= 100 then LeafVE_AchTest:AwardAchievement("pvp_duel_100", true) end
     end
   end
@@ -3663,10 +2663,7 @@ lootFrame:SetScript("OnEvent", function()
       if me then
         local total = IncrCounter(me, "fish")
         if total >= 25   then LeafVE_AchTest:AwardAchievement("casual_fish_25",   true) end
-        if total >= 50   then LeafVE_AchTest:AwardAchievement("casual_fish_50",   true) end
         if total >= 100  then LeafVE_AchTest:AwardAchievement("casual_fish_100",  true) end
-        if total >= 250  then LeafVE_AchTest:AwardAchievement("casual_fish_250",  true) end
-        if total >= 500  then LeafVE_AchTest:AwardAchievement("casual_fish_500",  true) end
         if total >= 1000 then LeafVE_AchTest:AwardAchievement("casual_fish_1000", true) end
       end
     end
@@ -3683,44 +2680,8 @@ emoteFrame:SetScript("OnEvent", function()
     local me = ShortName(UnitName("player"))
     if me and ShortName(senderName) == me then
       local total = IncrCounter(me, "emotes")
-      if total >= 25  then LeafVE_AchTest:AwardAchievement("casual_emote_25",       true) end
-      if total >= 50  then LeafVE_AchTest:AwardAchievement("casual_friend_emote",   true) end
-      if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_emote_100",      true) end
-      if total >= 500 then LeafVE_AchTest:AwardAchievement("casual_emote_500",      true) end
-    end
-  end
-end)
-
--- Track Auction House visits for casual_ah_sell achievement (10 visits).
--- AUCTION_HOUSE_SHOW was introduced in WoW 2.0; use pcall to avoid a load error on 1.12.
-local ahFrame = CreateFrame("Frame")
-local ahOk, ahErr = pcall(function() ahFrame:RegisterEvent("AUCTION_HOUSE_SHOW") end)
-if not ahOk then Debug("AUCTION_HOUSE_SHOW unavailable: "..(ahErr or "unknown")) end
-ahFrame:SetScript("OnEvent", function()
-  if event == "AUCTION_HOUSE_SHOW" then
-    local me = ShortName(UnitName("player"))
-    if me then
-      local total = IncrCounter(me, "ahvisits")
-      if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_ah_sell", true) end
-    end
-  end
-end)
-
--- Track Warsong Gulch entries for pvp_wsg_flag_return achievement (10 enters).
-local wsgFrame = CreateFrame("Frame")
-wsgFrame:RegisterEvent("UPDATE_BATTLEFIELD_STATUS")
-wsgFrame:SetScript("OnEvent", function()
-  if event == "UPDATE_BATTLEFIELD_STATUS" then
-    local me = ShortName(UnitName("player"))
-    if me and GetBattlefieldStatus then
-      for i = 1, GetMaxBattlefieldID and GetMaxBattlefieldID() or 3 do
-        local status, mapName = GetBattlefieldStatus(i)
-        if status == "active" and mapName and string.find(string.lower(mapName), "warsong") then
-          local total = IncrCounter(me, "wsgvisits")
-          if total >= 10 then LeafVE_AchTest:AwardAchievement("pvp_wsg_flag_return", true) end
-          break
-        end
-      end
+      if total >= 25  then LeafVE_AchTest:AwardAchievement("casual_emote_25",  true) end
+      if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_emote_100", true) end
     end
   end
 end)
@@ -3802,13 +2763,12 @@ local function HookChatWithTitles()
       if not string.find(msg, "^/") and not string.find(msg, "^%[LeafVE") then
         local title = LeafVE_AchTest:GetCurrentTitle(me)
         if title then
-          Debug("Adding title: "..title.name)
-          local titleDiff = "normal"
-          for _, td in ipairs(TITLES) do
-            if td.id == title.id then titleDiff = td.difficulty or "normal"; break end
+          Debug("Adding title: "..title.name.." (prefix: "..tostring(title.prefix)..")")
+          if title.prefix then
+            msg = "|cFFFF7F00["..title.name.."]|r "..msg
+          else
+            msg = msg.." |cFFFF7F00["..title.name.."]|r"
           end
-          local titleColor = GetTitleColor(titleDiff)
-          msg = msg.." "..titleColor.."["..title.name.."]|r"
           Debug("Modified message: "..msg)
         else
           Debug("No title found for player")
@@ -3835,7 +2795,7 @@ minimapButton:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Hig
 local icon = minimapButton:CreateTexture(nil, "BACKGROUND")
 icon:SetWidth(20)
 icon:SetHeight(20)
-icon:SetTexture("Interface\\Icons\\INV_Misc_Trophy_03")
+icon:SetTexture("Interface\\Icons\\INV_Misc_Trophy_Gold")
 icon:SetPoint("CENTER", 0, 1)
 minimapButton.icon = icon
 
@@ -3898,15 +2858,12 @@ Print("Minimap button loaded!")
 -- ---------------------------------------------------------------------------
 -- Zone discovery tracking for Turtle WoW exploration achievements
 -- ---------------------------------------------------------------------------
-local zoneDiscLastSeen = ""  -- debounce: skip if subzone hasn't changed
 local zoneDiscFrame = CreateFrame("Frame")
 zoneDiscFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-zoneDiscFrame:RegisterEvent("ZONE_CHANGED")
-zoneDiscFrame:RegisterEvent("MINIMAP_ZONE_CHANGED")
 zoneDiscFrame:SetScript("OnEvent", function()
+  if event ~= "ZONE_CHANGED_NEW_AREA" then return end
   local subzone = GetSubZoneText and GetSubZoneText() or ""
-  if subzone == "" or subzone == zoneDiscLastSeen then return end
-  zoneDiscLastSeen = subzone
+  if subzone == "" then return end
   local me = ShortName(UnitName("player"))
   if not me then return end
   EnsureDB()
@@ -3915,15 +2872,6 @@ zoneDiscFrame:SetScript("OnEvent", function()
   end
   if LeafVE_AchTest_DB.exploredZones[me][subzone] then return end
   LeafVE_AchTest_DB.exploredZones[me][subzone] = true
-  -- Update the total zone count for tiered exploration achievements
-  local zoneCount = 0
-  for _ in pairs(LeafVE_AchTest_DB.exploredZones[me]) do zoneCount = zoneCount + 1 end
-  CheckZoneExplorationAchievements(me, zoneCount)
-  -- Check Wanderer (counted subzones only) and continent achievements
-  if COUNTED_WANDERER_SUBZONES[subzone] then
-    CheckWandererAchievement(me)
-    CheckContinentAchievements(me)
-  end
   -- Check every zone-group achievement whose zones include this subzone
   for groupKey, zones in pairs(ZONE_GROUP_ZONES) do
     local achId = "explore_tw_"..groupKey
@@ -3937,8 +2885,6 @@ zoneDiscFrame:SetScript("OnEvent", function()
       end
       if allFound then
         LeafVE_AchTest:AwardAchievement(achId, true)
-        -- A new TW zone completion might complete World Explorer
-        CheckContinentAchievements(me)
       end
     end
   end
@@ -3960,29 +2906,5 @@ hookFrame:SetScript("OnEvent", function()
     end)
   end
 end)
-
--- ---------------------------------------------------------------------------
--- Public API functions (spec deliverables)
--- ---------------------------------------------------------------------------
-
--- Update the header points label with the given player name and point total.
-function LeafVE_UpdateHeader(frame, playerName, points)
-  if LeafVE_AchTest and LeafVE_AchTest.UI and LeafVE_AchTest.UI.pointsLabel then
-    LeafVE_AchTest.UI.pointsLabel:SetText(
-      tostring(playerName).." | Points: |cFFFF7F00"..tostring(points).."|r"
-    )
-  end
-end
-
--- Re-render the visible achievement rows at the given scroll offset.
--- Passing scrollOffset is optional; the current scroll position is used if omitted.
-function LeafVE_UpdateVisibleRows(scrollOffset)
-  if LeafVE_AchTest and LeafVE_AchTest.UI then
-    if scrollOffset and LeafVE_AchTest.UI.scrollFrame then
-      LeafVE_AchTest.UI.scrollFrame:SetVerticalScroll(scrollOffset)
-    end
-    LeafVE_AchTest.UI:UpdateVisibleAchievements()
-  end
-end
 
 Print("LeafVE Achievement System loaded successfully!")
