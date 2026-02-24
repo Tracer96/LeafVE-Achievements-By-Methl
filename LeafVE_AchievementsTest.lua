@@ -52,6 +52,89 @@ end
 local KALIMDOR_ZONES = {"Durotar","Mulgore","The Barrens","Teldrassil","Darkshore","Ashenvale","Stonetalon Mountains","Desolace","Feralas","Thousand Needles","Tanaris","Dustwallow Marsh","Azshara","Felwood","Un'Goro Crater","Moonglade","Winterspring","Silithus"}
 local EASTERN_KINGDOMS_ZONES = {"Dun Morogh","Elwynn Forest","Tirisfal Glades","Silverpine Forest","Westfall","Redridge Mountains","Duskwood","Wetlands","Loch Modan","Hillsbrad Foothills","Alterac Mountains","Arathi Highlands","Badlands","Searing Gorge","Burning Steppes","The Hinterlands","Western Plaguelands","Eastern Plaguelands","Stranglethorn Vale","Swamp of Sorrows","Blasted Lands","Deadwind Pass"}
 
+-- Required subzone lists for continent exploration achievements.
+-- Structure: [parentZone] = { subzone1, subzone2, ... }
+local REQUIRED_KALIMDOR_ZONES = {
+  ["Durotar"]              = {"Valley of Trials","Sen'jin Village","Razor Hill","The Burning Blade Coven"},
+  ["Mulgore"]              = {"Red Cloud Mesa","Bloodhoof Village","Thunder Bluff","Winterhoof Water Well"},
+  ["The Barrens"]          = {"The Crossroads","Ratchet","Camp Taurajo","Wailing Caverns","Mor'shan Rampart","Far Watch Post"},
+  ["Teldrassil"]           = {"Shadowglen","Dolanaar","Darnassus","Ban'ethil Hollow"},
+  ["Darkshore"]            = {"Auberdine","Grove of the Ancients","Ruins of Mathystra","Cliffspring River"},
+  ["Ashenvale"]            = {"Astranaar","Splintertree Post","Raynewood Retreat","Blackfathom Deeps"},
+  ["Stonetalon Mountains"] = {"Stonetalon Peak","Sun Rock Retreat","The Charred Vale","Windshear Crag"},
+  ["Desolace"]             = {"Ghost Walker Post","Nijel's Point","Shadowprey Village","Thunder Axe Fortress"},
+  ["Feralas"]              = {"Camp Mojache","Feathermoon Stronghold","Dire Maul","The Twin Colossals"},
+  ["Thousand Needles"]     = {"Freewind Post","The Shimmering Flats","Darkcloud Pinnacle","Great Lift"},
+  ["Dustwallow Marsh"]     = {"Brackenwall Village","Theramore Isle","Alcaz Island"},
+  ["Tanaris"]              = {"Gadgetzan","Steamwheedle Port","Zul'Farrak","The Noxious Lair"},
+  ["Un'Goro Crater"]       = {"Marshal's Refuge","Golakka Hot Springs","Fire Plume Ridge","The Slithering Scar"},
+  ["Azshara"]              = {"Talrendis Point","Ruins of Eldarath","Bay of Storms","Hetaera's Clutch"},
+  ["Felwood"]              = {"Bloodvenom Falls","Emerald Sanctuary","Jaedenar","Talonbranch Glade"},
+  ["Moonglade"]            = {"Nighthaven","Shrine of Remulos","Stormrage Barrow Dens"},
+  ["Winterspring"]         = {"Everlook","Frostsaber Rock","Lake Kel'Theril","Owl Wing Thicket"},
+  ["Silithus"]             = {"Cenarion Hold","Hive'Regal","Hive'Ashi","Ruins of Ahn'Qiraj"},
+}
+local REQUIRED_EK_ZONES = {
+  ["Elwynn Forest"]        = {"Northshire Valley","Goldshire","Stonefield Farm","Mirror Lake","Tower of Azora"},
+  ["Westfall"]             = {"Sentinel Hill","Moonbrook","The Deadmines","The Dust Plains"},
+  ["Redridge Mountains"]   = {"Lakeshire","Stonewatch Keep","Render's Camp","Tower of Ilgalar"},
+  ["Duskwood"]             = {"Darkshire","Raven Hill","Tranquil Gardens Cemetery","Roland's Doom"},
+  ["Dun Morogh"]           = {"Coldridge Valley","Anvilmar","Kharanos","Gnomeregan","Ironforge"},
+  ["Loch Modan"]           = {"Thelsamar","Stonewrought Dam","The Loch","Mo'grosh Stronghold"},
+  ["Wetlands"]             = {"Menethil Harbor","Dun Modr","Whelgar's Excavation Site","Direforge Hill"},
+  ["Arathi Highlands"]     = {"Refuge Pointe","Hammerfall","Stromgarde Keep","Circle of East Binding"},
+  ["Hillsbrad Foothills"]  = {"Southshore","Tarren Mill","Hillsbrad Fields","Durnholde Keep"},
+  ["Alterac Mountains"]    = {"Strahnbrad","Ruins of Alterac","The Uplands","Crushridge Hold"},
+  ["The Hinterlands"]      = {"Aerie Peak","Revantusk Village","Jintha'Alor","The Overlook Cliffs"},
+  ["Tirisfal Glades"]      = {"Deathknell","Brill","Undercity","Agamand Mills","The Bulwark"},
+  ["Silverpine Forest"]    = {"The Sepulcher","Ambermill","Shadowfang Keep","Skittering Dark"},
+  ["Western Plaguelands"]  = {"Andorhal","Chillwind Camp","Caer Darrow","Scholomance"},
+  ["Eastern Plaguelands"]  = {"Light's Hope Chapel","Stratholme","Crown Guard Tower","Naxxramas"},
+  ["Badlands"]             = {"Kargath","Uldaman","Camp Kosh","Dustbelch Grotto"},
+  ["Searing Gorge"]        = {"Thorium Point","The Cauldron","Grimesilt Dig Site"},
+  ["Burning Steppes"]      = {"Morgan's Vigil","Blackrock Mountain","Flame Crest","Dreadmaul Rock"},
+  ["Stranglethorn Vale"]   = {"Booty Bay","Grom'gol Base Camp","Rebel Camp","Zul'Gurub","Venture Co. Base Camp"},
+  ["Blasted Lands"]        = {"The Dark Portal","Nethergarde Keep","Dreadmaul Hold"},
+  ["Swamp of Sorrows"]     = {"Stonard","The Temple of Atal'Hakkar","Misty Valley"},
+  ["Deadwind Pass"]        = {"Karazhan","Deadwind Ravine","The Vice"},
+}
+
+-- Build flat lookup sets for fast discovery checking.
+local KALIMDOR_SUBZONE_SET = {}
+local KALIMDOR_REQUIRED_TOTAL = 0
+for _, subzones in pairs(REQUIRED_KALIMDOR_ZONES) do
+  for _, sz in ipairs(subzones) do
+    if not KALIMDOR_SUBZONE_SET[sz] then
+      KALIMDOR_SUBZONE_SET[sz] = true
+      KALIMDOR_REQUIRED_TOTAL = KALIMDOR_REQUIRED_TOTAL + 1
+    end
+  end
+end
+
+local EK_SUBZONE_SET = {}
+local EK_REQUIRED_TOTAL = 0
+for _, subzones in pairs(REQUIRED_EK_ZONES) do
+  for _, sz in ipairs(subzones) do
+    if not EK_SUBZONE_SET[sz] then
+      EK_SUBZONE_SET[sz] = true
+      EK_REQUIRED_TOTAL = EK_REQUIRED_TOTAL + 1
+    end
+  end
+end
+
+-- Union of Kalimdor + EK subzones: these are the "counted" subzones for The Wanderer.
+local COUNTED_WANDERER_SUBZONES = {}
+for sz in pairs(KALIMDOR_SUBZONE_SET) do COUNTED_WANDERER_SUBZONES[sz] = true end
+for sz in pairs(EK_SUBZONE_SET)      do COUNTED_WANDERER_SUBZONES[sz] = true end
+
+-- List of all TW zone-group achievement IDs required for World Explorer.
+local WORLD_EXPLORER_TW_IDS = {
+  "explore_tw_balor","explore_tw_gilneas","explore_tw_northwind","explore_tw_lapidis",
+  "explore_tw_gillijim","explore_tw_scarlet_enclave","explore_tw_grim_reaches",
+  "explore_tw_telabim","explore_tw_hyjal","explore_tw_tirisfal_uplands",
+  "explore_tw_stonetalon","explore_tw_arathi","explore_tw_badlands","explore_tw_ashenvale",
+}
+
 -- Turtle WoW zone-group → list of discoverable subzone names.
 -- Used for zone-group exploration achievements and their tooltip criteria.
 local ZONE_GROUP_ZONES = {
@@ -309,8 +392,8 @@ local ACHIEVEMENTS = {
   raid_ukh_complete={id="raid_ukh_complete",name="Upper Karazhan Halls: Raid Clear",desc="Defeat all bosses in Upper Karazhan Halls",category="Raids",points=200,icon="Interface\\Icons\\INV_Misc_Key_15",criteria_key="ukh",criteria_type="raid"},
   
   -- Exploration
-  explore_kalimdor={id="explore_kalimdor",name="Explore Kalimdor",desc="Discover all zones in Kalimdor",category="Exploration",points=50,icon="Interface\\Icons\\INV_Misc_Map_01"},
-  explore_eastern_kingdoms={id="explore_eastern_kingdoms",name="Explore Eastern Kingdoms",desc="Discover all zones in Eastern Kingdoms",category="Exploration",points=50,icon="Interface\\Icons\\INV_Misc_Map_02"},
+  explore_kalimdor={id="explore_kalimdor",name="Explore Kalimdor",desc="Discover all required locations across Kalimdor",category="Exploration",points=50,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_type="continent",criteria_key="kalimdor"},
+  explore_eastern_kingdoms={id="explore_eastern_kingdoms",name="Explore Eastern Kingdoms",desc="Discover all required locations across Eastern Kingdoms",category="Exploration",points=50,icon="Interface\\Icons\\INV_Misc_Map_02",criteria_type="continent",criteria_key="eastern_kingdoms"},
 
   -- Turtle WoW: Unique zone-group exploration achievements
   explore_tw_balor={id="explore_tw_balor",name="Explorer of Balor",desc="Discover all 6 locations in Balor.",category="Exploration",points=25,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_key="balor",criteria_type="zone_group"},
@@ -409,10 +492,10 @@ local ACHIEVEMENTS = {
   kills_10000={id="kills_10000",name="Annihilator",desc="Kill 10000 mobs",category="Kills",points=200,icon="Interface\\Icons\\Ability_Warrior_Rampage"},
 
   -- Tiered zone-exploration achievements (count of unique subzones discovered)
-  explore_zones_10={id="explore_zones_10",name="Wanderer",desc="Discover 10 unique subzones",category="Exploration",points=5,icon="Interface\\Icons\\INV_Misc_Map_01"},
+  explore_zones_10={id="explore_zones_10",name="Wanderer",desc="Discover any 10 counted subzones (Kalimdor or Eastern Kingdoms)",category="Exploration",points=5,icon="Interface\\Icons\\INV_Misc_Map_01"},
   explore_zones_25={id="explore_zones_25",name="Traveler",desc="Discover 25 unique subzones",category="Exploration",points=10,icon="Interface\\Icons\\INV_Misc_Map_01"},
   explore_zones_50={id="explore_zones_50",name="Pathfinder",desc="Discover 50 unique subzones",category="Exploration",points=20,icon="Interface\\Icons\\INV_Misc_Map_02"},
-  explore_zones_100={id="explore_zones_100",name="World Explorer",desc="Discover 100 unique subzones",category="Exploration",points=35,icon="Interface\\Icons\\INV_Misc_Map_02"},
+  explore_zones_100={id="explore_zones_100",name="World Explorer",desc="Complete Explore Kalimdor, Explore Eastern Kingdoms, and all Turtle WoW zone achievements",category="Exploration",points=100,icon="Interface\\Icons\\INV_Misc_Map_02",criteria_type="world_explorer_meta"},
 }
 
 local TITLES = {
@@ -822,10 +905,12 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   kills_5000   = {counter="genericKills", goal=5000},
   kills_10000  = {counter="genericKills", goal=10000},
   -- Zone-exploration count achievements
-  explore_zones_10  = {counter="exploredZoneCount", goal=10},
+  explore_zones_10  = {counter="wandererCount",    goal=10},
   explore_zones_25  = {counter="exploredZoneCount", goal=25},
   explore_zones_50  = {counter="exploredZoneCount", goal=50},
-  explore_zones_100 = {counter="exploredZoneCount", goal=100},
+  -- Continent exploration progress
+  explore_kalimdor          = {counter="kalimdorSubzoneCount", goal=KALIMDOR_REQUIRED_TOTAL},
+  explore_eastern_kingdoms  = {counter="ekSubzoneCount",       goal=EK_REQUIRED_TOTAL},
 }
 
 -- Returns {current, goal} or nil if no progress data exists for this achievement.
@@ -900,10 +985,53 @@ local function CheckZoneExplorationAchievements(me, zoneCount)
   EnsureDB()
   if not LeafVE_AchTest_DB.progressCounters[me] then LeafVE_AchTest_DB.progressCounters[me] = {} end
   LeafVE_AchTest_DB.progressCounters[me]["exploredZoneCount"] = zoneCount
-  if zoneCount >= 10  then LeafVE_AchTest:AwardAchievement("explore_zones_10",  true) end
   if zoneCount >= 25  then LeafVE_AchTest:AwardAchievement("explore_zones_25",  true) end
   if zoneCount >= 50  then LeafVE_AchTest:AwardAchievement("explore_zones_50",  true) end
-  if zoneCount >= 100 then LeafVE_AchTest:AwardAchievement("explore_zones_100", true) end
+end
+
+-- Updates wandererCount (counted subzones only) and awards Wanderer achievement.
+local function CheckWandererAchievement(me)
+  EnsureDB()
+  if not LeafVE_AchTest_DB.progressCounters[me] then LeafVE_AchTest_DB.progressCounters[me] = {} end
+  local explored = LeafVE_AchTest_DB.exploredZones and LeafVE_AchTest_DB.exploredZones[me]
+  if not explored then return end
+  local count = 0
+  for sz in pairs(explored) do
+    if COUNTED_WANDERER_SUBZONES[sz] then count = count + 1 end
+  end
+  LeafVE_AchTest_DB.progressCounters[me]["wandererCount"] = count
+  if count >= 10 then LeafVE_AchTest:AwardAchievement("explore_zones_10", true) end
+end
+
+-- Checks and awards Explore Kalimdor / Explore Eastern Kingdoms and World Explorer.
+local function CheckContinentAchievements(me)
+  EnsureDB()
+  if not LeafVE_AchTest_DB.progressCounters[me] then LeafVE_AchTest_DB.progressCounters[me] = {} end
+  local explored = LeafVE_AchTest_DB.exploredZones and LeafVE_AchTest_DB.exploredZones[me]
+  if not explored then return end
+  -- Kalimdor progress
+  local kalCount = 0
+  for sz in pairs(KALIMDOR_SUBZONE_SET) do if explored[sz] then kalCount = kalCount + 1 end end
+  LeafVE_AchTest_DB.progressCounters[me]["kalimdorSubzoneCount"] = kalCount
+  if kalCount >= KALIMDOR_REQUIRED_TOTAL then
+    LeafVE_AchTest:AwardAchievement("explore_kalimdor", true)
+  end
+  -- Eastern Kingdoms progress
+  local ekCount = 0
+  for sz in pairs(EK_SUBZONE_SET) do if explored[sz] then ekCount = ekCount + 1 end end
+  LeafVE_AchTest_DB.progressCounters[me]["ekSubzoneCount"] = ekCount
+  if ekCount >= EK_REQUIRED_TOTAL then
+    LeafVE_AchTest:AwardAchievement("explore_eastern_kingdoms", true)
+  end
+  -- World Explorer: requires both continents + all TW zone-group achievements
+  if LeafVE_AchTest:HasAchievement(me, "explore_kalimdor") and
+     LeafVE_AchTest:HasAchievement(me, "explore_eastern_kingdoms") then
+    local allTW = true
+    for _, twId in ipairs(WORLD_EXPLORER_TW_IDS) do
+      if not LeafVE_AchTest:HasAchievement(me, twId) then allTW = false; break end
+    end
+    if allTW then LeafVE_AchTest:AwardAchievement("explore_zones_100", true) end
+  end
 end
 
 -- ============================================================
@@ -2249,6 +2377,61 @@ local function CreateAchievementRow(parent)
         GameTooltip:AddLine(string.format("Discovered: %d / %d locations", found, total), 1.0, 0.82, 0.2)
       end
     end
+    -- ── Continent exploration criteria (Kalimdor / Eastern Kingdoms) ──────
+    if ad.criteria_type == "continent" and ad.criteria_key then
+      local reqZones, reqSet, reqTotal
+      if ad.criteria_key == "kalimdor" then
+        reqZones = REQUIRED_KALIMDOR_ZONES; reqSet = KALIMDOR_SUBZONE_SET; reqTotal = KALIMDOR_REQUIRED_TOTAL
+      elseif ad.criteria_key == "eastern_kingdoms" then
+        reqZones = REQUIRED_EK_ZONES; reqSet = EK_SUBZONE_SET; reqTotal = EK_REQUIRED_TOTAL
+      end
+      if reqZones and reqSet then
+        local pz = LeafVE_AchTest_DB and LeafVE_AchTest_DB.exploredZones
+        local myZones = pz and pz[me]
+        local found = 0
+        GameTooltip:AddLine(" ", 1, 1, 1)
+        -- Show per-zone progress (grouped)
+        for zoneName, subzones in pairs(reqZones) do
+          local zFound, zTotal = 0, table.getn(subzones)
+          for _, sz in ipairs(subzones) do
+            if myZones and myZones[sz] then zFound = zFound + 1; found = found + 1 end
+          end
+          local color = (zFound == zTotal) and "|cFF00CC00" or "|cFFFF8800"
+          GameTooltip:AddLine(color..zoneName..": "..zFound.."/"..zTotal.."|r", 0.9, 0.9, 0.9)
+        end
+        GameTooltip:AddLine(string.format("Discovered: %d / %d locations", found, reqTotal), 1.0, 0.82, 0.2)
+      end
+    end
+    -- ── World Explorer meta criteria ───────────────────────────────────────
+    if ad.criteria_type == "world_explorer_meta" then
+      GameTooltip:AddLine(" ", 1, 1, 1)
+      local done, total = 0, 2 + table.getn(WORLD_EXPLORER_TW_IDS)
+      -- Continent achievements
+      for _, contId in ipairs({"explore_kalimdor","explore_eastern_kingdoms"}) do
+        local cach = ACHIEVEMENTS[contId]
+        if cach then
+          if LeafVE_AchTest:HasAchievement(me, contId) then
+            done = done + 1
+            GameTooltip:AddLine("|cFF00CC00[x]|r "..cach.name, 0.9, 0.9, 0.9)
+          else
+            GameTooltip:AddLine("|cFF666666[ ]|r "..cach.name, 0.5, 0.5, 0.5)
+          end
+        end
+      end
+      -- TW zone-group achievements
+      for _, twId in ipairs(WORLD_EXPLORER_TW_IDS) do
+        local tach = ACHIEVEMENTS[twId]
+        if tach then
+          if LeafVE_AchTest:HasAchievement(me, twId) then
+            done = done + 1
+            GameTooltip:AddLine("|cFF00CC00[x]|r "..tach.name, 0.9, 0.9, 0.9)
+          else
+            GameTooltip:AddLine("|cFF666666[ ]|r "..tach.name, 0.5, 0.5, 0.5)
+          end
+        end
+      end
+      GameTooltip:AddLine(string.format("Criteria: %d / %d", done, total), 1.0, 0.82, 0.2)
+    end
     -- ── Quest chain step criteria ─────────────────────────────────────────
     if ad._questSteps then
       local cq = LeafVE_AchTest_DB and LeafVE_AchTest_DB.completedQuests
@@ -3016,6 +3199,8 @@ ef:RegisterEvent("DUEL_WON")
 ef:RegisterEvent("PLAYER_ENTERING_WORLD")
 ef:RegisterEvent("GUILD_ROSTER_UPDATE")
 ef:RegisterEvent("SKILL_LINES_CHANGED")
+ef:RegisterEvent("TRADE_SKILL_SHOW")
+ef:RegisterEvent("CRAFT_SHOW")
 
 ef:SetScript("OnEvent", function()
   if event == "ADDON_LOADED" and arg1 == LeafVE_AchTest.name then
@@ -3029,13 +3214,15 @@ ef:SetScript("OnEvent", function()
     -- Backlog: award completions from previously stored boss kill progress + history
     LeafVE_AchTest:CheckBacklogAchievements()
     Print("Achievement System Loaded! Type /achtest")
-    -- Backlog: sync exploredZoneCount for tiered zone achievements
+    -- Backlog: sync exploration counters for tiered zone achievements
     do
       local me = ShortName(UnitName("player"))
       if me and LeafVE_AchTest_DB.exploredZones and LeafVE_AchTest_DB.exploredZones[me] then
         local zoneCount = 0
         for _ in pairs(LeafVE_AchTest_DB.exploredZones[me]) do zoneCount = zoneCount + 1 end
         CheckZoneExplorationAchievements(me, zoneCount)
+        CheckWandererAchievement(me)
+        CheckContinentAchievements(me)
       end
     end
     Debug("Debug mode is: "..tostring(LeafVE_AchTest.DEBUG))
@@ -3067,7 +3254,7 @@ ef:SetScript("OnEvent", function()
   if event == "GUILD_ROSTER_UPDATE" then
     CheckGuildMemberAchievement()
   end
-  if event == "SKILL_LINES_CHANGED" then
+  if event == "SKILL_LINES_CHANGED" or event == "TRADE_SKILL_SHOW" or event == "CRAFT_SHOW" then
     LeafVE_AchTest.ScanProfessionsAndAward()
   end
   if event == "PLAYER_DEAD" then
@@ -3423,12 +3610,15 @@ Print("Minimap button loaded!")
 -- ---------------------------------------------------------------------------
 -- Zone discovery tracking for Turtle WoW exploration achievements
 -- ---------------------------------------------------------------------------
+local zoneDiscLastSeen = ""  -- debounce: skip if subzone hasn't changed
 local zoneDiscFrame = CreateFrame("Frame")
 zoneDiscFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+zoneDiscFrame:RegisterEvent("ZONE_CHANGED")
+zoneDiscFrame:RegisterEvent("MINIMAP_ZONE_CHANGED")
 zoneDiscFrame:SetScript("OnEvent", function()
-  if event ~= "ZONE_CHANGED_NEW_AREA" then return end
   local subzone = GetSubZoneText and GetSubZoneText() or ""
-  if subzone == "" then return end
+  if subzone == "" or subzone == zoneDiscLastSeen then return end
+  zoneDiscLastSeen = subzone
   local me = ShortName(UnitName("player"))
   if not me then return end
   EnsureDB()
@@ -3441,6 +3631,11 @@ zoneDiscFrame:SetScript("OnEvent", function()
   local zoneCount = 0
   for _ in pairs(LeafVE_AchTest_DB.exploredZones[me]) do zoneCount = zoneCount + 1 end
   CheckZoneExplorationAchievements(me, zoneCount)
+  -- Check Wanderer (counted subzones only) and continent achievements
+  if COUNTED_WANDERER_SUBZONES[subzone] then
+    CheckWandererAchievement(me)
+    CheckContinentAchievements(me)
+  end
   -- Check every zone-group achievement whose zones include this subzone
   for groupKey, zones in pairs(ZONE_GROUP_ZONES) do
     local achId = "explore_tw_"..groupKey
@@ -3454,6 +3649,8 @@ zoneDiscFrame:SetScript("OnEvent", function()
       end
       if allFound then
         LeafVE_AchTest:AwardAchievement(achId, true)
+        -- A new TW zone completion might complete World Explorer
+        CheckContinentAchievements(me)
       end
     end
   end

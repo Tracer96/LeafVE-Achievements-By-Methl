@@ -135,6 +135,7 @@ end
 local skillFrame = CreateFrame("Frame")
 skillFrame:RegisterEvent("CHAT_MSG_SKILL")    -- fires on every skill-up
 skillFrame:RegisterEvent("ADDON_LOADED")       -- backlog check on load
+skillFrame:RegisterEvent("PLAYER_ENTERING_WORLD") -- initial scan on login/reload
 
 skillFrame:SetScript("OnEvent", function()
   if event == "ADDON_LOADED" and arg1 == "LeafVE_AchievementsTest" then
@@ -142,7 +143,7 @@ skillFrame:SetScript("OnEvent", function()
       RegisterSkillAchievements()
     end
     CheckSkillMilestones()
-  elseif event == "CHAT_MSG_SKILL" then
+  elseif event == "CHAT_MSG_SKILL" or event == "PLAYER_ENTERING_WORLD" then
     CheckSkillMilestones()
   end
 end)
