@@ -49,12 +49,24 @@ local function EnsureDB()
   if not LeafVE_AchTest_DB.completedQuests then LeafVE_AchTest_DB.completedQuests = {} end
 end
 
-local KALIMDOR_ZONES = {"Durotar","Mulgore","The Barrens","Teldrassil","Darkshore","Ashenvale","Stonetalon Mountains","Desolace","Feralas","Thousand Needles","Tanaris","Dustwallow Marsh","Azshara","Felwood","Un'Goro Crater","Moonglade","Winterspring","Silithus"}
-local EASTERN_KINGDOMS_ZONES = {"Dun Morogh","Elwynn Forest","Tirisfal Glades","Silverpine Forest","Westfall","Redridge Mountains","Duskwood","Wetlands","Loch Modan","Hillsbrad Foothills","Alterac Mountains","Arathi Highlands","Badlands","Searing Gorge","Burning Steppes","The Hinterlands","Western Plaguelands","Eastern Plaguelands","Stranglethorn Vale","Swamp of Sorrows","Blasted Lands","Deadwind Pass"}
 
--- Turtle WoW zone-group → list of discoverable subzone names.
--- Used for zone-group exploration achievements and their tooltip criteria.
+-- Maps zone-group key → achievement ID for groups that don't use the explore_tw_ prefix.
+local ZONE_GROUP_ACH = {
+  kalimdor         = "explore_kalimdor",
+  eastern_kingdoms = "explore_eastern_kingdoms",
+  elwynn           = "casual_explore_elwynn",
+  barrens          = "casual_explore_barrens",
+}
+
+-- Zone-group → list of discoverable zone/subzone names.
+-- Kalimdor and Eastern Kingdoms use major zone names (tracked via GetZoneText).
+-- Elwynn/Barrens use subzone names (tracked via GetSubZoneText).
+-- All other entries are Turtle WoW custom zones (subzone names).
 local ZONE_GROUP_ZONES = {
+  kalimdor = {"Durotar","Mulgore","The Barrens","Teldrassil","Darkshore","Ashenvale","Stonetalon Mountains","Desolace","Feralas","Thousand Needles","Tanaris","Dustwallow Marsh","Azshara","Felwood","Un'Goro Crater","Moonglade","Winterspring","Silithus"},
+  eastern_kingdoms = {"Dun Morogh","Elwynn Forest","Tirisfal Glades","Silverpine Forest","Westfall","Redridge Mountains","Duskwood","Wetlands","Loch Modan","Hillsbrad Foothills","Alterac Mountains","Arathi Highlands","Badlands","Searing Gorge","Burning Steppes","The Hinterlands","Western Plaguelands","Eastern Plaguelands","Stranglethorn Vale","Swamp of Sorrows","Blasted Lands","Deadwind Pass"},
+  elwynn = {"Northshire","Northshire Abbey","Crystal Lake","Eastvale Logging Camp","Goldshire","Mirror Lake","Westbrook Garrison","Tower of Azora","Brackwell Pumpkin Patch","The Fargodeep Mine","Jasperlode Mine"},
+  barrens = {"The Crossroads","Ratchet","Grol'dom Farm","Lushwater Oasis","Stagnant Oasis","Camp Taurajo","Mor'shan Base Camp","Blackthorn Ridge","The Wailing Caverns","Darsok's Rest","Far Watch Post"},
   balor = {
     "Bilgerat Compound","Ruins of Breezehaven","SI:7 Outpost",
     "Sorrowmore Lake","Stormbreaker Point","Stormwrought Castle",
@@ -309,8 +321,11 @@ local ACHIEVEMENTS = {
   raid_ukh_complete={id="raid_ukh_complete",name="Upper Karazhan Halls: Raid Clear",desc="Defeat all bosses in Upper Karazhan Halls",category="Raids",points=200,icon="Interface\\Icons\\INV_Misc_Key_15",criteria_key="ukh",criteria_type="raid"},
   
   -- Exploration
-  explore_kalimdor={id="explore_kalimdor",name="Explore Kalimdor",desc="Discover all zones in Kalimdor",category="Exploration",points=50,icon="Interface\\Icons\\INV_Misc_Map_01"},
-  explore_eastern_kingdoms={id="explore_eastern_kingdoms",name="Explore Eastern Kingdoms",desc="Discover all zones in Eastern Kingdoms",category="Exploration",points=50,icon="Interface\\Icons\\INV_Misc_Map_02"},
+  explore_kalimdor={id="explore_kalimdor",name="Explore Kalimdor",desc="Discover all zones in Kalimdor",category="Exploration",points=50,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_key="kalimdor",criteria_type="zone_group"},
+  explore_eastern_kingdoms={id="explore_eastern_kingdoms",name="Explore Eastern Kingdoms",desc="Discover all zones in Eastern Kingdoms",category="Exploration",points=50,icon="Interface\\Icons\\INV_Misc_Map_02",criteria_key="eastern_kingdoms",criteria_type="zone_group"},
+  -- Meta: requires completing specific exploration achievements
+  explore_wanderer={id="explore_wanderer",name="Wanderer",desc="Complete Explore Kalimdor and Explore Eastern Kingdoms.",category="Exploration",points=100,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_type="ach_meta",criteria_ids={"explore_kalimdor","explore_eastern_kingdoms"}},
+  explore_world_explorer={id="explore_world_explorer",name="World Explorer",desc="Complete all major exploration achievements across Azeroth.",category="Exploration",points=250,icon="Interface\\Icons\\INV_Misc_Map_02",criteria_type="ach_meta",criteria_ids={"explore_kalimdor","explore_eastern_kingdoms","casual_explore_elwynn","casual_explore_barrens","explore_tw_balor","explore_tw_gilneas","explore_tw_northwind","explore_tw_lapidis","explore_tw_gillijim","explore_tw_scarlet_enclave","explore_tw_grim_reaches","explore_tw_telabim","explore_tw_hyjal","explore_tw_tirisfal_uplands"}},
 
   -- Turtle WoW: Unique zone-group exploration achievements
   explore_tw_balor={id="explore_tw_balor",name="Explorer of Balor",desc="Discover all 6 locations in Balor.",category="Exploration",points=25,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_key="balor",criteria_type="zone_group"},
@@ -374,8 +389,8 @@ local ACHIEVEMENTS = {
   casual_epic_mount={id="casual_epic_mount",name="Epic Mount",desc="Obtain an epic mount",category="Casual",points=25,icon="Interface\\Icons\\Ability_Mount_WhiteTiger"},
   casual_pet_collector={id="casual_pet_collector",name="Pet Collector",desc="Collect 10 vanity pets",category="Casual",points=15,icon="Interface\\Icons\\INV_Box_PetCarrier_01"},
   casual_pet_fanatic={id="casual_pet_fanatic",name="Pet Fanatic",desc="Collect 25 vanity pets",category="Casual",points=30,icon="Interface\\Icons\\INV_Box_PetCarrier_01"},
-  casual_explore_barrens={id="casual_explore_barrens",name="Barrens Explorer",desc="Explore all of The Barrens",category="Casual",points=5,icon="Interface\\Icons\\INV_Misc_Map_01"},
-  casual_explore_elwynn={id="casual_explore_elwynn",name="Elwynn Explorer",desc="Explore all of Elwynn Forest",category="Casual",points=5,icon="Interface\\Icons\\INV_Misc_Map_02"},
+  casual_explore_barrens={id="casual_explore_barrens",name="Barrens Explorer",desc="Discover all areas of The Barrens",category="Exploration",points=10,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_key="barrens",criteria_type="zone_group"},
+  casual_explore_elwynn={id="casual_explore_elwynn",name="Elwynn Explorer",desc="Discover all areas of Elwynn Forest",category="Exploration",points=10,icon="Interface\\Icons\\INV_Misc_Map_02",criteria_key="elwynn",criteria_type="zone_group"},
   casual_deaths_100={id="casual_deaths_100",name="Death's Door",desc="Die 100 times",category="Casual",points=5,icon="Interface\\Icons\\Spell_Shadow_DeathScream"},
   casual_hearthstone_use={id="casual_hearthstone_use",name="Frequent Traveler",desc="Use your hearthstone 50 times",category="Casual",points=10,icon="Interface\\Icons\\INV_Misc_Rune_01"},
   casual_fish_100={id="casual_fish_100",name="Angler",desc="Catch 100 fish",category="Casual",points=10,icon="Interface\\Icons\\Trade_Fishing"},
@@ -424,92 +439,95 @@ local ACHIEVEMENTS = {
 
 local TITLES = {
   -- Leveling Titles
-  {id="title_champion",name="Champion",achievement="lvl_60",prefix=false,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength"},
-  {id="title_elder",name="the Elder",achievement="lvl_60",prefix=false,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength"},
+  {id="title_champion",name="Champion",achievement="lvl_60",prefix=false,category="Leveling",icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength"},
+  {id="title_elder",name="the Elder",achievement="lvl_60",prefix=false,category="Leveling",icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength"},
   
   -- Molten Core Titles
-  {id="title_firelord",name="Firelord",achievement="raid_mc_ragnaros",prefix=false,icon="Interface\\Icons\\Spell_Fire_LavaSpawn"},
-  {id="title_flamewaker",name="Flamewaker",achievement="raid_mc_sulfuron",prefix=false,icon="Interface\\Icons\\Spell_Fire_FireArmor"},
-  {id="title_core_hound",name="Core Hound",achievement="raid_mc_magmadar",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
-  {id="title_molten_destroyer",name="Molten Destroyer",achievement="raid_mc_golemagg",prefix=false,icon="Interface\\Icons\\INV_Misc_MonsterScales_15"},
+  {id="title_firelord",name="Firelord",achievement="raid_mc_ragnaros",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_Fire_LavaSpawn"},
+  {id="title_flamewaker",name="Flamewaker",achievement="raid_mc_sulfuron",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_Fire_FireArmor"},
+  {id="title_core_hound",name="Core Hound",achievement="raid_mc_magmadar",prefix=false,category="Raids",icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
+  {id="title_molten_destroyer",name="Molten Destroyer",achievement="raid_mc_golemagg",prefix=false,category="Raids",icon="Interface\\Icons\\INV_Misc_MonsterScales_15"},
   
   -- Onyxia/Dragons
-  {id="title_dragonslayer",name="Dragonslayer",achievement="raid_onyxia",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
-  {id="title_dragon_hunter",name="Dragon Hunter",achievement="raid_onyxia",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
+  {id="title_dragonslayer",name="Dragonslayer",achievement="raid_onyxia",prefix=false,category="Raids",icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
+  {id="title_dragon_hunter",name="Dragon Hunter",achievement="raid_onyxia",prefix=false,category="Raids",icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
   
   -- Blackwing Lair Titles
-  {id="title_blackwing_slayer",name="Blackwing Slayer",achievement="raid_bwl_nefarian",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black"},
-  {id="title_dragonkin_slayer",name="Dragonkin Slayer",achievement="raid_bwl_razorgore",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black"},
-  {id="title_chromatic",name="the Chromatic",achievement="raid_bwl_chromaggus",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Bronze"},
-  {id="title_vaels_bane",name="Vael's Bane",achievement="raid_bwl_vaelastrasz",prefix=false,icon="Interface\\Icons\\Spell_Shadow_ShadowWordDominate"},
-  {id="title_broodlord_slayer",name="Broodlord Slayer",achievement="raid_bwl_broodlord",prefix=false,icon="Interface\\Icons\\INV_Bracer_18"},
+  {id="title_blackwing_slayer",name="Blackwing Slayer",achievement="raid_bwl_nefarian",prefix=false,category="Raids",icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black"},
+  {id="title_dragonkin_slayer",name="Dragonkin Slayer",achievement="raid_bwl_razorgore",prefix=false,category="Raids",icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black"},
+  {id="title_chromatic",name="the Chromatic",achievement="raid_bwl_chromaggus",prefix=false,category="Raids",icon="Interface\\Icons\\INV_Misc_Head_Dragon_Bronze"},
+  {id="title_vaels_bane",name="Vael's Bane",achievement="raid_bwl_vaelastrasz",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_Shadow_ShadowWordDominate"},
+  {id="title_broodlord_slayer",name="Broodlord Slayer",achievement="raid_bwl_broodlord",prefix=false,category="Raids",icon="Interface\\Icons\\INV_Bracer_18"},
   
   -- Zul'Gurub Titles
-  {id="title_zandalar",name="of Zandalar",achievement="raid_zg_hakkar",prefix=false,icon="Interface\\Icons\\Spell_Shadow_PainSpike"},
-  {id="title_bloodlord",name="Bloodlord",achievement="raid_zg_hakkar",prefix=false,icon="Interface\\Icons\\Spell_Shadow_PainSpike"},
-  {id="title_troll_slayer",name="Troll Slayer",achievement="raid_zg_thekal",prefix=false,icon="Interface\\Icons\\Ability_Druid_Mangle2"},
-  {id="title_snake_handler",name="Snake Handler",achievement="raid_zg_venoxis",prefix=false,icon="Interface\\Icons\\Spell_Nature_NullifyPoison"},
+  {id="title_zandalar",name="of Zandalar",achievement="raid_zg_hakkar",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_Shadow_PainSpike"},
+  {id="title_bloodlord",name="Bloodlord",achievement="raid_zg_hakkar",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_Shadow_PainSpike"},
+  {id="title_troll_slayer",name="Troll Slayer",achievement="raid_zg_thekal",prefix=false,category="Raids",icon="Interface\\Icons\\Ability_Druid_Mangle2"},
+  {id="title_snake_handler",name="Snake Handler",achievement="raid_zg_venoxis",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_Nature_NullifyPoison"},
   
   -- AQ20 Titles
-  {id="title_silithid_slayer",name="Silithid Slayer",achievement="raid_aq20_ossirian",prefix=false,icon="Interface\\Icons\\INV_Qiraj_JewelGlowing"},
-  {id="title_scarab_hunter",name="Scarab Hunter",achievement="raid_aq20_kurinnaxx",prefix=false,icon="Interface\\Icons\\INV_Qiraj_JewelBlessed"},
+  {id="title_silithid_slayer",name="Silithid Slayer",achievement="raid_aq20_ossirian",prefix=false,category="Raids",icon="Interface\\Icons\\INV_Qiraj_JewelGlowing"},
+  {id="title_scarab_hunter",name="Scarab Hunter",achievement="raid_aq20_kurinnaxx",prefix=false,category="Raids",icon="Interface\\Icons\\INV_Qiraj_JewelBlessed"},
   
   -- AQ40 Titles
-  {id="title_scarab_lord",name="Scarab Lord",achievement="raid_aq40_cthun",prefix=false,icon="Interface\\Icons\\Spell_Shadow_Charm"},
-  {id="title_qiraji_slayer",name="Qiraji Slayer",achievement="raid_aq40_cthun",prefix=false,icon="Interface\\Icons\\Spell_Shadow_Charm"},
-  {id="title_bug_squasher",name="Bug Squasher",achievement="raid_aq40_bug_trio",prefix=false,icon="Interface\\Icons\\INV_Misc_AhnQirajTrinket_02"},
-  {id="title_twin_emperor",name="Twin Emperor",achievement="raid_aq40_twins",prefix=false,icon="Interface\\Icons\\INV_Jewelry_Ring_AhnQiraj_04"},
-  {id="title_viscidus_slayer",name="Viscidus Slayer",achievement="raid_aq40_viscidus",prefix=false,icon="Interface\\Icons\\Spell_Nature_Acid_01"},
-  {id="title_the_prophet",name="the Prophet",achievement="raid_aq40_skeram",prefix=false,icon="Interface\\Icons\\Spell_Shadow_MindSteal"},
+  {id="title_scarab_lord",name="Scarab Lord",achievement="raid_aq40_cthun",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_Shadow_Charm"},
+  {id="title_qiraji_slayer",name="Qiraji Slayer",achievement="raid_aq40_cthun",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_Shadow_Charm"},
+  {id="title_bug_squasher",name="Bug Squasher",achievement="raid_aq40_bug_trio",prefix=false,category="Raids",icon="Interface\\Icons\\INV_Misc_AhnQirajTrinket_02"},
+  {id="title_twin_emperor",name="Twin Emperor",achievement="raid_aq40_twins",prefix=false,category="Raids",icon="Interface\\Icons\\INV_Jewelry_Ring_AhnQiraj_04"},
+  {id="title_viscidus_slayer",name="Viscidus Slayer",achievement="raid_aq40_viscidus",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_Nature_Acid_01"},
+  {id="title_the_prophet",name="the Prophet",achievement="raid_aq40_skeram",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_Shadow_MindSteal"},
   
   -- Naxxramas Titles
-  {id="title_death_demise",name="of the Ashen Verdict",achievement="raid_naxx_kelthuzad",prefix=false,icon="Interface\\Icons\\Spell_Shadow_SoulGem"},
-  {id="title_lich_hunter",name="Lich Hunter",achievement="raid_naxx_kelthuzad",prefix=false,icon="Interface\\Icons\\Spell_Shadow_SoulGem"},
-  {id="title_plaguebearer",name="Plaguebearer",achievement="raid_naxx_loatheb",prefix=false,icon="Interface\\Icons\\Spell_Shadow_CallofBone"},
-  {id="title_spore_bane",name="Spore Bane",achievement="raid_naxx_loatheb",prefix=false,icon="Interface\\Icons\\Spell_Shadow_CallofBone"},
-  {id="title_frost_wyrm",name="Frost Wyrm Slayer",achievement="raid_naxx_sapphiron",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Blue"},
-  {id="title_arachnid_slayer",name="Arachnid Slayer",achievement="raid_naxx_maexxna",prefix=false,icon="Interface\\Icons\\INV_Misc_MonsterSpiderCarapace_01"},
-  {id="title_four_horsemen",name="of the Four Horsemen",achievement="raid_naxx_four_horsemen",prefix=false,icon="Interface\\Icons\\Spell_DeathKnight_ClassIcon"},
-  {id="title_death_knight",name="Death Knight",achievement="raid_naxx_four_horsemen",prefix=false,icon="Interface\\Icons\\Spell_DeathKnight_ClassIcon"},
+  {id="title_death_demise",name="of the Ashen Verdict",achievement="raid_naxx_kelthuzad",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_Shadow_SoulGem"},
+  {id="title_lich_hunter",name="Lich Hunter",achievement="raid_naxx_kelthuzad",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_Shadow_SoulGem"},
+  {id="title_plaguebearer",name="Plaguebearer",achievement="raid_naxx_loatheb",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_Shadow_CallofBone"},
+  {id="title_spore_bane",name="Spore Bane",achievement="raid_naxx_loatheb",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_Shadow_CallofBone"},
+  {id="title_frost_wyrm",name="Frost Wyrm Slayer",achievement="raid_naxx_sapphiron",prefix=false,category="Raids",icon="Interface\\Icons\\INV_Misc_Head_Dragon_Blue"},
+  {id="title_arachnid_slayer",name="Arachnid Slayer",achievement="raid_naxx_maexxna",prefix=false,category="Raids",icon="Interface\\Icons\\INV_Misc_MonsterSpiderCarapace_01"},
+  {id="title_four_horsemen",name="of the Four Horsemen",achievement="raid_naxx_four_horsemen",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_DeathKnight_ClassIcon"},
+  {id="title_death_knight",name="Death Knight",achievement="raid_naxx_four_horsemen",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_DeathKnight_ClassIcon"},
   
   -- Elite Achievement Titles
-  {id="title_ironman",name="the Ironman",achievement="elite_ironman",prefix=false,icon="Interface\\Icons\\INV_Helmet_74"},
+  {id="title_ironman",name="the Ironman",achievement="elite_ironman",prefix=false,category="Elite",icon="Interface\\Icons\\INV_Helmet_74"},
   
   -- PvP Titles
-  {id="title_warlord",name="Warlord",achievement="pvp_hk_5000",prefix=true,icon="Interface\\Icons\\INV_Sword_62"},
-  {id="title_grand_marshal",name="Grand Marshal",achievement="elite_pvp_rank_14",prefix=true,icon="Interface\\Icons\\INV_Sword_39"},
-  {id="title_bloodthirsty",name="the Bloodthirsty",achievement="pvp_hk_10000",prefix=false,icon="Interface\\Icons\\Spell_Shadow_BloodBoil"},
-  {id="title_arena_master",name="Arena Master",achievement="pvp_duel_100",prefix=false,icon="Interface\\Icons\\INV_Sword_62"},
-  {id="title_gladiator",name="Gladiator",achievement="pvp_hk_1000",prefix=false,icon="Interface\\Icons\\INV_Sword_48"},
-  {id="title_duelist",name="the Duelist",achievement="pvp_duel_50",prefix=false,icon="Interface\\Icons\\INV_Sword_39"},
-  {id="title_high_warlord",name="High Warlord",achievement="pvp_hk_10000",prefix=true,icon="Interface\\Icons\\INV_Sword_39"},
+  {id="title_warlord",name="Warlord",achievement="pvp_hk_5000",prefix=true,category="PvP",icon="Interface\\Icons\\INV_Sword_62"},
+  {id="title_grand_marshal",name="Grand Marshal",achievement="elite_pvp_rank_14",prefix=true,category="PvP",icon="Interface\\Icons\\INV_Sword_39"},
+  {id="title_bloodthirsty",name="the Bloodthirsty",achievement="pvp_hk_10000",prefix=false,category="PvP",icon="Interface\\Icons\\Spell_Shadow_BloodBoil"},
+  {id="title_arena_master",name="Arena Master",achievement="pvp_duel_100",prefix=false,category="PvP",icon="Interface\\Icons\\INV_Sword_62"},
+  {id="title_gladiator",name="Gladiator",achievement="pvp_hk_1000",prefix=false,category="PvP",icon="Interface\\Icons\\INV_Sword_48"},
+  {id="title_duelist",name="the Duelist",achievement="pvp_duel_50",prefix=false,category="PvP",icon="Interface\\Icons\\INV_Sword_39"},
+  {id="title_high_warlord",name="High Warlord",achievement="pvp_hk_10000",prefix=true,category="PvP",icon="Interface\\Icons\\INV_Sword_39"},
   
   -- Profession Titles
-  {id="title_master_alchemist",name="Master Alchemist",achievement="prof_alchemy_300",prefix=false,icon="Interface\\Icons\\Trade_Alchemy"},
-  {id="title_master_blacksmith",name="Master Blacksmith",achievement="prof_blacksmithing_300",prefix=false,icon="Interface\\Icons\\Trade_BlackSmithing"},
-  {id="title_master_enchanter",name="Master Enchanter",achievement="prof_enchanting_300",prefix=false,icon="Interface\\Icons\\Trade_Engraving"},
-  {id="title_master_engineer",name="Master Engineer",achievement="prof_engineering_300",prefix=false,icon="Interface\\Icons\\Trade_Engineering"},
-  {id="title_artisan",name="the Artisan",achievement="prof_dual_artisan",prefix=false,icon="Interface\\Icons\\INV_Misc_Note_06"},
+  {id="title_master_alchemist",name="Master Alchemist",achievement="prof_alchemy_300",prefix=false,category="Professions",icon="Interface\\Icons\\Trade_Alchemy"},
+  {id="title_master_blacksmith",name="Master Blacksmith",achievement="prof_blacksmithing_300",prefix=false,category="Professions",icon="Interface\\Icons\\Trade_BlackSmithing"},
+  {id="title_master_enchanter",name="Master Enchanter",achievement="prof_enchanting_300",prefix=false,category="Professions",icon="Interface\\Icons\\Trade_Engraving"},
+  {id="title_master_engineer",name="Master Engineer",achievement="prof_engineering_300",prefix=false,category="Professions",icon="Interface\\Icons\\Trade_Engineering"},
+  {id="title_artisan",name="the Artisan",achievement="prof_dual_artisan",prefix=false,category="Professions",icon="Interface\\Icons\\INV_Misc_Note_06"},
+  
+  -- Exploration Titles
+  {id="title_explorer",name="the Explorer",achievement="explore_wanderer",prefix=false,category="Exploration",icon="Interface\\Icons\\INV_Misc_Map_01"},
+  {id="title_world_explorer",name="the World Explorer",achievement="explore_world_explorer",prefix=false,category="Exploration",icon="Interface\\Icons\\INV_Misc_Map_02"},
   
   -- Casual Titles
-  {id="title_explorer",name="the Explorer",achievement="explore_kalimdor",prefix=false,icon="Interface\\Icons\\INV_Misc_Map_01"},
-  {id="title_loremaster",name="Loremaster",achievement="casual_quest_1000",prefix=false,icon="Interface\\Icons\\INV_Misc_Book_09"},
-  {id="title_angler",name="the Master Angler",achievement="casual_fish_1000",prefix=false,icon="Interface\\Icons\\Trade_Fishing"},
-  {id="title_pet_collector",name="the Pet Collector",achievement="casual_pet_fanatic",prefix=false,icon="Interface\\Icons\\INV_Box_PetCarrier_01"},
-  {id="title_banker",name="the Banker",achievement="gold_5000",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_17"},
-  {id="title_death_prone",name="Death-Prone",achievement="casual_deaths_100",prefix=false,icon="Interface\\Icons\\Spell_Shadow_DeathScream"},
-  {id="title_clumsy",name="the Clumsy",achievement="casual_fall_death",prefix=false,icon="Interface\\Icons\\Ability_Rogue_FeintedStrike"},
+  {id="title_loremaster",name="Loremaster",achievement="casual_quest_1000",prefix=false,category="Casual",icon="Interface\\Icons\\INV_Misc_Book_09"},
+  {id="title_angler",name="the Master Angler",achievement="casual_fish_1000",prefix=false,category="Casual",icon="Interface\\Icons\\Trade_Fishing"},
+  {id="title_pet_collector",name="the Pet Collector",achievement="casual_pet_fanatic",prefix=false,category="Casual",icon="Interface\\Icons\\INV_Box_PetCarrier_01"},
+  {id="title_banker",name="the Banker",achievement="gold_5000",prefix=false,category="Casual",icon="Interface\\Icons\\INV_Misc_Coin_17"},
+  {id="title_death_prone",name="Death-Prone",achievement="casual_deaths_100",prefix=false,category="Casual",icon="Interface\\Icons\\Spell_Shadow_DeathScream"},
+  {id="title_clumsy",name="the Clumsy",achievement="casual_fall_death",prefix=false,category="Casual",icon="Interface\\Icons\\Ability_Rogue_FeintedStrike"},
   
   -- Gold Titles
-  {id="title_wealthy",name="the Wealthy",achievement="gold_1000",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_06"},
-  {id="title_fortune_builder",name="Fortune Builder",achievement="gold_5000",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_17"},
-  {id="title_tycoon",name="the Tycoon",achievement="gold_5000",prefix=false,icon="Interface\\Icons\\INV_Misc_Coin_17"},
+  {id="title_wealthy",name="the Wealthy",achievement="gold_1000",prefix=false,category="Gold",icon="Interface\\Icons\\INV_Misc_Coin_06"},
+  {id="title_fortune_builder",name="Fortune Builder",achievement="gold_5000",prefix=false,category="Gold",icon="Interface\\Icons\\INV_Misc_Coin_17"},
+  {id="title_tycoon",name="the Tycoon",achievement="gold_5000",prefix=false,category="Gold",icon="Interface\\Icons\\INV_Misc_Coin_17"},
   
   -- Dungeon Titles (updated to new completion IDs)
-  {id="title_dungeoneer",name="the Dungeoneer",achievement="dung_ubrs_complete",prefix=false,icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
-  {id="title_undead_slayer",name="Undead Slayer",achievement="dung_strat_complete",prefix=false,icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
-  {id="title_shadow_hunter",name="Shadow Hunter",achievement="dung_scholo_complete",prefix=false,icon="Interface\\Icons\\Spell_Shadow_Charm"},
-  {id="title_dungeon_master",name="Dungeon Master",achievement="dung_dmn_complete",prefix=false,icon="Interface\\Icons\\INV_Misc_Key_14"},
+  {id="title_dungeoneer",name="the Dungeoneer",achievement="dung_ubrs_complete",prefix=false,category="Dungeons",icon="Interface\\Icons\\INV_Misc_Head_Dragon_01"},
+  {id="title_undead_slayer",name="Undead Slayer",achievement="dung_strat_complete",prefix=false,category="Dungeons",icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
+  {id="title_shadow_hunter",name="Shadow Hunter",achievement="dung_scholo_complete",prefix=false,category="Dungeons",icon="Interface\\Icons\\Spell_Shadow_Charm"},
+  {id="title_dungeon_master",name="Dungeon Master",achievement="dung_dmn_complete",prefix=false,category="Dungeons",icon="Interface\\Icons\\INV_Misc_Key_14"},
 }
 
 -- ==========================================
@@ -837,6 +855,16 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   casual_loot_5000 = {counter="loots", goal=5000},
   -- Trades tracked via TRADE_CLOSED
   casual_trade_10 = {counter="trades", goal=10},
+  -- Generic kill milestones tracked via COMBAT_TEXT_UPDATE (KILLING_BLOW)
+  kill_01    = {counter="genericKills", goal=1},
+  kill_05    = {counter="genericKills", goal=5},
+  kill_10    = {counter="genericKills", goal=10},
+  kill_50    = {counter="genericKills", goal=50},
+  kill_100   = {counter="genericKills", goal=100},
+  kill_200   = {counter="genericKills", goal=200},
+  kill_500   = {counter="genericKills", goal=500},
+  kill_1000  = {counter="genericKills", goal=1000},
+  kill_10000 = {counter="genericKills", goal=10000},
 }
 
 -- Returns {current, goal} or nil if no progress data exists for this achievement.
@@ -1195,6 +1223,24 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
     LeafVE_AchTest.UI:Refresh()
   end
   
+  -- Check if any ach_meta achievements are now fulfilled
+  for metaId, metaData in pairs(ACHIEVEMENTS) do
+    if metaData.criteria_type == "ach_meta" and metaData.criteria_ids then
+      if not self:HasAchievement(me, metaId) then
+        local allDone = true
+        for _, reqId in ipairs(metaData.criteria_ids) do
+          if not self:HasAchievement(me, reqId) then
+            allDone = false
+            break
+          end
+        end
+        if allDone then
+          self:AwardAchievement(metaId, false)
+        end
+      end
+    end
+  end
+
   -- Notify LeafLegends to refresh if it's open
   if LeafVE and LeafVE.UI and LeafVE.UI.ShowPlayerCard and LeafVE.UI.cardCurrentPlayer then
     LeafVE.UI:ShowPlayerCard(LeafVE.UI.cardCurrentPlayer)
@@ -1839,6 +1885,22 @@ local function CreateAchievementRow(parent)
       end
       GameTooltip:AddLine(string.format("Progress: %d / %d quests", done, total), 1.0, 0.82, 0.2)
     end
+    -- ── Achievement meta criteria ─────────────────────────────────────────
+    if ad.criteria_type == "ach_meta" and ad.criteria_ids then
+      local done, total = 0, table.getn(ad.criteria_ids)
+      GameTooltip:AddLine(" ", 1, 1, 1)
+      for _, reqId in ipairs(ad.criteria_ids) do
+        local reqAch = ACHIEVEMENTS[reqId]
+        local reqName = reqAch and reqAch.name or reqId
+        if LeafVE_AchTest:HasAchievement(me, reqId) then
+          done = done + 1
+          GameTooltip:AddLine("|cFF00CC00[x]|r "..reqName, 0.9, 0.9, 0.9)
+        else
+          GameTooltip:AddLine("|cFF666666[ ]|r "..reqName, 0.5, 0.5, 0.5)
+        end
+      end
+      GameTooltip:AddLine(string.format("Criteria: %d / %d achievements", done, total), 1.0, 0.82, 0.2)
+    end
     GameTooltip:Show()
   end)
   frame:SetScript("OnLeave", function()
@@ -2112,29 +2174,73 @@ function LeafVE_AchTest.UI:Build()
   titleClearBtn:Hide()
   self.titleClearBtn = titleClearBtn
 
-  local titleAllBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-  titleAllBtn:SetPoint("LEFT", titleClearBtn, "RIGHT", 10, 0)
-  titleAllBtn:SetWidth(50)
-  titleAllBtn:SetHeight(25)
-  titleAllBtn:SetText("All")
-  titleAllBtn:SetScript("OnClick", function()
-    LeafVE_AchTest.UI.titleCategoryFilter = "All"
-    LeafVE_AchTest.UI:Refresh()
-  end)
-  titleAllBtn:Hide()
-  self.titleAllBtn = titleAllBtn
+  -- ── Left sidebar for title category navigation (same layout as achievement sidebar) ──
+  local titleSidebarFrame = CreateFrame("Frame", nil, f)
+  titleSidebarFrame:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -110)
+  titleSidebarFrame:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 8, 10)
+  titleSidebarFrame:SetWidth(130)
+  titleSidebarFrame:SetBackdrop({
+    bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true, tileSize = 16, edgeSize = 8,
+    insets = {left=2, right=2, top=2, bottom=2},
+  })
+  titleSidebarFrame:SetBackdropColor(0.07, 0.07, 0.08, 0.92)
+  titleSidebarFrame:SetBackdropBorderColor(0.28, 0.28, 0.30, 0.8)
+  titleSidebarFrame:Hide()
+  self.titleSidebarFrame = titleSidebarFrame
 
-  local titleObtainedBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-  titleObtainedBtn:SetPoint("LEFT", titleAllBtn, "RIGHT", 5, 0)
-  titleObtainedBtn:SetWidth(80)
-  titleObtainedBtn:SetHeight(25)
-  titleObtainedBtn:SetText("Obtained")
-  titleObtainedBtn:SetScript("OnClick", function()
-    LeafVE_AchTest.UI.titleCategoryFilter = "Obtained"
-    LeafVE_AchTest.UI:Refresh()
-  end)
-  titleObtainedBtn:Hide()
-  self.titleObtainedBtn = titleObtainedBtn
+  local TITLE_SIDEBAR_CATS = {
+    {display="All",          filter="All"},
+    {display="Obtained",     filter="Obtained"},
+    {display="Leveling",     filter="Leveling"},
+    {display="Raids",        filter="Raids"},
+    {display="Dungeons",     filter="Dungeons"},
+    {display="PvP",          filter="PvP"},
+    {display="Professions",  filter="Professions"},
+    {display="Elite",        filter="Elite"},
+    {display="Gold",         filter="Gold"},
+    {display="Exploration",  filter="Exploration"},
+    {display="Casual",       filter="Casual"},
+    {display="Quests",       filter="Quests"},
+  }
+  self.titleCategoryButtons = {}
+  for i, cat in ipairs(TITLE_SIDEBAR_CATS) do
+    local filterVal = cat.filter
+    local btn = CreateFrame("Frame", nil, titleSidebarFrame)
+    btn:SetPoint("TOPLEFT", titleSidebarFrame, "TOPLEFT", 4, -(i-1)*27 - 4)
+    btn:SetWidth(122)
+    btn:SetHeight(24)
+    btn:EnableMouse(true)
+    btn:SetBackdrop({
+      bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+      tile = true, tileSize = 8,
+      insets = {left=2, right=2, top=2, bottom=2},
+    })
+    btn:SetBackdropColor(0, 0, 0, 0)
+    local lbl = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    lbl:SetAllPoints(btn)
+    lbl:SetJustifyH("CENTER")
+    lbl:SetText(cat.display)
+    lbl:SetTextColor(0.8, 0.8, 0.8)
+    btn.label = lbl
+    btn.filterValue = filterVal
+    btn:SetScript("OnMouseDown", function()
+      LeafVE_AchTest.UI.titleCategoryFilter = this.filterValue
+      LeafVE_AchTest.UI:Refresh()
+    end)
+    btn:SetScript("OnEnter", function()
+      if this.filterValue ~= LeafVE_AchTest.UI.titleCategoryFilter then
+        this:SetBackdropColor(0.15, 0.15, 0.18, 0.6)
+      end
+    end)
+    btn:SetScript("OnLeave", function()
+      if this.filterValue ~= LeafVE_AchTest.UI.titleCategoryFilter then
+        this:SetBackdropColor(0, 0, 0, 0)
+      end
+    end)
+    table.insert(self.titleCategoryButtons, btn)
+  end
   
   local scrollFrame = CreateFrame("ScrollFrame", nil, f)
   scrollFrame:SetPoint("TOPLEFT", f, "TOPLEFT", 148, -145)
@@ -2231,10 +2337,9 @@ function LeafVE_AchTest.UI:Refresh()
     if self.titleSearchLabel then self.titleSearchLabel:Hide() end
     if self.titleSearchBox then self.titleSearchBox:Hide() end
     if self.titleClearBtn then self.titleClearBtn:Hide() end
-    if self.titleAllBtn then self.titleAllBtn:Hide() end
-    if self.titleObtainedBtn then self.titleObtainedBtn:Hide() end
-    -- Show sidebar and highlight selected category button
+    -- Show achievement sidebar, hide title sidebar
     if self.sidebarFrame then self.sidebarFrame:Show() end
+    if self.titleSidebarFrame then self.titleSidebarFrame:Hide() end
     if self.categoryButtons then
       for _, btn in ipairs(self.categoryButtons) do
         if btn.filterValue == self.selectedCategory then
@@ -2257,9 +2362,20 @@ function LeafVE_AchTest.UI:Refresh()
     if self.titleSearchLabel then self.titleSearchLabel:Show() end
     if self.titleSearchBox then self.titleSearchBox:Show() end
     if self.titleClearBtn then self.titleClearBtn:Show() end
-    if self.titleAllBtn then self.titleAllBtn:Show() end
-    if self.titleObtainedBtn then self.titleObtainedBtn:Show() end
+    -- Show title sidebar, hide achievement sidebar
     if self.sidebarFrame then self.sidebarFrame:Hide() end
+    if self.titleSidebarFrame then self.titleSidebarFrame:Show() end
+    if self.titleCategoryButtons then
+      for _, btn in ipairs(self.titleCategoryButtons) do
+        if btn.filterValue == self.titleCategoryFilter then
+          btn:SetBackdropColor(0.12, 0.50, 0.20, 0.55)
+          btn.label:SetTextColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3])
+        else
+          btn:SetBackdropColor(0, 0, 0, 0)
+          btn.label:SetTextColor(0.8, 0.8, 0.8)
+        end
+      end
+    end
     self:RefreshTitles()
   end
   
@@ -2410,8 +2526,11 @@ function LeafVE_AchTest.UI:RefreshTitles()
     
     if matchesSearch then
       local matchesCategory = true
-      if self.titleCategoryFilter == "Obtained" then
+      local cat = self.titleCategoryFilter or "All"
+      if cat == "Obtained" then
         matchesCategory = LeafVE_AchTest:HasAchievement(me, titleData.achievement)
+      elseif cat ~= "All" then
+        matchesCategory = (titleData.category == cat)
       end
       if matchesCategory then
         table.insert(filteredTitles, titleData)
@@ -2442,27 +2561,21 @@ function LeafVE_AchTest.UI:RefreshTitles()
       frame.icon = icon
       local name = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
       name:SetPoint("LEFT", icon, "RIGHT", 10, 8)
-      name:SetWidth(330)
+      name:SetWidth(430)
       name:SetJustifyH("LEFT")
       frame.name = name
       local requirement = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
       requirement:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -3)
-      requirement:SetWidth(330)
+      requirement:SetWidth(430)
       requirement:SetJustifyH("LEFT")
       frame.requirement = requirement
-      local prefixBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-      prefixBtn:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -70, -12)
-      prefixBtn:SetWidth(60)
-      prefixBtn:SetHeight(20)
-      prefixBtn:SetText("Prefix")
-      frame.prefixBtn = prefixBtn
-      local suffixBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-      suffixBtn:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -5, -12)
-      suffixBtn:SetWidth(60)
-      suffixBtn:SetHeight(20)
-      suffixBtn:SetText("Suffix")
-      frame.suffixBtn = suffixBtn
-      -- Tooltip — same style as Badge tooltip
+      local equipBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+      equipBtn:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -5, -12)
+      equipBtn:SetWidth(70)
+      equipBtn:SetHeight(24)
+      equipBtn:SetText("Equip")
+      frame.equipBtn = equipBtn
+      -- Tooltip
       frame:EnableMouse(true)
       frame:SetScript("OnEnter", function()
         if not this.titleData then return end
@@ -2508,16 +2621,11 @@ function LeafVE_AchTest.UI:RefreshTitles()
       frame.name:SetTextColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3])
       frame.requirement:SetText("From: "..(achData and achData.name or "Unknown"))
       frame.requirement:SetTextColor(0.9, 0.9, 0.9)
-      frame.prefixBtn:Enable()
-      frame.suffixBtn:Enable()
-      frame.prefixBtn.titleID = titleData.id
-      frame.prefixBtn:SetScript("OnClick", function()
-        LeafVE_AchTest:SetTitle(me, this.titleID, true)
-        LeafVE_AchTest.UI:Refresh()
-      end)
-      frame.suffixBtn.titleID = titleData.id
-      frame.suffixBtn:SetScript("OnClick", function()
-        LeafVE_AchTest:SetTitle(me, this.titleID, false)
+      frame.equipBtn:Enable()
+      frame.equipBtn.titleID = titleData.id
+      frame.equipBtn.titlePrefix = titleData.prefix
+      frame.equipBtn:SetScript("OnClick", function()
+        LeafVE_AchTest:SetTitle(me, this.titleID, this.titlePrefix)
         LeafVE_AchTest.UI:Refresh()
       end)
     else
@@ -2528,8 +2636,7 @@ function LeafVE_AchTest.UI:RefreshTitles()
       frame.name:SetTextColor(0.5, 0.5, 0.5)
       frame.requirement:SetText("Requires: "..(achData and achData.name or "Unknown"))
       frame.requirement:SetTextColor(0.6, 0.4, 0.4)
-      frame.prefixBtn:Disable()
-      frame.suffixBtn:Disable()
+      frame.equipBtn:Disable()
     end
     frame:Show()
     yOffset = yOffset + 60
@@ -2989,25 +3096,37 @@ end)
 Print("Minimap button loaded!")
 
 -- ---------------------------------------------------------------------------
--- Zone discovery tracking for Turtle WoW exploration achievements
+-- Zone discovery tracking for exploration achievements
+-- Records both the major zone name (GetZoneText) and the subzone name
+-- (GetSubZoneText) so that both continent-level (Kalimdor/Eastern Kingdoms)
+-- and fine-grained (Elwynn Forest/Barrens) tracking work correctly.
 -- ---------------------------------------------------------------------------
 local zoneDiscFrame = CreateFrame("Frame")
 zoneDiscFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 zoneDiscFrame:SetScript("OnEvent", function()
   if event ~= "ZONE_CHANGED_NEW_AREA" then return end
-  local subzone = GetSubZoneText and GetSubZoneText() or ""
-  if subzone == "" then return end
   local me = ShortName(UnitName("player"))
   if not me then return end
   EnsureDB()
   if not LeafVE_AchTest_DB.exploredZones[me] then
     LeafVE_AchTest_DB.exploredZones[me] = {}
   end
-  if LeafVE_AchTest_DB.exploredZones[me][subzone] then return end
-  LeafVE_AchTest_DB.exploredZones[me][subzone] = true
-  -- Check every zone-group achievement whose zones include this subzone
+  local zoneName  = GetZoneText and GetZoneText() or ""
+  local subzone   = GetSubZoneText and GetSubZoneText() or ""
+  -- Record new zone/subzone names and re-check all zone-group achievements
+  local anyNew = false
+  if zoneName ~= "" and not LeafVE_AchTest_DB.exploredZones[me][zoneName] then
+    LeafVE_AchTest_DB.exploredZones[me][zoneName] = true
+    anyNew = true
+  end
+  if subzone ~= "" and not LeafVE_AchTest_DB.exploredZones[me][subzone] then
+    LeafVE_AchTest_DB.exploredZones[me][subzone] = true
+    anyNew = true
+  end
+  if not anyNew then return end
+  -- Check every zone-group achievement
   for groupKey, zones in pairs(ZONE_GROUP_ZONES) do
-    local achId = "explore_tw_"..groupKey
+    local achId = ZONE_GROUP_ACH[groupKey] or ("explore_tw_"..groupKey)
     if not LeafVE_AchTest:HasAchievement(me, achId) then
       local allFound = true
       for _, z in ipairs(zones) do
