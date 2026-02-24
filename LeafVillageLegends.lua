@@ -995,7 +995,6 @@ end
 
 function LeafVE:GetGroupGuildies()
   if not InGuild() then return {} end
-  local myGuild = GetGuildInfo("player")  -- may be nil early in the session
   self:UpdateGuildRosterCache()
   local guildies = {} local numMembers = GetNumRaidMembers() local isRaid = numMembers > 0
   if not isRaid then numMembers = GetNumPartyMembers() end
@@ -1003,10 +1002,7 @@ function LeafVE:GetGroupGuildies()
   for i = 1, numMembers do
     local unit = isRaid and "raid"..i or "party"..i
     if UnitExists(unit) then local name = UnitName(unit) name = ShortName(name)
-      local unitGuild = GetGuildInfo(unit)
-      local isGuildie = (myGuild and unitGuild and unitGuild == myGuild)
-        or self:IsKnownGuildie(name)
-      if name and isGuildie then table.insert(guildies, name) end
+      if name and self:IsKnownGuildie(name) then table.insert(guildies, name) end
     end
   end
   return guildies
@@ -1269,6 +1265,12 @@ function LeafVE:OnQuestTurnedIn()
   local me = ShortName(UnitName("player"))
   if not me then return end
   if not InGuild() then return end
+  -- Only award quest points when grouped with at least one guild member
+  local guildies = self:GetGroupGuildies()
+  if table.getn(guildies) == 0 then
+    self:CacheQuestLog()
+    return
+  end
   EnsureDB()
   local today = DayKey()
 
@@ -1328,7 +1330,6 @@ function LeafVE:TickProximityPoints(dt)
   local numRaid = GetNumRaidMembers()
   local numParty = GetNumPartyMembers()
   if numRaid > 0 or numParty > 0 then
-    local myGuild = GetGuildInfo("player")
     local px, py = GetPlayerMapPosition("player")
     if px and py and px ~= 0 then
       local total = numRaid > 0 and numRaid or numParty
@@ -1337,9 +1338,7 @@ function LeafVE:TickProximityPoints(dt)
         local unit = unitPrefix..i
         if UnitExists(unit) then
           local unitName = ShortName(UnitName(unit))
-          local unitGuild = GetGuildInfo(unit)
-          local isGuildie = (myGuild and unitGuild and unitGuild == myGuild) or self:IsKnownGuildie(unitName)
-          if isGuildie then
+          if self:IsKnownGuildie(unitName) then
             local ux, uy = GetPlayerMapPosition(unit)
             if ux and uy and ux ~= 0 then
               local dx, dy = px - ux, py - uy
@@ -1393,9 +1392,6 @@ function LeafVE:TickProximityPoints(dt)
     LeafVE_DB.proximityTracking[me].ticks = (LeafVE_DB.proximityTracking[me].ticks or 0) + 1
     Print(string.format("Proximity tick! +%d G for %d min active with guildmates", proxPts, math.floor(proxInterval / 60)))
   end
-
-  -- Also check for quest area trigger proximity (pfDB integration)
-  self:CheckAreaTriggerQuest()
 end
 
 function LeafVE:GiveShoutout(targetName, reason)
