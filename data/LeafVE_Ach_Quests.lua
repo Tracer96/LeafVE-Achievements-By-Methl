@@ -287,7 +287,8 @@ local function RegisterQuestChainAchievements()
         id          = chain.title.id,
         name        = chain.title.name,
         achievement = chain.id,
-        prefix      = chain.title.prefix,
+        prefix      = false,
+        category    = "Quests",
         icon        = chain.icon,
       })
     end

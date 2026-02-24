@@ -28,6 +28,7 @@ local PROF_STEPS = {
   {value=125, title="Adept",      points=8},
   {value=150, title="Journeyman", points=10},
   {value=225, title="Expert",     points=15},
+  {value=300, title="Artisan",    points=25},
 }
 
 local WEAPONS = {
@@ -89,7 +90,7 @@ end
 -- Called on CHAT_MSG_SKILL (every skill-up) and on ADDON_LOADED
 -- (backlog check).
 -- ============================================================
-local PROF_MILESTONES = {75, 125, 150, 225}
+local PROF_MILESTONES = {75, 125, 150, 225, 300}
 local WEAPON_MILESTONES = {300}
 
 -- Maps display name -> canonical id prefix for professions
@@ -133,8 +134,9 @@ end
 -- Event Handler
 -- ============================================================
 local skillFrame = CreateFrame("Frame")
-skillFrame:RegisterEvent("CHAT_MSG_SKILL")    -- fires on every skill-up
-skillFrame:RegisterEvent("ADDON_LOADED")       -- backlog check on load
+skillFrame:RegisterEvent("CHAT_MSG_SKILL")        -- fires on every skill-up
+skillFrame:RegisterEvent("SKILL_LINES_CHANGED")   -- fires when skill list updates
+skillFrame:RegisterEvent("ADDON_LOADED")           -- backlog check on load
 skillFrame:RegisterEvent("PLAYER_ENTERING_WORLD") -- initial scan on login/reload
 
 skillFrame:SetScript("OnEvent", function()
@@ -143,7 +145,7 @@ skillFrame:SetScript("OnEvent", function()
       RegisterSkillAchievements()
     end
     CheckSkillMilestones()
-  elseif event == "CHAT_MSG_SKILL" or event == "PLAYER_ENTERING_WORLD" then
+  elseif event == "CHAT_MSG_SKILL" or event == "SKILL_LINES_CHANGED" or event == "PLAYER_ENTERING_WORLD" then
     CheckSkillMilestones()
   end
 end)
