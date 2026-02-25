@@ -40,6 +40,7 @@ local INSTANCE_MAX_DAILY = 20
 local QUEST_POINTS = 1
 local QUEST_MAX_DAILY = 10
 local AREA_TRIGGER_THRESHOLD = 0.03  -- ~3% of map width, ~60-90 yards
+local BOSS_TARGET_WINDOW = 30        -- seconds; "X dies." counts if boss was targeted within this window
 local PROXIMITY_TICK_POINTS = 1
 local PROXIMITY_TICK_INTERVAL = 900   -- 15 minutes in seconds
 local PROXIMITY_COMBAT_WINDOW = 600   -- combat counts as active for 10 min after last event
@@ -193,6 +194,7 @@ LeafVE.instanceZone = nil
 LeafVE.instanceHasGuildie = false
 LeafVE.instanceBossesKilledThisRun = 0
 LeafVE.lastCombatAt = 0
+LeafVE.recentTargets = {}  -- lowercase name -> last-targeted timestamp (for fallback kill validation)
 LeafVE.nearGuildieAccum = 0
 LeafVE.proximityTickTimer = 0
 -- Quest tracking via pfDB
@@ -1247,12 +1249,53 @@ end
 
 function LeafVE:OnBossKillChat(msg)
   if not self.instanceJoinedAt then return end
+
+  -- Scenario 1-3: explicit killer message (player, party, or raid landing the blow)
   local bossName = string.match(msg, "^You have slain (.+)!$")
     or string.match(msg, "^Your party has slain (.+)!$")
     or string.match(msg, "^Your raid has slain (.+)!$")
-    or string.match(msg, "^(.+) dies%.$")
+
+  -- Scenarios 4-5: no explicit killer (DoT tick, shared kill credit, environmental damage)
+  -- Validate that our party was actually in the fight before crediting.
+  local isFallback = false
+  if not bossName then
+    bossName = string.match(msg, "^(.+) dies%.$")
+      or string.match(msg, "^(.+) has been slain%.$")
+    isFallback = bossName ~= nil
+  end
+
   if not bossName then return end
   if not KNOWN_BOSSES[bossName] then return end
+
+  if isFallback then
+    local lname = string.lower(bossName)
+    -- Scenario 6: player targeted the boss within the recent window
+    local recentlyTargeted = self.recentTargets[lname]
+      and (Now() - self.recentTargets[lname]) < BOSS_TARGET_WINDOW
+    -- Scenario 7: a party/raid member currently has the boss as their target
+    local partyTargeting = false
+    if not recentlyTargeted then
+      local numRaid = GetNumRaidMembers()
+      local numParty = GetNumPartyMembers()
+      if numRaid > 0 then
+        for i = 1, numRaid do
+          if UnitName("raid"..i.."target") == bossName then
+            partyTargeting = true; break
+          end
+        end
+      elseif numParty > 0 then
+        for i = 1, numParty do
+          if UnitName("party"..i.."target") == bossName then
+            partyTargeting = true; break
+          end
+        end
+      end
+    end
+    -- Scenario 8: player is currently in combat (boss died mid-fight)
+    local inCombat = UnitAffectingCombat and UnitAffectingCombat("player")
+    if not recentlyTargeted and not partyTargeting and not inCombat then return end
+  end
+
   local me = ShortName(UnitName("player"))
   if not me then return end
   EnsureDB()
@@ -6877,6 +6920,7 @@ ef:RegisterEvent("RAID_ROSTER_UPDATE")
 ef:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 ef:RegisterEvent("QUEST_LOG_UPDATE")
 ef:RegisterEvent("PLAYER_REGEN_DISABLED")
+ef:RegisterEvent("PLAYER_TARGET_CHANGED")
 ef:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
 
 local groupCheckTimer = 0
@@ -7002,6 +7046,14 @@ ef:SetScript("OnEvent", function()
 
   if event == "PLAYER_REGEN_DISABLED" then
     LeafVE.lastCombatAt = Now()
+    return
+  end
+
+  if event == "PLAYER_TARGET_CHANGED" then
+    local tname = UnitName("target")
+    if tname then
+      LeafVE.recentTargets[string.lower(tname)] = Now()
+    end
     return
   end
 
