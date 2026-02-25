@@ -69,7 +69,7 @@ local function RegisterKillAchievements()
     LeafVE_AchTest:AddAchievement(ach.id, {
       id=ach.id, name=ach.name, desc=ach.desc,
       category="Kills", points=ach.points,
-      icon="Interface\\Icons\\Ability_Warrior_Rampage",
+      icon="Interface\\Icons\\INV_Sword_27",
     })
   end
 
@@ -77,7 +77,7 @@ local function RegisterKillAchievements()
     LeafVE_AchTest:AddAchievement(ach.id, {
       id=ach.id, name=ach.name, desc=ach.desc,
       category="Kills", points=10,
-      icon="Interface\\Icons\\Ability_Warrior_Rampage",
+      icon="Interface\\Icons\\INV_Sword_27",
     })
     -- Register progress tracking so the tooltip shows X/50
     if LeafVE_AchTest.RegisterProgressDef then

@@ -32,22 +32,22 @@ local PROF_STEPS = {
 }
 
 local WEAPONS = {
-  {id="UNARMED",   name="Unarmed"},
-  {id="DEFENSE",   name="Defense"},
-  {id="CROSSBOWS", name="Crossbows"},
-  {id="DAGGERS",   name="Daggers"},
-  {id="GUNS",      name="Guns"},
-  {id="MACES",     name="Maces"},
-  {id="POLEARMS",  name="Polearms"},
-  {id="THROWN",    name="Thrown"},
-  {id="2HAXES",    name="Two-Handed Axes"},
-  {id="2HMACES",   name="Two-Handed Maces"},
-  {id="2HSWORDS",  name="Two-Handed Swords"},
-  {id="WANDS",     name="Wands"},
-  {id="FIST",      name="Fist Weapons"},
-  {id="STAVES",    name="Staves"},
-  {id="SWORDS",    name="Swords"},
-  {id="AXES",      name="Axes"},
+  {id="UNARMED",   name="Unarmed",           icon="Interface\\Icons\\INV_Gauntlets_09"},
+  {id="DEFENSE",   name="Defense",           icon="Interface\\Icons\\INV_Shield_09"},
+  {id="CROSSBOWS", name="Crossbows",         icon="Interface\\Icons\\INV_Weapon_Crossbow_04"},
+  {id="DAGGERS",   name="Daggers",           icon="Interface\\Icons\\INV_Weapon_ShortBlade_15"},
+  {id="GUNS",      name="Guns",              icon="Interface\\Icons\\INV_Weapon_Rifle_05"},
+  {id="MACES",     name="Maces",             icon="Interface\\Icons\\INV_Hammer_09"},
+  {id="POLEARMS",  name="Polearms",          icon="Interface\\Icons\\INV_Spear_08"},
+  {id="THROWN",    name="Thrown",            icon="Interface\\Icons\\INV_ThrowingKnife_02"},
+  {id="2HAXES",    name="Two-Handed Axes",   icon="Interface\\Icons\\INV_Axe_22"},
+  {id="2HMACES",   name="Two-Handed Maces",  icon="Interface\\Icons\\INV_Hammer_Unique_Sulfuras"},
+  {id="2HSWORDS",  name="Two-Handed Swords", icon="Interface\\Icons\\INV_Sword_39"},
+  {id="WANDS",     name="Wands",             icon="Interface\\Icons\\INV_Wand_09"},
+  {id="FIST",      name="Fist Weapons",      icon="Interface\\Icons\\INV_Gauntlets_05"},
+  {id="STAVES",    name="Staves",            icon="Interface\\Icons\\INV_Staff_30"},
+  {id="SWORDS",    name="Swords",            icon="Interface\\Icons\\INV_Sword_27"},
+  {id="AXES",      name="Axes",              icon="Interface\\Icons\\INV_Axe_10"},
 }
 
 local WEAPON_STEPS = {
@@ -78,7 +78,7 @@ local function RegisterSkillAchievements()
         desc="Reach "..step.value.." in "..w.name.." weapon skill.",
         category="Skills",
         points=step.points,
-        icon="Interface\\Icons\\INV_Sword_27",
+        icon=w.icon,
       })
     end
   end

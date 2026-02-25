@@ -13,8 +13,8 @@
 
 local FACTIONS = {
   -- Neutral factions
-  {id="argentdawn",    name="Argent Dawn",      icon="Interface\\Icons\\Spell_Holy_AuraOfLight"},
-  {id="timbermaw",     name="Timbermaw Hold",   icon="Interface\\Icons\\Spell_Nature_Forceofnature"},
+  {id="argentdawn",    name="Argent Dawn",      icon="Interface\\Icons\\Spell_Holy_HolyProtection"},
+  {id="timbermaw",     name="Timbermaw Hold",   icon="Interface\\Icons\\Spell_Nature_ForceOfNature"},
   {id="ratchet",       name="Ratchet",          icon="Interface\\Icons\\INV_Misc_Coin_02"},
   {id="gadgetzan",     name="Gadgetzan",        icon="Interface\\Icons\\INV_Misc_Coin_03"},
   {id="everlook",      name="Everlook",         icon="Interface\\Icons\\INV_Misc_Coin_04"},
@@ -22,22 +22,22 @@ local FACTIONS = {
   {id="cenarion",      name="Cenarion Circle",  icon="Interface\\Icons\\Spell_Nature_Regeneration"},
   {id="thorium",       name="Thorium Brotherhood", icon="Interface\\Icons\\Trade_BlackSmithing"},
   {id="hydraxian",     name="Hydraxian Waterlords", icon="Interface\\Icons\\Spell_Frost_SummonWaterElemental_2"},
-  {id="wintersaber",   name="Wintersaber Trainers", icon="Interface\\Icons\\Ability_Mount_WhiteTiger"},
+  {id="wintersaber",   name="Wintersaber Trainers", icon="Interface\\Icons\\Ability_Hunter_Pet_Bear"},
   -- Horde
-  {id="orgrimmar",     name="Orgrimmar",        icon="Interface\\Icons\\INV_BannerPvP_01"},
-  {id="thunderbluff",  name="Thunder Bluff",    icon="Interface\\Icons\\INV_BannerPvP_02"},
-  {id="undercity",     name="Undercity",        icon="Interface\\Icons\\INV_BannerPvP_03"},
-  {id="darkspear",     name="Darkspear Trolls", icon="Interface\\Icons\\INV_BannerPvP_04"},
+  {id="orgrimmar",     name="Orgrimmar",        icon="Interface\\Icons\\INV_BannerPVP_01"},
+  {id="thunderbluff",  name="Thunder Bluff",    icon="Interface\\Icons\\INV_BannerPVP_02"},
+  {id="undercity",     name="Undercity",        icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
+  {id="darkspear",     name="Darkspear Trolls", icon="Interface\\Icons\\Racial_Troll_Berserk"},
   -- Alliance
-  {id="stormwind",     name="Stormwind",        icon="Interface\\Icons\\INV_BannerPvP_01"},
-  {id="ironforge",     name="Ironforge",        icon="Interface\\Icons\\INV_BannerPvP_02"},
-  {id="darnassus",     name="Darnassus",        icon="Interface\\Icons\\INV_BannerPvP_03"},
+  {id="stormwind",     name="Stormwind",        icon="Interface\\Icons\\INV_BannerPVP_01"},
+  {id="ironforge",     name="Ironforge",        icon="Interface\\Icons\\INV_BannerPVP_02"},
+  {id="darnassus",     name="Darnassus",        icon="Interface\\Icons\\Spell_Nature_WispSplode"},
   {id="gnomeregan",    name="Gnomeregan Exiles",icon="Interface\\Icons\\INV_Misc_Gear_01"},
   -- Raid/Instance
   {id="zandalari",     name="Zandalar Tribe",   icon="Interface\\Icons\\INV_Misc_Idol_02"},
   {id="ahnqiraj",      name="Brood of Nozdormu",icon="Interface\\Icons\\INV_Qiraj_JewelBlessed"},
   {id="scarlet",       name="Scarlet Crusade",  icon="Interface\\Icons\\Spell_Holy_PowerWordShield"},
-  {id="defias",        name="Syndicate",        icon="Interface\\Icons\\INV_Misc_EngGizmos_20"},
+  {id="defias",        name="Syndicate",        icon="Interface\\Icons\\INV_Misc_EngGizmos_19"},
 }
 
 local STANDINGS = {
