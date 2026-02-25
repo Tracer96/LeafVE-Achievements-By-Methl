@@ -148,38 +148,35 @@ table.sort(GENERIC_MILESTONES, function(a, b) return a.value < b.value end)
 -- Event Handler
 -- ============================================================
 local killFrame = CreateFrame("Frame")
-killFrame:RegisterEvent("COMBAT_TEXT_UPDATE")       -- KILLING_BLOW for generic kills
-killFrame:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")  -- for named kills
+killFrame:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")  -- for generic, named, and boss kills
 
 killFrame:SetScript("OnEvent", function()
-  -- Generic kill via floating combat text (KILLING_BLOW)
-  if event == "COMBAT_TEXT_UPDATE" and arg1 == "KILLING_BLOW" then
-    -- Delegate to RecordKill in main file (handles debounce + all milestones)
-    if LeafVE_AchTest and LeafVE_AchTest.RecordKill then
-      LeafVE_AchTest.RecordKill(nil)
-    elseif LeafVE_AchTest and LeafVE_AchTest.ShortName then
-      -- Fallback if RecordKill not yet available
+  -- All kill tracking via hostile death message
+  if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
+    local msg = arg1 or ""
+    -- "You have slain X!" fires when the player lands the killing blow.
+    -- "X dies." / "X has been slain." may also appear for critters/mobs we kill.
+    local playerKill = string.match(msg, "^You have slain (.+)!$")
+    local targetName = playerKill
+      or string.match(msg, "^(.+) dies%.$")
+      or string.match(msg, "^(.+) has been slain%.$")
+    if not targetName then return end
+
+    -- Generic kill counter: only count kills confirmed as ours ("You have slain X!")
+    if playerKill and LeafVE_AchTest and LeafVE_AchTest.ShortName then
       local me = LeafVE_AchTest.ShortName(UnitName("player"))
-      if not me then return end
-      local total = LeafVE_AchTest.IncrCounter(me, "genericKills")
-      for i = 1, table.getn(GENERIC_MILESTONES) do
-        local m = GENERIC_MILESTONES[i]
-        if total >= m.value then
-          LeafVE_AchTest:AwardAchievement(m.id, true)
+      if me then
+        local total = LeafVE_AchTest.IncrCounter(me, "genericKills")
+        for i = 1, table.getn(GENERIC_MILESTONES) do
+          local m = GENERIC_MILESTONES[i]
+          if total >= m.value then
+            LeafVE_AchTest:AwardAchievement(m.id, true)
+          end
         end
       end
     end
 
-  -- Named / boss kill via hostile death message
-  elseif event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
-    local msg = arg1 or ""
-    -- "You have slain X!" or "X dies." or "X has been slain."
-    local targetName =
-      string.match(msg, "^You have slain (.+)!$") or
-      string.match(msg, "^(.+) dies%.$") or
-      string.match(msg, "^(.+) has been slain%.$")
-    if not targetName then return end
-
+    -- Named / boss kill tracking
     local lname = string.lower(targetName)
     local achId = NAMED_KILL_LOOKUP[lname]
     if achId and LeafVE_AchTest then
