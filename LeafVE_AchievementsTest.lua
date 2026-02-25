@@ -325,12 +325,12 @@ end
 
 local ACHIEVEMENTS = {
   -- Leveling
-  lvl_10={id="lvl_10",name="Level 10",desc="Reach level 10",category="Leveling",points=5,icon="Interface\\Icons\\INV_Misc_Bone_HumanSkull_01"},
-  lvl_20={id="lvl_20",name="Level 20",desc="Reach level 20",category="Leveling",points=10,icon="Interface\\Icons\\INV_Helmet_08"},
-  lvl_30={id="lvl_30",name="Level 30",desc="Reach level 30",category="Leveling",points=15,icon="Interface\\Icons\\INV_Shoulder_23"},
-  lvl_40={id="lvl_40",name="Level 40",desc="Reach level 40",category="Leveling",points=20,icon="Interface\\Icons\\INV_Chest_Plate16"},
-  lvl_50={id="lvl_50",name="Level 50",desc="Reach level 50",category="Leveling",points=25,icon="Interface\\Icons\\INV_Weapon_ShortBlade_25"},
-  lvl_60={id="lvl_60",name="Level 60",desc="Reach maximum level",category="Leveling",points=50,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength"},
+  lvl_10={id="lvl_10",name="Level 10",desc="Reach level 10",category="Leveling",points=5,icon="Interface\\Icons\\INV_Boots_05"},
+  lvl_20={id="lvl_20",name="Level 20",desc="Reach level 20",category="Leveling",points=10,icon="Interface\\Icons\\INV_Gauntlets_18"},
+  lvl_30={id="lvl_30",name="Level 30",desc="Reach level 30",category="Leveling",points=15,icon="Interface\\Icons\\INV_Helmet_08"},
+  lvl_40={id="lvl_40",name="Level 40",desc="Reach level 40",category="Leveling",points=20,icon="Interface\\Icons\\INV_Shoulder_23"},
+  lvl_50={id="lvl_50",name="Level 50",desc="Reach level 50",category="Leveling",points=25,icon="Interface\\Icons\\INV_Chest_Plate16"},
+  lvl_60={id="lvl_60",name="Level 60",desc="Reach maximum level",category="Leveling",points=50,icon="Interface\\Icons\\INV_Crown_01"},
   
   -- Professions
   prof_alchemy_300={id="prof_alchemy_300",name="Master Alchemist",desc="Reach 300 Alchemy",category="Professions",points=25,icon="Interface\\Icons\\Trade_Alchemy"},
@@ -350,16 +350,16 @@ local ACHIEVEMENTS = {
   -- Gold
   gold_10={id="gold_10",name="Copper Baron",desc="Accumulate 10 gold",category="Gold",points=10,icon="Interface\\Icons\\INV_Misc_Coin_01"},
   gold_100={id="gold_100",name="Silver Merchant",desc="Accumulate 100 gold",category="Gold",points=20,icon="Interface\\Icons\\INV_Misc_Coin_03"},
-  gold_500={id="gold_500",name="Gold Tycoon",desc="Accumulate 500 gold",category="Gold",points=40,icon="Interface\\Icons\\INV_Misc_Coin_05"},
-  gold_1000={id="gold_1000",name="Wealthy Elite",desc="Accumulate 1000 gold",category="Gold",points=75,icon="Interface\\Icons\\INV_Misc_Coin_06"},
-  gold_5000={id="gold_5000",name="Fortune Builder",desc="Accumulate 5000 gold",category="Gold",points=100,icon="Interface\\Icons\\INV_Misc_Coin_17"},
+  gold_500={id="gold_500",name="Gold Tycoon",desc="Accumulate 500 gold",category="Gold",points=40,icon="Interface\\Icons\\INV_Misc_Coin_06"},
+  gold_1000={id="gold_1000",name="Wealthy Elite",desc="Accumulate 1000 gold",category="Gold",points=75,icon="Interface\\Icons\\INV_Misc_Coin_17"},
+  gold_5000={id="gold_5000",name="Fortune Builder",desc="Accumulate 5000 gold",category="Gold",points=100,icon="Interface\\Icons\\INV_Crown_01"},
   
   -- Dungeons (Completion — all bosses with checkmarks, awarded when all killed)
-  dung_rfc_complete={id="dung_rfc_complete",name="Ragefire Chasm: Dungeon Clear",desc="Defeat all bosses in Ragefire Chasm",category="Dungeons",points=15,icon="Interface\\Icons\\Spell_Shadow_SealOfKings",criteria_key="rfc",criteria_type="dungeon"},
+  dung_rfc_complete={id="dung_rfc_complete",name="Ragefire Chasm: Dungeon Clear",desc="Defeat all bosses in Ragefire Chasm",category="Dungeons",points=15,icon="Interface\\Icons\\Spell_Fire_Incinerate",criteria_key="rfc",criteria_type="dungeon"},
   dung_wc_complete={id="dung_wc_complete",name="Wailing Caverns: Dungeon Clear",desc="Defeat all bosses in Wailing Caverns",category="Dungeons",points=20,icon="Interface\\Icons\\Spell_Nature_NullifyDisease",criteria_key="wc",criteria_type="dungeon"},
-  dung_dm_complete={id="dung_dm_complete",name="The Deadmines: Dungeon Clear",desc="Defeat all bosses in The Deadmines",category="Dungeons",points=20,icon="Interface\\Icons\\INV_Sword_01",criteria_key="dm",criteria_type="dungeon"},
+  dung_dm_complete={id="dung_dm_complete",name="The Deadmines: Dungeon Clear",desc="Defeat all bosses in The Deadmines",category="Dungeons",points=20,icon="Interface\\Icons\\INV_Misc_Bandana_03",criteria_key="dm",criteria_type="dungeon"},
   dung_sfk_complete={id="dung_sfk_complete",name="Shadowfang Keep: Dungeon Clear",desc="Defeat all bosses in Shadowfang Keep",category="Dungeons",points=25,icon="Interface\\Icons\\Spell_Shadow_Possession",criteria_key="sfk",criteria_type="dungeon"},
-  dung_bfd_complete={id="dung_bfd_complete",name="Blackfathom Deeps: Dungeon Clear",desc="Defeat all bosses in Blackfathom Deeps",category="Dungeons",points=25,icon="Interface\\Icons\\INV_Misc_Fish_02",criteria_key="bfd",criteria_type="dungeon"},
+  dung_bfd_complete={id="dung_bfd_complete",name="Blackfathom Deeps: Dungeon Clear",desc="Defeat all bosses in Blackfathom Deeps",category="Dungeons",points=25,icon="Interface\\Icons\\INV_Misc_Gem_Pearl_01",criteria_key="bfd",criteria_type="dungeon"},
   dung_stocks_complete={id="dung_stocks_complete",name="The Stockade: Dungeon Clear",desc="Defeat all bosses in The Stockade",category="Dungeons",points=25,icon="Interface\\Icons\\INV_Misc_Key_03",criteria_key="stocks",criteria_type="dungeon"},
   dung_tcg_complete={id="dung_tcg_complete",name="The Crescent Grove: Dungeon Clear",desc="Defeat all bosses in The Crescent Grove",category="Dungeons",points=25,icon="Interface\\Icons\\Spell_Nature_Regeneration",criteria_key="tcg",criteria_type="dungeon"},
   dung_gnomer_complete={id="dung_gnomer_complete",name="Gnomeregan: Dungeon Clear",desc="Defeat all bosses in Gnomeregan",category="Dungeons",points=30,icon="Interface\\Icons\\INV_Misc_Gear_01",criteria_key="gnomer",criteria_type="dungeon"},
@@ -508,23 +508,23 @@ local ACHIEVEMENTS = {
   raid_ukh_complete={id="raid_ukh_complete",name="Upper Karazhan Halls: Raid Clear",desc="Defeat all bosses in Upper Karazhan Halls",category="Raids",points=200,icon="Interface\\Icons\\INV_Misc_Key_15",criteria_key="ukh",criteria_type="raid"},
   
   -- Exploration
-  explore_kalimdor={id="explore_kalimdor",name="Explore Kalimdor",desc="Discover all zones in Kalimdor",category="Exploration",points=50,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_key="kalimdor",criteria_type="zone_group"},
-  explore_eastern_kingdoms={id="explore_eastern_kingdoms",name="Explore Eastern Kingdoms",desc="Discover all zones in Eastern Kingdoms",category="Exploration",points=50,icon="Interface\\Icons\\INV_Misc_Map_02",criteria_key="eastern_kingdoms",criteria_type="zone_group"},
+  explore_kalimdor={id="explore_kalimdor",name="Explore Kalimdor",desc="Discover all zones in Kalimdor",category="Exploration",points=50,icon="Interface\\Icons\\Spell_Nature_ProtectionformNature",criteria_key="kalimdor",criteria_type="zone_group"},
+  explore_eastern_kingdoms={id="explore_eastern_kingdoms",name="Explore Eastern Kingdoms",desc="Discover all zones in Eastern Kingdoms",category="Exploration",points=50,icon="Interface\\Icons\\INV_BannerPVP_02",criteria_key="eastern_kingdoms",criteria_type="zone_group"},
   -- Meta: requires completing specific exploration achievements
-  explore_wanderer={id="explore_wanderer",name="Wanderer",desc="Complete Explore Kalimdor and Explore Eastern Kingdoms.",category="Exploration",points=100,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_type="ach_meta",criteria_ids={"explore_kalimdor","explore_eastern_kingdoms"}},
-  explore_world_explorer={id="explore_world_explorer",name="World Explorer",desc="Complete all major exploration achievements across Azeroth.",category="Exploration",points=250,icon="Interface\\Icons\\INV_Misc_Map_02",criteria_type="ach_meta",criteria_ids={"explore_kalimdor","explore_eastern_kingdoms","casual_explore_elwynn","casual_explore_barrens","explore_tw_balor","explore_tw_gilneas","explore_tw_northwind","explore_tw_lapidis","explore_tw_gillijim","explore_tw_scarlet_enclave","explore_tw_grim_reaches","explore_tw_telabim","explore_tw_hyjal","explore_tw_tirisfal_uplands"}},
+  explore_wanderer={id="explore_wanderer",name="Wanderer",desc="Complete Explore Kalimdor and Explore Eastern Kingdoms.",category="Exploration",points=100,icon="Interface\\Icons\\INV_Boots_05",criteria_type="ach_meta",criteria_ids={"explore_kalimdor","explore_eastern_kingdoms"}},
+  explore_world_explorer={id="explore_world_explorer",name="World Explorer",desc="Complete all major exploration achievements across Azeroth.",category="Exploration",points=250,icon="Interface\\Icons\\INV_Misc_Spyglass_03",criteria_type="ach_meta",criteria_ids={"explore_kalimdor","explore_eastern_kingdoms","casual_explore_elwynn","casual_explore_barrens","explore_tw_balor","explore_tw_gilneas","explore_tw_northwind","explore_tw_lapidis","explore_tw_gillijim","explore_tw_scarlet_enclave","explore_tw_grim_reaches","explore_tw_telabim","explore_tw_hyjal","explore_tw_tirisfal_uplands"}},
 
   -- Turtle WoW: Unique zone-group exploration achievements
-  explore_tw_balor={id="explore_tw_balor",name="Explorer of Balor",desc="Discover all 6 locations in Balor.",category="Exploration",points=25,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_key="balor",criteria_type="zone_group"},
+  explore_tw_balor={id="explore_tw_balor",name="Explorer of Balor",desc="Discover all 6 locations in Balor.",category="Exploration",points=25,icon="Interface\\Icons\\INV_Misc_Platnumdisks",criteria_key="balor",criteria_type="zone_group"},
   explore_tw_gilneas={id="explore_tw_gilneas",name="Explorer of Gilneas",desc="Discover all 26 locations in Gilneas.",category="Exploration",points=75,icon="Interface\\Icons\\INV_Shield_06",criteria_key="gilneas",criteria_type="zone_group"},
-  explore_tw_northwind={id="explore_tw_northwind",name="Explorer of Northwind",desc="Discover all 7 locations in Northwind.",category="Exploration",points=30,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_key="northwind",criteria_type="zone_group"},
-  explore_tw_lapidis={id="explore_tw_lapidis",name="Explorer of Lapidis Isle",desc="Discover all 10 locations on Lapidis Isle.",category="Exploration",points=40,icon="Interface\\Icons\\INV_Misc_Map_02",criteria_key="lapidis",criteria_type="zone_group"},
-  explore_tw_gillijim={id="explore_tw_gillijim",name="Explorer of Gillijim's Isle",desc="Discover all 16 locations on Gillijim's Isle.",category="Exploration",points=60,icon="Interface\\Icons\\INV_Misc_Map_02",criteria_key="gillijim",criteria_type="zone_group"},
-  explore_tw_scarlet_enclave={id="explore_tw_scarlet_enclave",name="Explorer of the Scarlet Enclave",desc="Discover all 6 locations in the Scarlet Enclave.",category="Exploration",points=25,icon="Interface\\Icons\\Spell_Holy_PowerWordShield",criteria_key="scarlet_enclave",criteria_type="zone_group"},
-  explore_tw_grim_reaches={id="explore_tw_grim_reaches",name="Explorer of the Grim Reaches",desc="Discover all 5 locations in the Grim Reaches.",category="Exploration",points=25,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_key="grim_reaches",criteria_type="zone_group"},
-  explore_tw_telabim={id="explore_tw_telabim",name="Explorer of Tel'Abim",desc="Discover all 8 locations on Tel'Abim.",category="Exploration",points=35,icon="Interface\\Icons\\INV_Misc_Map_02",criteria_key="telabim",criteria_type="zone_group"},
+  explore_tw_northwind={id="explore_tw_northwind",name="Explorer of Northwind",desc="Discover all 7 locations in Northwind.",category="Exploration",points=30,icon="Interface\\Icons\\Spell_Frost_FrostShock",criteria_key="northwind",criteria_type="zone_group"},
+  explore_tw_lapidis={id="explore_tw_lapidis",name="Explorer of Lapidis Isle",desc="Discover all 10 locations on Lapidis Isle.",category="Exploration",points=40,icon="Interface\\Icons\\INV_Misc_Gem_Sapphire_02",criteria_key="lapidis",criteria_type="zone_group"},
+  explore_tw_gillijim={id="explore_tw_gillijim",name="Explorer of Gillijim's Isle",desc="Discover all 16 locations on Gillijim's Isle.",category="Exploration",points=60,icon="Interface\\Icons\\INV_Misc_Gem_Pearl_01",criteria_key="gillijim",criteria_type="zone_group"},
+  explore_tw_scarlet_enclave={id="explore_tw_scarlet_enclave",name="Explorer of the Scarlet Enclave",desc="Discover all 6 locations in the Scarlet Enclave.",category="Exploration",points=25,icon="Interface\\Icons\\Spell_Holy_WordFortitude",criteria_key="scarlet_enclave",criteria_type="zone_group"},
+  explore_tw_grim_reaches={id="explore_tw_grim_reaches",name="Explorer of the Grim Reaches",desc="Discover all 5 locations in the Grim Reaches.",category="Exploration",points=25,icon="Interface\\Icons\\Spell_Shadow_RaiseDead",criteria_key="grim_reaches",criteria_type="zone_group"},
+  explore_tw_telabim={id="explore_tw_telabim",name="Explorer of Tel'Abim",desc="Discover all 8 locations on Tel'Abim.",category="Exploration",points=35,icon="Interface\\Icons\\INV_Misc_Herb_BlackLotus",criteria_key="telabim",criteria_type="zone_group"},
   explore_tw_hyjal={id="explore_tw_hyjal",name="Explorer of Hyjal",desc="Discover all 10 locations in Hyjal.",category="Exploration",points=40,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Green",criteria_key="hyjal",criteria_type="zone_group"},
-  explore_tw_tirisfal_uplands={id="explore_tw_tirisfal_uplands",name="Explorer of Tirisfal Uplands",desc="Discover all 14 locations in the Tirisfal Uplands.",category="Exploration",points=50,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_key="tirisfal_uplands",criteria_type="zone_group"},
+  explore_tw_tirisfal_uplands={id="explore_tw_tirisfal_uplands",name="Explorer of Tirisfal Uplands",desc="Discover all 14 locations in the Tirisfal Uplands.",category="Exploration",points=50,icon="Interface\\Icons\\Spell_Shadow_RagingScream",criteria_key="tirisfal_uplands",criteria_type="zone_group"},
   -- Turtle WoW: vanilla zone additions
   explore_tw_stonetalon={id="explore_tw_stonetalon",name="Stonetalon Pathfinder",desc="Discover 7 new Turtle WoW locations in Stonetalon Mountains.",category="Exploration",points=30,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_key="stonetalon_tw",criteria_type="zone_group"},
   explore_tw_arathi={id="explore_tw_arathi",name="Arathi Pathfinder",desc="Discover 5 new Turtle WoW locations in the Arathi Highlands.",category="Exploration",points=25,icon="Interface\\Icons\\INV_Misc_Map_02",criteria_key="arathi_tw",criteria_type="zone_group"},
@@ -576,8 +576,8 @@ local ACHIEVEMENTS = {
   casual_epic_mount={id="casual_epic_mount",name="Epic Mount",desc="Obtain an epic mount",category="Casual",points=25,icon="Interface\\Icons\\Ability_Mount_JungleTiger"},
   casual_pet_collector={id="casual_pet_collector",name="Pet Collector",desc="Collect 10 vanity pets",category="Casual",points=15,icon="Interface\\Icons\\INV_Misc_Toy_07"},
   casual_pet_fanatic={id="casual_pet_fanatic",name="Pet Fanatic",desc="Collect 25 vanity pets",category="Casual",points=30,icon="Interface\\Icons\\INV_Misc_Toy_07"},
-  casual_explore_barrens={id="casual_explore_barrens",name="Barrens Explorer",desc="Discover all areas of The Barrens",category="Exploration",points=10,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_key="barrens",criteria_type="zone_group"},
-  casual_explore_elwynn={id="casual_explore_elwynn",name="Elwynn Explorer",desc="Discover all areas of Elwynn Forest",category="Exploration",points=10,icon="Interface\\Icons\\INV_Misc_Map_02",criteria_key="elwynn",criteria_type="zone_group"},
+  casual_explore_barrens={id="casual_explore_barrens",name="Barrens Explorer",desc="Discover all areas of The Barrens",category="Exploration",points=10,icon="Interface\\Icons\\INV_Misc_Food_Wheat_01",criteria_key="barrens",criteria_type="zone_group"},
+  casual_explore_elwynn={id="casual_explore_elwynn",name="Elwynn Explorer",desc="Discover all areas of Elwynn Forest",category="Exploration",points=10,icon="Interface\\Icons\\INV_Misc_Flower_01",criteria_key="elwynn",criteria_type="zone_group"},
   casual_deaths_100={id="casual_deaths_100",name="Death's Door",desc="Die 100 times",category="Casual",points=5,icon="Interface\\Icons\\Spell_Shadow_DeathScream"},
   casual_hearthstone_use={id="casual_hearthstone_use",name="Frequent Traveler",desc="Use your hearthstone 50 times",category="Casual",points=10,icon="Interface\\Icons\\INV_Misc_Rune_01"},
   casual_fish_100={id="casual_fish_100",name="Angler",desc="Catch 100 fish",category="Casual",points=10,icon="Interface\\Icons\\Trade_Fishing"},
@@ -589,13 +589,13 @@ local ACHIEVEMENTS = {
   casual_guild_join={id="casual_guild_join",name="Guild Member",desc="Join a guild",category="Casual",points=5,icon="Interface\\Icons\\INV_Shirt_GuildTabard_01"},
   casual_party_join={id="casual_party_join",name="Team Player",desc="Join 50 groups",category="Casual",points=10,icon="Interface\\Icons\\INV_Misc_GroupNeedMore"},
   casual_emote_100={id="casual_emote_100",name="Chatterbox",desc="Use 100 emotes on other players",category="Casual",points=10,icon="Interface\\Icons\\INV_Letter_15"},
-  casual_hearthstone_1={id="casual_hearthstone_1",name="Home Is Where the Hearth Is",desc="Use your hearthstone for the first time",category="Casual",points=5,icon="Interface\\Icons\\INV_Misc_Coin_01"},
-  casual_hearthstone_100={id="casual_hearthstone_100",name="Seasoned Traveler",desc="Use your hearthstone 100 times",category="Casual",points=20,icon="Interface\\Icons\\INV_Misc_Coin_05"},
-  casual_deaths_10={id="casual_deaths_10",name="First Casualty",desc="Die 10 times",category="Casual",points=5,icon="Interface\\Icons\\INV_Misc_Toy_08"},
-  casual_deaths_50={id="casual_deaths_50",name="Danger Seeker",desc="Die 50 times",category="Casual",points=10,icon="Interface\\Icons\\INV_Misc_Spyglass_03"},
+  casual_hearthstone_1={id="casual_hearthstone_1",name="Home Is Where the Hearth Is",desc="Use your hearthstone for the first time",category="Casual",points=5,icon="Interface\\Icons\\INV_Misc_Rune_01"},
+  casual_hearthstone_100={id="casual_hearthstone_100",name="Seasoned Traveler",desc="Use your hearthstone 100 times",category="Casual",points=20,icon="Interface\\Icons\\INV_Misc_Rune_01"},
+  casual_deaths_10={id="casual_deaths_10",name="First Casualty",desc="Die 10 times",category="Casual",points=5,icon="Interface\\Icons\\Spell_Shadow_DeathScream"},
+  casual_deaths_50={id="casual_deaths_50",name="Danger Seeker",desc="Die 50 times",category="Casual",points=10,icon="Interface\\Icons\\Ability_Rogue_FeintedStrike"},
   casual_fall_death={id="casual_fall_death",name="Falling Star",desc="Die from falling 10 times",category="Casual",points=5,icon="Interface\\Icons\\Ability_Rogue_FeintedStrike"},
-  casual_drown={id="casual_drown",name="Landlubber",desc="Drown 10 times",category="Casual",points=5,icon="Interface\\Icons\\INV_Misc_Fish_02"},
-  casual_fish_25={id="casual_fish_25",name="Weekend Angler",desc="Catch 25 fish",category="Casual",points=5,icon="Interface\\Icons\\Trade_BlackSmithing"},
+  casual_drown={id="casual_drown",name="Landlubber",desc="Drown 10 times",category="Casual",points=5,icon="Interface\\Icons\\Spell_Frost_FrostShock"},
+  casual_fish_25={id="casual_fish_25",name="Weekend Angler",desc="Catch 25 fish",category="Casual",points=5,icon="Interface\\Icons\\Trade_Fishing"},
   casual_bank_full={id="casual_bank_full",name="Pack Rat",desc="Fill your bank completely",category="Casual",points=10,icon="Interface\\Icons\\INV_Misc_Bag_22"},
   -- Leveling extras (from KAM)
   -- Death extras (from KAM)
@@ -618,10 +618,10 @@ local ACHIEVEMENTS = {
   casual_trade_10={id="casual_trade_10",name="Trader",desc="Complete 10 trades with other players",category="Casual",points=10,icon="Interface\\Icons\\INV_Misc_Coin_01"},
   -- Level milestones
   casual_level_5={id="casual_level_5",name="Baby Steps",desc="Reach level 5",category="Leveling",points=3,icon="Interface\\Icons\\INV_Misc_Bone_HumanSkull_01"},
-  casual_level_15={id="casual_level_15",name="Getting Started",desc="Reach level 15",category="Leveling",points=5,icon="Interface\\Icons\\INV_Misc_Bone_HumanSkull_01"},
-  casual_level_25={id="casual_level_25",name="Quarter Way",desc="Reach level 25",category="Leveling",points=8,icon="Interface\\Icons\\INV_Helmet_08"},
-  casual_level_35={id="casual_level_35",name="Midway There",desc="Reach level 35",category="Leveling",points=12,icon="Interface\\Icons\\INV_Shoulder_23"},
-  casual_level_45={id="casual_level_45",name="Almost There",desc="Reach level 45",category="Leveling",points=18,icon="Interface\\Icons\\INV_Chest_Plate16"},
+  casual_level_15={id="casual_level_15",name="Getting Started",desc="Reach level 15",category="Leveling",points=5,icon="Interface\\Icons\\INV_Belt_26"},
+  casual_level_25={id="casual_level_25",name="Quarter Way",desc="Reach level 25",category="Leveling",points=8,icon="Interface\\Icons\\INV_Pants_12"},
+  casual_level_35={id="casual_level_35",name="Midway There",desc="Reach level 35",category="Leveling",points=12,icon="Interface\\Icons\\INV_Shield_01"},
+  casual_level_45={id="casual_level_45",name="Almost There",desc="Reach level 45",category="Leveling",points=18,icon="Interface\\Icons\\INV_Helmet_24"},
 
   -- Legendary Achievements (officer-approved, require streaming or recording)
   legendary_solo_raid_boss={id="legendary_solo_raid_boss",name="The Unsupported",desc="Defeat any raid boss completely alone. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
@@ -828,7 +828,7 @@ local function GetAchievementIcon(achId)
   
   -- Leveling icons
   if string.find(lowerAchId, "^lvl_") then
-    return "Interface\\Icons\\INV_Misc_Book_09"
+    return "Interface\\Icons\\INV_Helmet_08"
   end
   
   -- Profession icons
@@ -863,12 +863,12 @@ local function GetAchievementIcon(achId)
   
   -- Casual icons
   if string.find(lowerAchId, "^casual_") then
-    return "Interface\\Icons\\INV_Misc_Gift_01"
+    return "Interface\\Icons\\INV_Misc_Toy_07"
   end
   
   -- Exploration icons
   if string.find(lowerAchId, "^explore_") then
-    return "Interface\\Icons\\INV_Misc_Map_01"
+    return "Interface\\Icons\\INV_Misc_Spyglass_03"
   end
   
   -- Default fallback
