@@ -2944,24 +2944,9 @@ ef:SetScript("OnEvent", function()
   if event == "PLAYER_LEVEL_UP" then LeafVE_AchTest:CheckLevelAchievements() end
   if event == "PLAYER_MONEY" then LeafVE_AchTest:CheckGoldAchievements() end
   if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
-    -- "X is slain by Y." — the kill credit message sent by this server.
-    -- Only count the kill when Y is the player themselves or a party/raid member,
-    -- so kills from unrelated players are ignored and each kill is counted exactly once.
+    -- "X is slain by Y." — boss kill tracking only; generic kills are handled by LeafVE_Ach_Kills.lua.
     local mobName, killerName = string.match(arg1, "^(.+) is slain by (.-)%.?$")
     if mobName and killerName and IsPartyOrSelf(killerName) then
-      local me = ShortName(UnitName("player"))
-      if me then
-        local total = IncrCounter(me, "genericKills")
-        if total >= 1     then LeafVE_AchTest:AwardAchievement("kill_01")    end
-        if total >= 5     then LeafVE_AchTest:AwardAchievement("kill_05")    end
-        if total >= 10    then LeafVE_AchTest:AwardAchievement("kill_10")    end
-        if total >= 50    then LeafVE_AchTest:AwardAchievement("kill_50")    end
-        if total >= 100   then LeafVE_AchTest:AwardAchievement("kill_100")   end
-        if total >= 200   then LeafVE_AchTest:AwardAchievement("kill_200")   end
-        if total >= 500   then LeafVE_AchTest:AwardAchievement("kill_500")   end
-        if total >= 1000  then LeafVE_AchTest:AwardAchievement("kill_1000")  end
-        if total >= 10000 then LeafVE_AchTest:AwardAchievement("kill_10000") end
-      end
       LeafVE_AchTest:CheckBossKill(mobName)
     end
   end
