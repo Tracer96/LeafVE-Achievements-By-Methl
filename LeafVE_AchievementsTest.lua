@@ -930,7 +930,7 @@ function LeafVE_AchTest:AddTitle(titleData)
 end
 
 -- Check and award quest-count achievements using GetNumQuestsCompleted() or the stored counter
-function LeafVE_AchTest:CheckQuestAchievements()
+function LeafVE_AchTest:CheckQuestAchievements(silent)
   local me = ShortName(UnitName("player"))
   if not me then return end
   local total
@@ -941,9 +941,9 @@ function LeafVE_AchTest:CheckQuestAchievements()
     local pc = LeafVE_AchTest_DB.progressCounters[me]
     total = (pc and pc.quests) or 0
   end
-  if total >= 100  then self:AwardAchievement("casual_quest_100",  true) end
-  if total >= 500  then self:AwardAchievement("casual_quest_500",  true) end
-  if total >= 1000 then self:AwardAchievement("casual_quest_1000", true) end
+  if total >= 100  then self:AwardAchievement("casual_quest_100",  silent) end
+  if total >= 500  then self:AwardAchievement("casual_quest_500",  silent) end
+  if total >= 1000 then self:AwardAchievement("casual_quest_1000", silent) end
 end
 
 -- Check PvP rank achievement
@@ -1168,8 +1168,8 @@ function LeafVE_AchTest:ShowAchievementPopup(achievementID)
       fadeOut = fadeOut + arg1
       popup:SetAlpha(1 - (fadeOut / 0.5))
     else
+      popup:SetScript("OnUpdate", nil)
       popup:Hide()
-      popup = nil
     end
   end)
   
@@ -1299,28 +1299,28 @@ function LeafVE_AchTest:SetTitle(playerName, titleID, usePrefix)
   end
 end
 
-function LeafVE_AchTest:CheckLevelAchievements()
+function LeafVE_AchTest:CheckLevelAchievements(silent)
   local level = UnitLevel("player")
-  if level >= 5  then self:AwardAchievement("casual_level_5",  true) end
-  if level >= 10 then self:AwardAchievement("lvl_10", true) end
-  if level >= 15 then self:AwardAchievement("casual_level_15", true) end
-  if level >= 20 then self:AwardAchievement("lvl_20", true) end
-  if level >= 25 then self:AwardAchievement("casual_level_25", true) end
-  if level >= 30 then self:AwardAchievement("lvl_30", true) end
-  if level >= 35 then self:AwardAchievement("casual_level_35", true) end
-  if level >= 40 then self:AwardAchievement("lvl_40", true) end
-  if level >= 45 then self:AwardAchievement("casual_level_45", true) end
-  if level >= 50 then self:AwardAchievement("lvl_50", true) end
-  if level >= 60 then self:AwardAchievement("lvl_60") end
+  if level >= 5  then self:AwardAchievement("casual_level_5",  silent) end
+  if level >= 10 then self:AwardAchievement("lvl_10",          silent) end
+  if level >= 15 then self:AwardAchievement("casual_level_15", silent) end
+  if level >= 20 then self:AwardAchievement("lvl_20",          silent) end
+  if level >= 25 then self:AwardAchievement("casual_level_25", silent) end
+  if level >= 30 then self:AwardAchievement("lvl_30",          silent) end
+  if level >= 35 then self:AwardAchievement("casual_level_35", silent) end
+  if level >= 40 then self:AwardAchievement("lvl_40",          silent) end
+  if level >= 45 then self:AwardAchievement("casual_level_45", silent) end
+  if level >= 50 then self:AwardAchievement("lvl_50",          silent) end
+  if level >= 60 then self:AwardAchievement("lvl_60",          silent) end
 end
 
-function LeafVE_AchTest:CheckGoldAchievements()
+function LeafVE_AchTest:CheckGoldAchievements(silent)
   local gold = math.floor(GetMoney() / 10000)
-  if gold >= 10 then self:AwardAchievement("gold_10", true) end
-  if gold >= 100 then self:AwardAchievement("gold_100", true) end
-  if gold >= 500 then self:AwardAchievement("gold_500", true) end
-  if gold >= 1000 then self:AwardAchievement("gold_1000", true) end
-  if gold >= 5000 then self:AwardAchievement("gold_5000", true) end
+  if gold >= 10 then self:AwardAchievement("gold_10", silent) end
+  if gold >= 100 then self:AwardAchievement("gold_100", silent) end
+  if gold >= 500 then self:AwardAchievement("gold_500", silent) end
+  if gold >= 1000 then self:AwardAchievement("gold_1000", silent) end
+  if gold >= 5000 then self:AwardAchievement("gold_5000", silent) end
 end
 
 LeafVE_AchTest.UI = {}
@@ -1458,8 +1458,8 @@ function LeafVE_AchTest:RecordDungeonBoss(bossName)
         self:AwardAchievement(achId)
         -- Count completed dungeon runs for run-count achievements
         local runTotal = IncrCounter(me, "dungeonRuns")
-        if runTotal >= 50  then self:AwardAchievement("elite_50_dungeons",  true) end
-        if runTotal >= 100 then self:AwardAchievement("elite_100_dungeons", true) end
+        if runTotal >= 50  then self:AwardAchievement("elite_50_dungeons")  end
+        if runTotal >= 100 then self:AwardAchievement("elite_100_dungeons") end
         self:CheckMetaAchievements()
       end
     end
@@ -1488,8 +1488,8 @@ function LeafVE_AchTest:RecordRaidBoss(bossName)
         self:AwardAchievement(achId)
         -- Count completed raid runs for run-count achievements
         local runTotal = IncrCounter(me, "raidRuns")
-        if runTotal >= 25 then self:AwardAchievement("elite_25_raids", true) end
-        if runTotal >= 50 then self:AwardAchievement("elite_50_raids", true) end
+        if runTotal >= 25 then self:AwardAchievement("elite_25_raids") end
+        if runTotal >= 50 then self:AwardAchievement("elite_50_raids") end
         self:CheckMetaAchievements()
       end
     end
@@ -1537,7 +1537,7 @@ function LeafVE_AchTest:CheckBacklogAchievements()
   end
 
   -- Re-check meta achievements based on what has been awarded so far
-  self:CheckMetaAchievements()
+  self:CheckMetaAchievements(true)
 
   -- Scan LeafVE_DB point history for previously tracked instance completions.
   -- If LeafVillageLegends recorded "Instance completion: <Zone>", credit the
@@ -1626,19 +1626,19 @@ local ALL_DUNGEON_COMPLETE_IDS = {
   "dung_dmr_complete",
 }
 
-function LeafVE_AchTest:CheckMetaAchievements()
+function LeafVE_AchTest:CheckMetaAchievements(silent)
   local me = ShortName(UnitName("player"))
   if not me then return end
   local allRaids = true
   for _, id in ipairs(ALL_RAID_COMPLETE_IDS) do
     if not self:HasAchievement(me, id) then allRaids = false; break end
   end
-  if allRaids then self:AwardAchievement("elite_all_raids_complete", true) end
+  if allRaids then self:AwardAchievement("elite_all_raids_complete", silent) end
   local allDungeons = true
   for _, id in ipairs(ALL_DUNGEON_COMPLETE_IDS) do
     if not self:HasAchievement(me, id) then allDungeons = false; break end
   end
-  if allDungeons then self:AwardAchievement("elite_all_dungeons_complete", true) end
+  if allDungeons then self:AwardAchievement("elite_all_dungeons_complete", silent) end
 end
 
 function LeafVE_AchTest:CheckBossKill(bossName)
@@ -1661,34 +1661,34 @@ function LeafVE_AchTest:CheckBossKill(bossName)
     if bossCounter then
       local n = IncrCounter(me, bossCounter)
       if bossCounter == "boss_Ragnaros" then
-        if n >= 5  then self:AwardAchievement("elite_rag_5x",  true) end
-        if n >= 10 then self:AwardAchievement("elite_rag_10x", true) end
+        if n >= 5  then self:AwardAchievement("elite_rag_5x")  end
+        if n >= 10 then self:AwardAchievement("elite_rag_10x") end
       elseif bossCounter == "boss_Nefarian" then
-        if n >= 5  then self:AwardAchievement("elite_nef_5x",  true) end
-        if n >= 10 then self:AwardAchievement("elite_nef_10x", true) end
+        if n >= 5  then self:AwardAchievement("elite_nef_5x")  end
+        if n >= 10 then self:AwardAchievement("elite_nef_10x") end
       elseif bossCounter == "boss_KelThuzad" then
-        if n >= 3 then self:AwardAchievement("elite_kt_3x", true) end
-        if n >= 5 then self:AwardAchievement("elite_kt_5x", true) end
+        if n >= 3 then self:AwardAchievement("elite_kt_3x") end
+        if n >= 5 then self:AwardAchievement("elite_kt_5x") end
       elseif bossCounter == "boss_CThun" then
-        if n >= 5 then self:AwardAchievement("elite_cthun_5x", true) end
+        if n >= 5 then self:AwardAchievement("elite_cthun_5x") end
       elseif bossCounter == "boss_Drakkisath" then
-        if n >= 5 then self:AwardAchievement("elite_drakkisath_5x", true) end
+        if n >= 5 then self:AwardAchievement("elite_drakkisath_5x") end
       elseif bossCounter == "boss_Gandling" then
-        if n >= 5 then self:AwardAchievement("elite_gandling_5x", true) end
+        if n >= 5 then self:AwardAchievement("elite_gandling_5x") end
       elseif bossCounter == "boss_BaronRiv" then
-        if n >= 5 then self:AwardAchievement("elite_baron_5x", true) end
+        if n >= 5 then self:AwardAchievement("elite_baron_5x") end
       elseif bossCounter == "boss_Onyxia" then
-        if n >= 5  then self:AwardAchievement("elite_onyxia_5x",  true) end
-        if n >= 10 then self:AwardAchievement("elite_onyxia_10x", true) end
+        if n >= 5  then self:AwardAchievement("elite_onyxia_5x")  end
+        if n >= 10 then self:AwardAchievement("elite_onyxia_10x") end
       elseif bossCounter == "boss_Hakkar" then
-        if n >= 5 then self:AwardAchievement("elite_hakkar_5x", true) end
+        if n >= 5 then self:AwardAchievement("elite_hakkar_5x") end
       end
     end
     -- Total boss kills
     local total = IncrCounter(me, "totalBossKills")
-    if total >= 100 then self:AwardAchievement("elite_100_bosses", true) end
-    if total >= 250 then self:AwardAchievement("elite_250_bosses", true) end
-    if total >= 500 then self:AwardAchievement("elite_500_bosses", true) end
+    if total >= 100 then self:AwardAchievement("elite_100_bosses") end
+    if total >= 250 then self:AwardAchievement("elite_250_bosses") end
+    if total >= 500 then self:AwardAchievement("elite_500_bosses") end
     -- Unique boss kills (first kill of each boss name)
     EnsureDB()
     local pc = LeafVE_AchTest_DB.progressCounters
@@ -1697,8 +1697,8 @@ function LeafVE_AchTest:CheckBossKill(bossName)
     if not pc[me][killedKey] then
       pc[me][killedKey] = true
       local unique = IncrCounter(me, "uniqueBossKills")
-      if unique >= 25 then self:AwardAchievement("elite_25_unique_bosses", true) end
-      if unique >= 50 then self:AwardAchievement("elite_50_unique_bosses", true) end
+      if unique >= 25 then self:AwardAchievement("elite_25_unique_bosses") end
+      if unique >= 50 then self:AwardAchievement("elite_50_unique_bosses") end
     end
   end
 end
@@ -2682,10 +2682,10 @@ ef:SetScript("OnEvent", function()
   if event == "ADDON_LOADED" and arg1 == LeafVE_AchTest.name then
     EnsureDB()
     -- Backlog: auto-award anything already earned that can be queried via the API
-    LeafVE_AchTest:CheckLevelAchievements()
-    LeafVE_AchTest:CheckGoldAchievements()
+    LeafVE_AchTest:CheckLevelAchievements(true)
+    LeafVE_AchTest:CheckGoldAchievements(true)
     LeafVE_AchTest:CheckProfessionAchievements()
-    LeafVE_AchTest:CheckQuestAchievements()
+    LeafVE_AchTest:CheckQuestAchievements(true)
     LeafVE_AchTest:CheckPvPRankAchievements()
     -- Backlog: award completions from previously stored boss kill progress + history
     LeafVE_AchTest:CheckBacklogAchievements()
@@ -2708,20 +2708,20 @@ ef:SetScript("OnEvent", function()
     local me = ShortName(UnitName("player"))
     if me then
       local total = IncrCounter(me, "deaths")
-      if total >= 5   then LeafVE_AchTest:AwardAchievement("casual_deaths_5",   true) end
-      if total >= 25  then LeafVE_AchTest:AwardAchievement("casual_deaths_25",  true) end
-      if total >= 10  then LeafVE_AchTest:AwardAchievement("casual_deaths_10",  true) end
-      if total >= 50  then LeafVE_AchTest:AwardAchievement("casual_deaths_50",  true) end
-      if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_deaths_100", true) end
+      if total >= 5   then LeafVE_AchTest:AwardAchievement("casual_deaths_5")   end
+      if total >= 10  then LeafVE_AchTest:AwardAchievement("casual_deaths_10")  end
+      if total >= 25  then LeafVE_AchTest:AwardAchievement("casual_deaths_25")  end
+      if total >= 50  then LeafVE_AchTest:AwardAchievement("casual_deaths_50")  end
+      if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_deaths_100") end
       -- Check if death was caused by falling (fall damage fired just before death)
       if GetTime() - lastFallDamageTime < DEATH_CLASSIFY_WINDOW then
         local fallTotal = IncrCounter(me, "fallDeaths")
-        if fallTotal >= 10 then LeafVE_AchTest:AwardAchievement("casual_fall_death", true) end
+        if fallTotal >= 10 then LeafVE_AchTest:AwardAchievement("casual_fall_death") end
       end
       -- Check if death was caused by drowning (suffocation damage fired just before death)
       if GetTime() - lastDrownDamageTime < DEATH_CLASSIFY_WINDOW then
         local drownTotal = IncrCounter(me, "drownings")
-        if drownTotal >= 10 then LeafVE_AchTest:AwardAchievement("casual_drown", true) end
+        if drownTotal >= 10 then LeafVE_AchTest:AwardAchievement("casual_drown") end
       end
     end
   end
@@ -2742,7 +2742,7 @@ ef:SetScript("OnEvent", function()
         local prev = pc and pc[me] and pc[me].lastPartySize or 0
         if prev == 0 then
           local total = IncrCounter(me, "groups")
-          if total >= 50 then LeafVE_AchTest:AwardAchievement("casual_party_join", true) end
+          if total >= 50 then LeafVE_AchTest:AwardAchievement("casual_party_join") end
         end
         -- Refresh cached size for this player
         if pc and pc[me] then pc[me].lastPartySize = partySize end
@@ -2755,9 +2755,9 @@ ef:SetScript("OnEvent", function()
     local me = ShortName(UnitName("player"))
     if me then
       local total = IncrCounter(me, "duels")
-      if total >= 10  then LeafVE_AchTest:AwardAchievement("pvp_duel_10",  true) end
-      if total >= 50  then LeafVE_AchTest:AwardAchievement("pvp_duel_50",  true) end
-      if total >= 100 then LeafVE_AchTest:AwardAchievement("pvp_duel_100", true) end
+      if total >= 10  then LeafVE_AchTest:AwardAchievement("pvp_duel_10")  end
+      if total >= 50  then LeafVE_AchTest:AwardAchievement("pvp_duel_50")  end
+      if total >= 100 then LeafVE_AchTest:AwardAchievement("pvp_duel_100") end
     end
   end
   if event == "PLAYER_ALIVE" or event == "PLAYER_UNGHOST" then
@@ -2767,8 +2767,8 @@ ef:SetScript("OnEvent", function()
       local me = ShortName(UnitName("player"))
       if me then
         local total = IncrCounter(me, "resurrections")
-        if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_resurrect_10", true) end
-        if total >= 50 then LeafVE_AchTest:AwardAchievement("casual_resurrect_50", true) end
+        if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_resurrect_10") end
+        if total >= 50 then LeafVE_AchTest:AwardAchievement("casual_resurrect_50") end
       end
     end
   end
@@ -2778,15 +2778,15 @@ ef:SetScript("OnEvent", function()
     local me = ShortName(UnitName("player"))
     if me and UnitOnTaxi and UnitOnTaxi("player") then
       local total = IncrCounter(me, "flights")
-      if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_flight_10", true) end
-      if total >= 50 then LeafVE_AchTest:AwardAchievement("casual_flight_50", true) end
+      if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_flight_10") end
+      if total >= 50 then LeafVE_AchTest:AwardAchievement("casual_flight_50") end
     end
   end
   if event == "TRADE_CLOSED" then
     local me = ShortName(UnitName("player"))
     if me then
       local total = IncrCounter(me, "trades")
-      if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_trade_10", true) end
+      if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_trade_10") end
     end
   end
 end)
@@ -2832,9 +2832,9 @@ spellFrame:SetScript("OnEvent", function()
       local me = ShortName(UnitName("player"))
       if me then
         local total = IncrCounter(me, "hearthstones")
-        if total >= 1   then LeafVE_AchTest:AwardAchievement("casual_hearthstone_1",   true) end
-        if total >= 50  then LeafVE_AchTest:AwardAchievement("casual_hearthstone_use", true) end
-        if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_hearthstone_100", true) end
+        if total >= 1   then LeafVE_AchTest:AwardAchievement("casual_hearthstone_1")   end
+        if total >= 50  then LeafVE_AchTest:AwardAchievement("casual_hearthstone_use") end
+        if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_hearthstone_100") end
       end
     end
     -- Bandage tracking (First Aid spells contain "Bandage" in the name)
@@ -2842,8 +2842,8 @@ spellFrame:SetScript("OnEvent", function()
       local me = ShortName(UnitName("player"))
       if me then
         local total = IncrCounter(me, "bandages")
-        if total >= 25  then LeafVE_AchTest:AwardAchievement("casual_bandage_25",  true) end
-        if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_bandage_100", true) end
+        if total >= 25  then LeafVE_AchTest:AwardAchievement("casual_bandage_25")  end
+        if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_bandage_100") end
       end
     end
 
@@ -2858,9 +2858,9 @@ spellFrame:SetScript("OnEvent", function()
       local me = ShortName(UnitName("player"))
       if me then
         local total = IncrCounter(me, "hearthstones")
-        if total >= 1   then LeafVE_AchTest:AwardAchievement("casual_hearthstone_1",   true) end
-        if total >= 50  then LeafVE_AchTest:AwardAchievement("casual_hearthstone_use", true) end
-        if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_hearthstone_100", true) end
+        if total >= 1   then LeafVE_AchTest:AwardAchievement("casual_hearthstone_1")   end
+        if total >= 50  then LeafVE_AchTest:AwardAchievement("casual_hearthstone_use") end
+        if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_hearthstone_100") end
       end
       pendingHearthstoneStart = 0
     end
@@ -2894,18 +2894,18 @@ lootFrame:SetScript("OnEvent", function()
       local me = ShortName(UnitName("player"))
       if me then
         local total = IncrCounter(me, "fish")
-        if total >= 25   then LeafVE_AchTest:AwardAchievement("casual_fish_25",   true) end
-        if total >= 100  then LeafVE_AchTest:AwardAchievement("casual_fish_100",  true) end
-        if total >= 1000 then LeafVE_AchTest:AwardAchievement("casual_fish_1000", true) end
+        if total >= 25   then LeafVE_AchTest:AwardAchievement("casual_fish_25")   end
+        if total >= 100  then LeafVE_AchTest:AwardAchievement("casual_fish_100")  end
+        if total >= 1000 then LeafVE_AchTest:AwardAchievement("casual_fish_1000") end
       end
     end
     -- Count all looted items for casual_loot_* achievements
     local me = ShortName(UnitName("player"))
     if me and string.find(string.lower(arg1 or ""), "you receive loot") then
       local lootTotal = IncrCounter(me, "loots")
-      if lootTotal >= 100  then LeafVE_AchTest:AwardAchievement("casual_loot_100",  true) end
-      if lootTotal >= 1000 then LeafVE_AchTest:AwardAchievement("casual_loot_1000", true) end
-      if lootTotal >= 5000 then LeafVE_AchTest:AwardAchievement("casual_loot_5000", true) end
+      if lootTotal >= 100  then LeafVE_AchTest:AwardAchievement("casual_loot_100")  end
+      if lootTotal >= 1000 then LeafVE_AchTest:AwardAchievement("casual_loot_1000") end
+      if lootTotal >= 5000 then LeafVE_AchTest:AwardAchievement("casual_loot_5000") end
     end
   end
 end)
@@ -2920,8 +2920,8 @@ emoteFrame:SetScript("OnEvent", function()
     local me = ShortName(UnitName("player"))
     if me and ShortName(senderName) == me then
       local total = IncrCounter(me, "emotes")
-      if total >= 25  then LeafVE_AchTest:AwardAchievement("casual_emote_25",  true) end
-      if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_emote_100", true) end
+      if total >= 25  then LeafVE_AchTest:AwardAchievement("casual_emote_25")  end
+      if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_emote_100") end
     end
   end
 end)
@@ -3136,7 +3136,7 @@ zoneDiscFrame:SetScript("OnEvent", function()
         end
       end
       if allFound then
-        LeafVE_AchTest:AwardAchievement(achId, true)
+        LeafVE_AchTest:AwardAchievement(achId)
       end
     end
   end
