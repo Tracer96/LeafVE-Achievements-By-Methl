@@ -1247,7 +1247,10 @@ end
 
 function LeafVE:OnBossKillChat(msg)
   if not self.instanceJoinedAt then return end
-  local bossName = string.match(msg, "^(.+) dies%.$")
+  local bossName = string.match(msg, "^You have slain (.+)!$")
+    or string.match(msg, "^Your party has slain (.+)!$")
+    or string.match(msg, "^Your raid has slain (.+)!$")
+    or string.match(msg, "^(.+) dies%.$")
   if not bossName then return end
   if not KNOWN_BOSSES[bossName] then return end
   local me = ShortName(UnitName("player"))

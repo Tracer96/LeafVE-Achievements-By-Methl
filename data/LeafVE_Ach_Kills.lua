@@ -155,9 +155,12 @@ killFrame:SetScript("OnEvent", function()
   if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
     local msg = arg1 or ""
     -- "You have slain X!" fires when the player lands the killing blow.
+    -- "Your party/raid has slain X!" fires when a group member lands the killing blow.
     -- "X dies." / "X has been slain." may also appear for critters/mobs we kill.
     local playerKill = string.match(msg, "^You have slain (.+)!$")
     local targetName = playerKill
+      or string.match(msg, "^Your party has slain (.+)!$")
+      or string.match(msg, "^Your raid has slain (.+)!$")
       or string.match(msg, "^(.+) dies%.$")
       or string.match(msg, "^(.+) has been slain%.$")
     if not targetName then return end
