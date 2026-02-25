@@ -47,6 +47,7 @@ local function EnsureDB()
   if not LeafVE_AchTest_DB.raidProgress then LeafVE_AchTest_DB.raidProgress = {} end
   if not LeafVE_AchTest_DB.progressCounters then LeafVE_AchTest_DB.progressCounters = {} end
   if not LeafVE_AchTest_DB.completedQuests then LeafVE_AchTest_DB.completedQuests = {} end
+  if not LeafVE_AchTest_DB.peakGold then LeafVE_AchTest_DB.peakGold = {} end
 end
 
 
@@ -877,7 +878,9 @@ local function GetAchievementProgress(me, achId)
   if def.api == "hk" then
     current = (GetPVPLifetimeHonorableKills and GetPVPLifetimeHonorableKills()) or 0
   elseif def.api == "gold" then
-    current = math.floor((GetMoney and GetMoney() or 0) / 10000)
+    local peak = (me and LeafVE_AchTest_DB and LeafVE_AchTest_DB.peakGold and LeafVE_AchTest_DB.peakGold[me]) or 0
+    local cur = math.floor((GetMoney and GetMoney() or 0) / 10000)
+    current = math.max(peak, cur)
   elseif def.api == "quests" then
     -- Prefer the server-side total (available via GetNumQuestsCompleted in Turtle WoW)
     if GetNumQuestsCompleted then
@@ -1183,7 +1186,6 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
   local me = ShortName(playerName)
   if not me or me == "" then return end
   if self:HasAchievement(me, achievementID) then
-    Print("You already have this achievement!")
     return
   end
   local achievement = ACHIEVEMENTS[achievementID]
@@ -1315,12 +1317,21 @@ function LeafVE_AchTest:CheckLevelAchievements(silent)
 end
 
 function LeafVE_AchTest:CheckGoldAchievements(silent)
-  local gold = math.floor(GetMoney() / 10000)
-  if gold >= 10 then self:AwardAchievement("gold_10", silent) end
-  if gold >= 100 then self:AwardAchievement("gold_100", silent) end
-  if gold >= 500 then self:AwardAchievement("gold_500", silent) end
-  if gold >= 1000 then self:AwardAchievement("gold_1000", silent) end
-  if gold >= 5000 then self:AwardAchievement("gold_5000", silent) end
+  local me = ShortName(UnitName("player"))
+  if not me then return end
+  EnsureDB()
+  local current = math.floor((GetMoney and GetMoney() or 0) / 10000)
+  -- Update peak gold: only ever goes up, so spending gold never resets progress
+  local peak = LeafVE_AchTest_DB.peakGold[me] or 0
+  if current > peak then
+    peak = current
+    LeafVE_AchTest_DB.peakGold[me] = peak
+  end
+  if peak >= 10   then self:AwardAchievement("gold_10",   silent) end
+  if peak >= 100  then self:AwardAchievement("gold_100",  silent) end
+  if peak >= 500  then self:AwardAchievement("gold_500",  silent) end
+  if peak >= 1000 then self:AwardAchievement("gold_1000", silent) end
+  if peak >= 5000 then self:AwardAchievement("gold_5000", silent) end
 end
 
 LeafVE_AchTest.UI = {}

@@ -105,7 +105,7 @@ for _, w in ipairs(WEAPONS) do
   WEAPON_ID_MAP[w.name] = string.lower(w.id)
 end
 
-local function CheckSkillMilestones()
+local function CheckSkillMilestones(silent)
   -- Expand all skill headers so collapsed professions are visible
   if ExpandSkillHeader then ExpandSkillHeader(0) end
   local numSkills = GetNumSkillLines and GetNumSkillLines() or 0
@@ -116,7 +116,7 @@ local function CheckSkillMilestones()
       if profKey then
         for _, threshold in ipairs(PROF_MILESTONES) do
           if skillRank >= threshold then
-            LeafVE_AchTest:AwardAchievement("prof_"..profKey.."_"..threshold, true)
+            LeafVE_AchTest:AwardAchievement("prof_"..profKey.."_"..threshold, silent)
           end
         end
       end
@@ -124,7 +124,7 @@ local function CheckSkillMilestones()
       if weapKey then
         for _, threshold in ipairs(WEAPON_MILESTONES) do
           if skillRank >= threshold then
-            LeafVE_AchTest:AwardAchievement("weapon_"..weapKey.."_"..threshold, true)
+            LeafVE_AchTest:AwardAchievement("weapon_"..weapKey.."_"..threshold, silent)
           end
         end
       end
@@ -146,8 +146,10 @@ skillFrame:SetScript("OnEvent", function()
     if LeafVE_AchTest and LeafVE_AchTest.AddAchievement then
       RegisterSkillAchievements()
     end
-    CheckSkillMilestones()
-  elseif event == "CHAT_MSG_SKILL" or event == "SKILL_LINES_CHANGED" or event == "PLAYER_ENTERING_WORLD" then
-    CheckSkillMilestones()
+    CheckSkillMilestones(true)  -- silent: backlog check on load
+  elseif event == "PLAYER_ENTERING_WORLD" then
+    CheckSkillMilestones(true)  -- silent: initial scan on login/reload
+  elseif event == "CHAT_MSG_SKILL" or event == "SKILL_LINES_CHANGED" then
+    CheckSkillMilestones(false) -- not silent: live skill-up, show popup
   end
 end)
