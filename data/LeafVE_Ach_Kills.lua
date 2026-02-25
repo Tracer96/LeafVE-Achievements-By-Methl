@@ -174,40 +174,22 @@ killFrame:SetScript("OnEvent", function()
       or string.match(msg, "^Your party has slain (.+)!$")
       or string.match(msg, "^Your raid has slain (.+)!$")
 
-    -- Scenario 9: "X slain by Y." or "X has been slain by Y." — credit if Y is the player or a party/raid member
+    -- Scenario 9: "X is slain by Y.", "X slain by Y.", or "X has been slain by Y."
+    -- Credit the kill whenever a named killer appears — party membership is not required
+    -- so that group members (e.g. Methanel) count kills made by others (e.g. Methl).
     if not targetName then
-      local slainTarget, slainByName = string.match(msg, "^(.+) slain by (.+)%.$")
+      local slainTarget, slainByName = string.match(msg, "^(.+) is slain by (.+)%.$")
+      if not slainTarget then
+        slainTarget, slainByName = string.match(msg, "^(.+) slain by (.+)%.$")
+      end
       if not slainTarget then
         slainTarget, slainByName = string.match(msg, "^(.+) has been slain by (.+)%.$")
       end
       if slainTarget and slainByName and LeafVE_AchTest and LeafVE_AchTest.ShortName then
-        local slainByShort = LeafVE_AchTest.ShortName(slainByName)
         local myName = LeafVE_AchTest.ShortName(UnitName("player"))
-        local creditKill = myName and (slainByShort == myName)
-        if not creditKill then
-          local numRaid = GetNumRaidMembers()
-          local numParty = GetNumPartyMembers()
-          if numRaid > 0 then
-            for i = 1, numRaid do
-              local rname = UnitName("raid"..i)
-              if rname and LeafVE_AchTest.ShortName(rname) == slainByShort then
-                creditKill = true; break
-              end
-            end
-          elseif numParty > 0 then
-            for i = 1, numParty do
-              local pname = UnitName("party"..i)
-              if pname and LeafVE_AchTest.ShortName(pname) == slainByShort then
-                creditKill = true; break
-              end
-            end
-          end
-        end
-        if creditKill then
-          targetName = slainTarget
-          if myName and slainByShort == myName then
-            playerKill = slainTarget
-          end
+        targetName = slainTarget
+        if myName and LeafVE_AchTest.ShortName(slainByName) == myName then
+          playerKill = slainTarget
         end
       end
     end
@@ -259,7 +241,7 @@ killFrame:SetScript("OnEvent", function()
         for i = 1, table.getn(GENERIC_MILESTONES) do
           local m = GENERIC_MILESTONES[i]
           if total >= m.value then
-            LeafVE_AchTest:AwardAchievement(m.id, true)
+            LeafVE_AchTest:AwardAchievement(m.id)
           end
         end
       end
@@ -276,12 +258,12 @@ killFrame:SetScript("OnEvent", function()
         if me then
           local total = LeafVE_AchTest.IncrCounter(me, "nkills_"..achId)
           if total >= goal then
-            LeafVE_AchTest:AwardAchievement(achId, true)
+            LeafVE_AchTest:AwardAchievement(achId)
           end
         end
       else
         -- Named boss: one-shot award
-        LeafVE_AchTest:AwardAchievement(achId, true)
+        LeafVE_AchTest:AwardAchievement(achId)
       end
     end
   end
