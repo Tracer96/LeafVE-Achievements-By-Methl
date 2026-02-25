@@ -106,8 +106,6 @@ for _, w in ipairs(WEAPONS) do
 end
 
 local function CheckSkillMilestones(silent)
-  -- Expand all skill headers so collapsed professions are visible
-  if ExpandSkillHeader then ExpandSkillHeader(0) end
   local numSkills = GetNumSkillLines and GetNumSkillLines() or 0
   for i = 1, numSkills do
     local skillName, isHeader, _, skillRank = GetSkillLineInfo(i)
