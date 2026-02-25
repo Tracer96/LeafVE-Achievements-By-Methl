@@ -436,6 +436,18 @@ local ACHIEVEMENTS = {
   casual_level_25={id="casual_level_25",name="Quarter Way",desc="Reach level 25",category="Leveling",points=8,icon="Interface\\Icons\\INV_Helmet_08"},
   casual_level_35={id="casual_level_35",name="Midway There",desc="Reach level 35",category="Leveling",points=12,icon="Interface\\Icons\\INV_Shoulder_23"},
   casual_level_45={id="casual_level_45",name="Almost There",desc="Reach level 45",category="Leveling",points=18,icon="Interface\\Icons\\INV_Chest_Plate16"},
+
+  -- Legendary Achievements (officer-approved, require streaming or recording)
+  legendary_solo_raid_boss={id="legendary_solo_raid_boss",name="The Unsupported",desc="Defeat any raid boss completely alone. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
+  legendary_naked_dungeon={id="legendary_naked_dungeon",name="Bare Bones",desc="Clear any level-60 dungeon with your group wearing no armor at all. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Misc_Pelt_Wolf_01",manual=true},
+  legendary_ironman_60={id="legendary_ironman_60",name="Untouched by Death",desc="Reach level 60 without dying a single time. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Helmet_74",manual=true},
+  legendary_world_first={id="legendary_world_first",name="World First",desc="Be in the first group on LeafVE to defeat a new raid boss on release day. Must be verified by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Crown_01",manual=true},
+  legendary_duel_streak_100={id="legendary_duel_streak_100",name="Undefeated",desc="Win 100 consecutive duels without a single loss. Must be witnessed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Sword_62",manual=true},
+  legendary_full_clear_week={id="legendary_full_clear_week",name="Conqueror of All",desc="Clear MC, BWL, ZG, AQ20, AQ40, and Naxxramas all within a single calendar week. Must be verified by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Shadow_SoulGem",manual=true},
+  legendary_flawless_naxx={id="legendary_flawless_naxx",name="The Immortal",desc="Complete all of Naxxramas without any raid member dying the entire run. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Shadow_RaiseDead",manual=true},
+  legendary_speed_run_brd={id="legendary_speed_run_brd",name="Speed Demon",desc="Complete a full clear of Blackrock Depths in under 30 minutes. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Fire_LavaSpawn",manual=true},
+  legendary_solo_ubrs={id="legendary_solo_ubrs",name="True Solo",desc="Complete Upper Blackrock Spire entirely alone with no group members. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",manual=true},
+  legendary_realm_first_60={id="legendary_realm_first_60",name="Realm First! Level 60",desc="Be the very first player on LeafVE to reach level 60. Must be verified by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
 }
 
 local TITLES = {
@@ -529,6 +541,18 @@ local TITLES = {
   {id="title_undead_slayer",name="Undead Slayer",achievement="dung_strat_complete",prefix=false,category="Dungeons",icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
   {id="title_shadow_hunter",name="Shadow Hunter",achievement="dung_scholo_complete",prefix=false,category="Dungeons",icon="Interface\\Icons\\Spell_Shadow_Charm"},
   {id="title_dungeon_master",name="Dungeon Master",achievement="dung_dmn_complete",prefix=false,category="Dungeons",icon="Interface\\Icons\\INV_Misc_Key_14"},
+
+  -- Legendary Titles (RED - require officer approval)
+  {id="title_the_unsupported",name="the Unsupported",achievement="legendary_solo_raid_boss",prefix=false,category="Legendary",icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",legendary=true},
+  {id="title_bare_bones",name="Bare Bones",achievement="legendary_naked_dungeon",prefix=false,category="Legendary",icon="Interface\\Icons\\INV_Misc_Pelt_Wolf_01",legendary=true},
+  {id="title_undying",name="the Undying",achievement="legendary_ironman_60",prefix=false,category="Legendary",icon="Interface\\Icons\\INV_Helmet_74",legendary=true},
+  {id="title_world_first",name="World First",achievement="legendary_world_first",prefix=true,category="Legendary",icon="Interface\\Icons\\INV_Crown_01",legendary=true},
+  {id="title_undefeated",name="the Undefeated",achievement="legendary_duel_streak_100",prefix=false,category="Legendary",icon="Interface\\Icons\\INV_Sword_62",legendary=true},
+  {id="title_conqueror_of_all",name="Conqueror of All",achievement="legendary_full_clear_week",prefix=false,category="Legendary",icon="Interface\\Icons\\Spell_Shadow_SoulGem",legendary=true},
+  {id="title_the_immortal_leg",name="the Immortal",achievement="legendary_flawless_naxx",prefix=false,category="Legendary",icon="Interface\\Icons\\Spell_Shadow_RaiseDead",legendary=true},
+  {id="title_speed_demon",name="Speed Demon",achievement="legendary_speed_run_brd",prefix=false,category="Legendary",icon="Interface\\Icons\\Spell_Fire_LavaSpawn",legendary=true},
+  {id="title_true_solo",name="the True Solo",achievement="legendary_solo_ubrs",prefix=false,category="Legendary",icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",legendary=true},
+  {id="title_realm_first",name="Realm First",achievement="legendary_realm_first_60",prefix=true,category="Legendary",icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",legendary=true},
 }
 
 -- ==========================================
@@ -1206,7 +1230,8 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
 
     -- Build message: [Title] [LeafVE Achievement] earned [Achievement]
     if currentTitle then
-      guildMsg = "|cFFFF7F00["..currentTitle.name.."]|r |cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+      local titleColor = currentTitle.legendary and "|cFFFF0000" or "|cFFFF7F00"
+      guildMsg = titleColor.."["..currentTitle.name.."]|r |cFF2DD35C[LeafVE Achievement]|r earned "..achLink
     else
       guildMsg = "|cFF2DD35C[LeafVE Achievement]|r earned "..achLink
     end
@@ -1273,7 +1298,7 @@ function LeafVE_AchTest:GetCurrentTitle(playerName)
   end
   for _, title in ipairs(TITLES) do
     if title.id == titleID then
-      return {id=title.id,name=title.name,achievement=title.achievement,prefix=asPrefix}
+      return {id=title.id,name=title.name,achievement=title.achievement,prefix=asPrefix,legendary=title.legendary}
     end
   end
   return nil
@@ -1584,8 +1609,6 @@ function LeafVE_AchTest:CheckProfessionAchievements()
     ["First Aid"]     = "prof_firstaid_300",
   }
   local artisanCount = 0
-  -- Expand all skill headers so collapsed professions are visible
-  if ExpandSkillHeader then ExpandSkillHeader(0) end
   local numSkills = GetNumSkillLines and GetNumSkillLines() or 0
   for i = 1, numSkills do
     local skillName, isHeader, _, skillRank = GetSkillLineInfo(i)
@@ -1992,9 +2015,20 @@ function LeafVE_AchTest.UI:Build()
   end)
   self.titlesTab = titlesTab
 
-  -- Award / Reset buttons (placed directly after the Titles tab)
+  local adminTab = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+  adminTab:SetPoint("LEFT", titlesTab, "RIGHT", 5, 0)
+  adminTab:SetWidth(60)
+  adminTab:SetHeight(25)
+  adminTab:SetText("Admin")
+  adminTab:SetScript("OnClick", function()
+    LeafVE_AchTest.UI.currentView = "admin"
+    LeafVE_AchTest.UI:Refresh()
+  end)
+  self.adminTab = adminTab
+
+  -- Award / Reset buttons (placed directly after the Admin tab)
   local awardBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-  awardBtn:SetPoint("LEFT", titlesTab, "RIGHT", 15, 0)
+  awardBtn:SetPoint("LEFT", adminTab, "RIGHT", 15, 0)
   awardBtn:SetWidth(60)
   awardBtn:SetHeight(25)
   awardBtn:SetText("Award")
@@ -2029,6 +2063,147 @@ function LeafVE_AchTest.UI:Build()
     LeafVE_AchTest.UI:Refresh()
   end)
 
+  -- ── Admin Panel (hidden by default) ─────────────────────────────────────
+  local adminFrame = CreateFrame("Frame", nil, f)
+  adminFrame:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -110)
+  adminFrame:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 10)
+  adminFrame:SetBackdrop({
+    bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true, tileSize = 16, edgeSize = 8,
+    insets = {left=2, right=2, top=2, bottom=2},
+  })
+  adminFrame:SetBackdropColor(0.06, 0.04, 0.04, 0.96)
+  adminFrame:SetBackdropBorderColor(0.8, 0.1, 0.1, 0.8)
+  adminFrame:Hide()
+  self.adminFrame = adminFrame
+
+  local adminTitle = adminFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+  adminTitle:SetPoint("TOP", adminFrame, "TOP", 0, -14)
+  adminTitle:SetText("|cFFFF0000Admin Panel|r — Grant Achievements to Players")
+
+  local adminNote = adminFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+  adminNote:SetPoint("TOP", adminTitle, "BOTTOM", 0, -4)
+  adminNote:SetText("|cFFFFCC00Officers only — use /achgrant <player> <id> in chat as well|r")
+
+  local adminPlayerLabel = adminFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  adminPlayerLabel:SetPoint("TOPLEFT", adminFrame, "TOPLEFT", 20, -70)
+  adminPlayerLabel:SetText("Player Name:")
+
+  local adminPlayerBox = CreateFrame("EditBox", nil, adminFrame)
+  adminPlayerBox:SetPoint("LEFT", adminPlayerLabel, "RIGHT", 8, 0)
+  adminPlayerBox:SetWidth(180)
+  adminPlayerBox:SetHeight(24)
+  adminPlayerBox:SetAutoFocus(false)
+  adminPlayerBox:SetFontObject("GameFontHighlight")
+  adminPlayerBox:SetBackdrop({
+    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true, tileSize = 16, edgeSize = 14,
+    insets = {left=4, right=4, top=4, bottom=4}
+  })
+  adminPlayerBox:SetBackdropColor(0, 0, 0, 0.8)
+  adminPlayerBox:SetBackdropBorderColor(0.5, 0.3, 0.3, 1)
+  adminPlayerBox:SetTextInsets(6, 6, 0, 0)
+  adminPlayerBox:SetScript("OnEscapePressed", function() this:ClearFocus() end)
+  adminPlayerBox:SetScript("OnEnterPressed", function() this:ClearFocus() end)
+  self.adminPlayerBox = adminPlayerBox
+
+  local adminAchLabel = adminFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  adminAchLabel:SetPoint("TOPLEFT", adminPlayerLabel, "BOTTOMLEFT", 0, -16)
+  adminAchLabel:SetText("Achievement ID:")
+
+  local adminAchBox = CreateFrame("EditBox", nil, adminFrame)
+  adminAchBox:SetPoint("LEFT", adminAchLabel, "RIGHT", 8, 0)
+  adminAchBox:SetWidth(280)
+  adminAchBox:SetHeight(24)
+  adminAchBox:SetAutoFocus(false)
+  adminAchBox:SetFontObject("GameFontHighlight")
+  adminAchBox:SetBackdrop({
+    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true, tileSize = 16, edgeSize = 14,
+    insets = {left=4, right=4, top=4, bottom=4}
+  })
+  adminAchBox:SetBackdropColor(0, 0, 0, 0.8)
+  adminAchBox:SetBackdropBorderColor(0.5, 0.3, 0.3, 1)
+  adminAchBox:SetTextInsets(6, 6, 0, 0)
+  adminAchBox:SetScript("OnEscapePressed", function() this:ClearFocus() end)
+  adminAchBox:SetScript("OnEnterPressed", function() this:ClearFocus() end)
+  self.adminAchBox = adminAchBox
+
+  local adminGrantBtn = CreateFrame("Button", nil, adminFrame, "UIPanelButtonTemplate")
+  adminGrantBtn:SetPoint("LEFT", adminAchBox, "RIGHT", 10, 0)
+  adminGrantBtn:SetWidth(80)
+  adminGrantBtn:SetHeight(24)
+  adminGrantBtn:SetText("Grant")
+  adminGrantBtn:SetScript("OnClick", function()
+    local playerName = LeafVE_AchTest.UI.adminPlayerBox and LeafVE_AchTest.UI.adminPlayerBox:GetText() or ""
+    local achId = LeafVE_AchTest.UI.adminAchBox and LeafVE_AchTest.UI.adminAchBox:GetText() or ""
+    playerName = string.gsub(playerName, "^%s*(.-)%s*$", "%1")
+    achId = string.gsub(achId, "^%s*(.-)%s*$", "%1")
+    if playerName == "" or achId == "" then
+      Print("|cFFFF4444Admin: Enter a player name and achievement ID.|r")
+      return
+    end
+    -- Prefix dung_ or raid_ if bare key given
+    if not string.find(achId, "^dung_") and not string.find(achId, "^raid_") and not string.find(achId, "^legendary_") then
+      if ACHIEVEMENTS["dung_"..achId] then
+        achId = "dung_"..achId
+      elseif ACHIEVEMENTS["raid_"..achId] then
+        achId = "raid_"..achId
+      end
+    end
+    local ach = ACHIEVEMENTS[achId]
+    if not ach then
+      Print("|cFFFF4444Admin: Unknown achievement ID: "..achId.."|r")
+      return
+    end
+    local target = ShortName(playerName)
+    EnsureDB()
+    if not LeafVE_AchTest_DB.achievements[target] then
+      LeafVE_AchTest_DB.achievements[target] = {}
+    end
+    if LeafVE_AchTest_DB.achievements[target][achId] then
+      Print("|cFFFFCC00Admin: "..target.." already has: "..ach.name.."|r")
+      return
+    end
+    LeafVE_AchTest_DB.achievements[target][achId] = {timestamp = Now(), points = ach.points}
+    Print("|cFFFF0000[Admin Grant]|r "..target.." awarded: |cFF2DD35C"..ach.name.."|r (+"..ach.points.." pts)")
+    LeafVE_AchTest.UI:Refresh()
+  end)
+
+  local adminStatusLabel = adminFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  adminStatusLabel:SetPoint("TOPLEFT", adminAchLabel, "BOTTOMLEFT", 0, -14)
+  adminStatusLabel:SetWidth(700)
+  adminStatusLabel:SetJustifyH("LEFT")
+  adminStatusLabel:SetText("|cFF888888Hint: Use /achgrant <name> <id> in chat, or enter above and click Grant.|r")
+  self.adminStatusLabel = adminStatusLabel
+
+  -- Legendary achievements quick-reference list
+  local adminLegHeader = adminFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  adminLegHeader:SetPoint("TOPLEFT", adminStatusLabel, "BOTTOMLEFT", 0, -12)
+  adminLegHeader:SetText("|cFFFF0000Legendary Achievement IDs (require streaming/recording + officer approval):|r")
+
+  local LEGENDARY_IDS = {
+    "legendary_solo_raid_boss","legendary_naked_dungeon","legendary_ironman_60",
+    "legendary_world_first","legendary_duel_streak_100","legendary_full_clear_week",
+    "legendary_flawless_naxx","legendary_speed_run_brd","legendary_solo_ubrs",
+    "legendary_realm_first_60",
+  }
+  local yLeg = -14
+  for _, lid in ipairs(LEGENDARY_IDS) do
+    local ach = ACHIEVEMENTS[lid]
+    if ach then
+      local row = adminFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+      row:SetPoint("TOPLEFT", adminLegHeader, "BOTTOMLEFT", 0, yLeg)
+      row:SetWidth(820)
+      row:SetJustifyH("LEFT")
+      row:SetText("|cFFFF8800"..lid.."|r — "..ach.name)
+      yLeg = yLeg - 16
+    end
+  end
+
   -- ── Left sidebar: category navigation ───────────────────────────────────
   local sidebarFrame = CreateFrame("Frame", nil, f)
   sidebarFrame:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -110)
@@ -2061,6 +2236,7 @@ function LeafVE_AchTest.UI:Build()
     {display="Kills",          filter="Kills"},
     {display="Identity",       filter="Identity"},
     {display="Reputation",     filter="Reputation"},
+    {display="Legendary",      filter="Legendary"},
   }
   self.categoryButtons = {}
   for i, cat in ipairs(SIDEBAR_CATS) do
@@ -2214,6 +2390,7 @@ function LeafVE_AchTest.UI:Build()
     {display="Exploration",  filter="Exploration"},
     {display="Casual",       filter="Casual"},
     {display="Quests",       filter="Quests"},
+    {display="Legendary",    filter="Legendary"},
   }
   self.titleCategoryButtons = {}
   for i, cat in ipairs(TITLE_SIDEBAR_CATS) do
@@ -2317,7 +2494,8 @@ function LeafVE_AchTest.UI:Refresh()
   if self.pointsLabel then
     if currentTitle then
       local titleText = currentTitle.prefix and (currentTitle.name.." "..me) or (me.." "..currentTitle.name)
-      self.pointsLabel:SetText("|cFFFF7F00"..titleText.."|r | Points: |cFFFF7F00"..totalPoints.."|r")
+      local titleColor = currentTitle.legendary and "|cFFFF0000" or "|cFFFF7F00"
+      self.pointsLabel:SetText(titleColor..titleText.."|r | Points: |cFFFF7F00"..totalPoints.."|r")
     else
       self.pointsLabel:SetText(me.." | Points: |cFFFF7F00"..totalPoints.."|r")
     end
@@ -2341,6 +2519,7 @@ function LeafVE_AchTest.UI:Refresh()
   if self.currentView == "achievements" then
     if self.achTab then self.achTab:Disable() end
     if self.titlesTab then self.titlesTab:Enable() end
+    if self.adminTab then self.adminTab:Enable() end
     if self.awardBtn then self.awardBtn:Show() end
     if self.searchLabel then self.searchLabel:Show() end
     if self.searchBox then self.searchBox:Show() end
@@ -2348,9 +2527,12 @@ function LeafVE_AchTest.UI:Refresh()
     if self.titleSearchLabel then self.titleSearchLabel:Hide() end
     if self.titleSearchBox then self.titleSearchBox:Hide() end
     if self.titleClearBtn then self.titleClearBtn:Hide() end
-    -- Show achievement sidebar, hide title sidebar
+    -- Show achievement sidebar, hide title sidebar and admin panel
     if self.sidebarFrame then self.sidebarFrame:Show() end
     if self.titleSidebarFrame then self.titleSidebarFrame:Hide() end
+    if self.adminFrame then self.adminFrame:Hide() end
+    if self.scrollFrame then self.scrollFrame:Show() end
+    if self.scrollbar then self.scrollbar:Show() end
     if self.categoryButtons then
       for _, btn in ipairs(self.categoryButtons) do
         if btn.filterValue == self.selectedCategory then
@@ -2363,9 +2545,26 @@ function LeafVE_AchTest.UI:Refresh()
       end
     end
     self:RefreshAchievements()
+  elseif self.currentView == "admin" then
+    if self.achTab then self.achTab:Enable() end
+    if self.titlesTab then self.titlesTab:Enable() end
+    if self.adminTab then self.adminTab:Disable() end
+    if self.awardBtn then self.awardBtn:Hide() end
+    if self.searchLabel then self.searchLabel:Hide() end
+    if self.searchBox then self.searchBox:Hide() end
+    if self.clearBtn then self.clearBtn:Hide() end
+    if self.titleSearchLabel then self.titleSearchLabel:Hide() end
+    if self.titleSearchBox then self.titleSearchBox:Hide() end
+    if self.titleClearBtn then self.titleClearBtn:Hide() end
+    if self.sidebarFrame then self.sidebarFrame:Hide() end
+    if self.titleSidebarFrame then self.titleSidebarFrame:Hide() end
+    if self.adminFrame then self.adminFrame:Show() end
+    if self.scrollFrame then self.scrollFrame:Hide() end
+    if self.scrollbar then self.scrollbar:Hide() end
   else
     if self.achTab then self.achTab:Enable() end
     if self.titlesTab then self.titlesTab:Disable() end
+    if self.adminTab then self.adminTab:Enable() end
     if self.awardBtn then self.awardBtn:Hide() end
     if self.searchLabel then self.searchLabel:Hide() end
     if self.searchBox then self.searchBox:Hide() end
@@ -2373,9 +2572,12 @@ function LeafVE_AchTest.UI:Refresh()
     if self.titleSearchLabel then self.titleSearchLabel:Show() end
     if self.titleSearchBox then self.titleSearchBox:Show() end
     if self.titleClearBtn then self.titleClearBtn:Show() end
-    -- Show title sidebar, hide achievement sidebar
+    -- Show title sidebar, hide achievement sidebar and admin panel
     if self.sidebarFrame then self.sidebarFrame:Hide() end
     if self.titleSidebarFrame then self.titleSidebarFrame:Show() end
+    if self.adminFrame then self.adminFrame:Hide() end
+    if self.scrollFrame then self.scrollFrame:Show() end
+    if self.scrollbar then self.scrollbar:Show() end
     if self.titleCategoryButtons then
       for _, btn in ipairs(self.titleCategoryButtons) do
         if btn.filterValue == self.titleCategoryFilter then
@@ -2491,9 +2693,15 @@ function LeafVE_AchTest.UI:UpdateVisibleAchievements()
       frame.icon:SetDesaturated(false)
       frame.icon:SetAlpha(1)
       frame.checkmark:Show()
-      frame:SetBackdropBorderColor(THEME.gold[1], THEME.gold[2], THEME.gold[3], 0.9)
+      local isLeg = ach.data.category == "Legendary"
+      if isLeg then
+        frame:SetBackdropBorderColor(0.9, 0.1, 0.1, 0.9)
+        frame.name:SetTextColor(1, 0, 0)
+      else
+        frame:SetBackdropBorderColor(THEME.gold[1], THEME.gold[2], THEME.gold[3], 0.9)
+        frame.name:SetTextColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3])
+      end
       frame.name:SetText(ach.data.name)
-      frame.name:SetTextColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3])
       frame.desc:SetText(ach.data.desc)
       frame.desc:SetTextColor(0.9, 0.9, 0.9)
       frame.emblem:SetVertexColor(1.0, 0.82, 0.20)
@@ -2625,11 +2833,17 @@ function LeafVE_AchTest.UI:RefreshTitles()
     local achData = ACHIEVEMENTS[titleData.achievement]
     frame.icon:SetTexture(titleData.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
     if earned then
-      frame:SetBackdropBorderColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3], 0.6)
+      local isLeg = titleData.legendary
+      local br = isLeg and {1,0,0} or {THEME.leaf[1],THEME.leaf[2],THEME.leaf[3]}
+      frame:SetBackdropBorderColor(br[1], br[2], br[3], 0.6)
       frame.icon:SetDesaturated(false)
       frame.icon:SetAlpha(1)
       frame.name:SetText(titleData.name)
-      frame.name:SetTextColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3])
+      if isLeg then
+        frame.name:SetTextColor(1, 0, 0)
+      else
+        frame.name:SetTextColor(THEME.leaf[1], THEME.leaf[2], THEME.leaf[3])
+      end
       frame.requirement:SetText("From: "..(achData and achData.name or "Unknown"))
       frame.requirement:SetTextColor(0.9, 0.9, 0.9)
       frame.equipBtn:Enable()
@@ -3015,10 +3229,11 @@ local function HookChatWithTitles()
         local title = LeafVE_AchTest:GetCurrentTitle(me)
         if title then
           Debug("Adding title: "..title.name.." (prefix: "..tostring(title.prefix)..")")
+          local titleColor = title.legendary and "|cFFFF0000" or "|cFFFF7F00"
           if title.prefix then
-            msg = "|cFFFF7F00["..title.name.."]|r "..msg
+            msg = titleColor.."["..title.name.."]|r "..msg
           else
-            msg = msg.." |cFFFF7F00["..title.name.."]|r"
+            msg = msg.." "..titleColor.."["..title.name.."]|r"
           end
           Debug("Modified message: "..msg)
         else
