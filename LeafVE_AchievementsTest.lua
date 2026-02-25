@@ -988,7 +988,7 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   pvp_hk_2500  = {api="hk", goal=2500},
   pvp_hk_5000  = {api="hk", goal=5000},
   pvp_hk_10000 = {api="hk", goal=10000},
-  -- Duels tracked via DUEL_WON event
+  -- Duels tracked via CHAT_MSG_SYSTEM event
   pvp_duel_10  = {counter="duels", goal=10},
   pvp_duel_25  = {counter="duels", goal=25},
   pvp_duel_50  = {counter="duels", goal=50},
@@ -3098,7 +3098,7 @@ ef:RegisterEvent("TAXIMAP_CLOSED")
 ef:RegisterEvent("TRADE_CLOSED")
 ef:RegisterEvent("QUEST_COMPLETE")
 ef:RegisterEvent("PARTY_MEMBERS_CHANGED")
-ef:RegisterEvent("DUEL_WON")
+ef:RegisterEvent("CHAT_MSG_SYSTEM")
 
 ef:SetScript("OnEvent", function()
   if event == "ADDON_LOADED" and arg1 == LeafVE_AchTest.name then
@@ -3223,13 +3223,19 @@ ef:SetScript("OnEvent", function()
       end
     end
   end
-  if event == "DUEL_WON" then
-    local me = ShortName(UnitName("player"))
-    if me then
-      local total = IncrCounter(me, "duels")
-      if total >= 10  then LeafVE_AchTest:AwardAchievement("pvp_duel_10")  end
-      if total >= 50  then LeafVE_AchTest:AwardAchievement("pvp_duel_50")  end
-      if total >= 100 then LeafVE_AchTest:AwardAchievement("pvp_duel_100") end
+  if event == "CHAT_MSG_SYSTEM" then
+    local msg = arg1 or ""
+    local winner, loser = string.match(msg, "^(.+) has defeated (.+) in a duel$")
+    if winner then
+      local me = ShortName(UnitName("player"))
+      if me and ShortName(winner) == me then
+        Debug("Duel won against: "..tostring(loser))
+        local total = IncrCounter(me, "duels")
+        if total >= 10  then LeafVE_AchTest:AwardAchievement("pvp_duel_10")  end
+        if total >= 25  then LeafVE_AchTest:AwardAchievement("pvp_duel_25")  end
+        if total >= 50  then LeafVE_AchTest:AwardAchievement("pvp_duel_50")  end
+        if total >= 100 then LeafVE_AchTest:AwardAchievement("pvp_duel_100") end
+      end
     end
   end
   if event == "PLAYER_ALIVE" or event == "PLAYER_UNGHOST" then
