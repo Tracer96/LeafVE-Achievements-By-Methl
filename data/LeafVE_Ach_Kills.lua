@@ -175,21 +175,31 @@ killFrame:SetScript("OnEvent", function()
       or string.match(msg, "^Your raid has slain (.+)!$")
 
     -- Scenario 9: "X is slain by Y.", "X slain by Y.", or "X has been slain by Y."
-    -- Credit the kill whenever a named killer appears — party membership is not required
-    -- so that group members (e.g. Methanel) count kills made by others (e.g. Methl).
+    -- Credit the kill only when the killer is the player or a party/raid member,
+    -- so that group members (e.g. Methanel) count kills made by others (e.g. Methl)
+    -- but random nearby players do not award undeserved credit.
     if not targetName then
-      local slainTarget, slainByName = string.match(msg, "^(.+) is slain by (.+)%.$")
+      local slainTarget, slainByName = string.match(msg, "^(.+) is slain by (.-)%.?$")
       if not slainTarget then
-        slainTarget, slainByName = string.match(msg, "^(.+) slain by (.+)%.$")
+        slainTarget, slainByName = string.match(msg, "^(.+) slain by (.-)%.?$")
       end
       if not slainTarget then
-        slainTarget, slainByName = string.match(msg, "^(.+) has been slain by (.+)%.$")
+        slainTarget, slainByName = string.match(msg, "^(.+) has been slain by (.-)%.?$")
       end
       if slainTarget and slainByName and LeafVE_AchTest and LeafVE_AchTest.ShortName then
         local myName = LeafVE_AchTest.ShortName(UnitName("player"))
-        targetName = slainTarget
-        if myName and LeafVE_AchTest.ShortName(slainByName) == myName then
-          playerKill = slainTarget
+        local killerShort = LeafVE_AchTest.ShortName(slainByName)
+        local inGroup = false
+        if LeafVE_AchTest.IsPartyOrSelf then
+          inGroup = LeafVE_AchTest.IsPartyOrSelf(slainByName)
+        elseif myName and killerShort == myName then
+          inGroup = true
+        end
+        if inGroup then
+          targetName = slainTarget
+          if myName and killerShort == myName then
+            playerKill = slainTarget
+          end
         end
       end
     end
