@@ -354,15 +354,17 @@ end
 -- Event Handler
 -- ============================================================
 
+-- Register achievements immediately at load time.
+if LeafVE_AchTest and LeafVE_AchTest.AddAchievement then
+  RegisterQuestChainAchievements()
+end
+
 local questFrame = CreateFrame("Frame")
 questFrame:RegisterEvent("ADDON_LOADED")
 questFrame:RegisterEvent("CHAT_MSG_SYSTEM")
 
 questFrame:SetScript("OnEvent", function()
   if event == "ADDON_LOADED" and arg1 == "LeafVE_AchievementsTest" then
-    if LeafVE_AchTest and LeafVE_AchTest.AddAchievement then
-      RegisterQuestChainAchievements()
-    end
     -- Backlog: re-check chains in case all steps were completed in a prior session
     local me = LeafVE_AchTest and LeafVE_AchTest.ShortName and
                LeafVE_AchTest.ShortName(UnitName("player"))

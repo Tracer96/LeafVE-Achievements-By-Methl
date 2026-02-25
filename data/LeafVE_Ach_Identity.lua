@@ -70,17 +70,16 @@ local function CheckIdentity()
   end
 end
 
+-- Register achievements immediately at load time.
+if LeafVE_AchTest and LeafVE_AchTest.AddAchievement then
+  RegisterIdentityAchievements()
+end
+
 local identityFrame = CreateFrame("Frame")
 identityFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-identityFrame:RegisterEvent("ADDON_LOADED")
 
 identityFrame:SetScript("OnEvent", function()
   if event == "PLAYER_ENTERING_WORLD" then
-    CheckIdentity()
-  elseif event == "ADDON_LOADED" and arg1 == "LeafVE_AchievementsTest" then
-    if LeafVE_AchTest and LeafVE_AchTest.AddAchievement then
-      RegisterIdentityAchievements()
-    end
     CheckIdentity()
   end
 end)

@@ -130,6 +130,12 @@ local function CheckSkillMilestones(silent)
   end
 end
 
+-- Register achievements immediately at load time (LeafVE_AchievementsTest.lua
+-- is listed before this file in the TOC, so AddAchievement is already defined).
+if LeafVE_AchTest and LeafVE_AchTest.AddAchievement then
+  RegisterSkillAchievements()
+end
+
 -- ============================================================
 -- Event Handler
 -- ============================================================
@@ -141,9 +147,6 @@ skillFrame:RegisterEvent("PLAYER_ENTERING_WORLD") -- initial scan on login/reloa
 
 skillFrame:SetScript("OnEvent", function()
   if event == "ADDON_LOADED" and arg1 == "LeafVE_AchievementsTest" then
-    if LeafVE_AchTest and LeafVE_AchTest.AddAchievement then
-      RegisterSkillAchievements()
-    end
     CheckSkillMilestones(true)  -- silent: backlog check on load
   elseif event == "PLAYER_ENTERING_WORLD" then
     CheckSkillMilestones(true)  -- silent: initial scan on login/reload

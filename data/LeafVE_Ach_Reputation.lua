@@ -100,6 +100,11 @@ end
 -- ============================================================
 -- Event Handler
 -- ============================================================
+-- Register achievements immediately at load time.
+if LeafVE_AchTest and LeafVE_AchTest.AddAchievement then
+  RegisterReputationAchievements()
+end
+
 local repFrame = CreateFrame("Frame")
 repFrame:RegisterEvent("CHAT_MSG_COMBAT_FACTION_CHANGE")  -- fires when rep changes
 repFrame:RegisterEvent("ADDON_LOADED")                     -- backlog check
@@ -108,9 +113,6 @@ repFrame:SetScript("OnEvent", function()
   if event == "CHAT_MSG_COMBAT_FACTION_CHANGE" then
     CheckReputationMilestones()
   elseif event == "ADDON_LOADED" and arg1 == "LeafVE_AchievementsTest" then
-    if LeafVE_AchTest and LeafVE_AchTest.AddAchievement then
-      RegisterReputationAchievements()
-    end
     CheckReputationMilestones()
   end
 end)
