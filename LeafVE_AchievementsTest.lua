@@ -38,6 +38,24 @@ local function ShortName(name)
   return name
 end
 
+local function IsPartyOrSelf(name)
+  name = ShortName(name)
+  if not name then return false end
+  if name == ShortName(UnitName("player")) then return true end
+  local numRaid = GetNumRaidMembers and GetNumRaidMembers() or 0
+  if numRaid > 0 then
+    for i = 1, numRaid do
+      if UnitExists("raid"..i) and ShortName(UnitName("raid"..i)) == name then return true end
+    end
+  else
+    local numParty = GetNumPartyMembers and GetNumPartyMembers() or 0
+    for i = 1, numParty do
+      if UnitExists("party"..i) and ShortName(UnitName("party"..i)) == name then return true end
+    end
+  end
+  return false
+end
+
 local function EnsureDB()
   if not LeafVE_AchTest_DB then LeafVE_AchTest_DB = {} end
   if not LeafVE_AchTest_DB.achievements then LeafVE_AchTest_DB.achievements = {} end
@@ -1271,6 +1289,12 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
   -- Notify LeafLegends to refresh if it's open
   if LeafVE and LeafVE.UI and LeafVE.UI.ShowPlayerCard and LeafVE.UI.cardCurrentPlayer then
     LeafVE.UI:ShowPlayerCard(LeafVE.UI.cardCurrentPlayer)
+  end
+
+  -- Immediately sync to guild so others see the new achievement without waiting for the 5-minute timer
+  -- Silent (backlog) awards on login are already covered by the 5-second login broadcast
+  if not silent then
+    LeafVE_AchTest:BroadcastAchievements()
   end
 end
 
@@ -2920,15 +2944,25 @@ ef:SetScript("OnEvent", function()
   if event == "PLAYER_LEVEL_UP" then LeafVE_AchTest:CheckLevelAchievements() end
   if event == "PLAYER_MONEY" then LeafVE_AchTest:CheckGoldAchievements() end
   if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
-    -- Extract boss name from "Bossname dies.", "Bossname is slain!", "Bossname has been slain.",
-    -- or "Bossname slain by Y." / "Bossname has been slain by Y." (party/raid member kill)
-    local bossName = string.match(arg1, "^(.+) dies%.$")
-                  or string.match(arg1, "^(.+) is slain!$")
-                  or string.match(arg1, "^(.+) has been slain%.$")
-                  or string.match(arg1, "^(.+) slain by .+%.$")
-                  or string.match(arg1, "^(.+) has been slain by .+%.$")
-    if bossName then
-      LeafVE_AchTest:CheckBossKill(bossName)
+    -- "X is slain by Y." — the kill credit message sent by this server.
+    -- Only count the kill when Y is the player themselves or a party/raid member,
+    -- so kills from unrelated players are ignored and each kill is counted exactly once.
+    local mobName, killerName = string.match(arg1, "^(.+) is slain by (.-)%.?$")
+    if mobName and killerName and IsPartyOrSelf(killerName) then
+      local me = ShortName(UnitName("player"))
+      if me then
+        local total = IncrCounter(me, "genericKills")
+        if total >= 1     then LeafVE_AchTest:AwardAchievement("kill_01")    end
+        if total >= 5     then LeafVE_AchTest:AwardAchievement("kill_05")    end
+        if total >= 10    then LeafVE_AchTest:AwardAchievement("kill_10")    end
+        if total >= 50    then LeafVE_AchTest:AwardAchievement("kill_50")    end
+        if total >= 100   then LeafVE_AchTest:AwardAchievement("kill_100")   end
+        if total >= 200   then LeafVE_AchTest:AwardAchievement("kill_200")   end
+        if total >= 500   then LeafVE_AchTest:AwardAchievement("kill_500")   end
+        if total >= 1000  then LeafVE_AchTest:AwardAchievement("kill_1000")  end
+        if total >= 10000 then LeafVE_AchTest:AwardAchievement("kill_10000") end
+      end
+      LeafVE_AchTest:CheckBossKill(mobName)
     end
   end
   if event == "PLAYER_DEAD" then
