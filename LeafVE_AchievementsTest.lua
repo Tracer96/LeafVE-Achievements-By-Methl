@@ -960,8 +960,9 @@ end
 
 -- Expose helpers so separate achievement module files loaded after this file
 -- can add achievements and interact with the DB without duplicating locals.
-LeafVE_AchTest.ShortName   = ShortName
-LeafVE_AchTest.IncrCounter = IncrCounter
+LeafVE_AchTest.ShortName     = ShortName
+LeafVE_AchTest.IncrCounter   = IncrCounter
+LeafVE_AchTest.IsPartyOrSelf = IsPartyOrSelf
 function LeafVE_AchTest:AddAchievement(id, data)
   ACHIEVEMENTS[id] = data
 end
