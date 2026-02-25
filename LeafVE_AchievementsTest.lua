@@ -3413,8 +3413,10 @@ Print("Minimap button loaded!")
 -- ---------------------------------------------------------------------------
 local zoneDiscFrame = CreateFrame("Frame")
 zoneDiscFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+zoneDiscFrame:RegisterEvent("ZONE_CHANGED")
+zoneDiscFrame:RegisterEvent("ZONE_CHANGED_INDOORS")
+zoneDiscFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 zoneDiscFrame:SetScript("OnEvent", function()
-  if event ~= "ZONE_CHANGED_NEW_AREA" then return end
   local me = ShortName(UnitName("player"))
   if not me then return end
   EnsureDB()
