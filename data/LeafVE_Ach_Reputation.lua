@@ -49,6 +49,7 @@ local STANDINGS = {
 local STANDING_NAMES = {"Hated","Hostile","Unfriendly","Neutral","Friendly","Honored","Revered","Exalted"}
 
 local function RegisterReputationAchievements()
+  if not LeafVE_AchTest or not LeafVE_AchTest.AddAchievement then return end
   for _, faction in ipairs(FACTIONS) do
     for _, standing in ipairs(STANDINGS) do
       local achId = "rep_"..faction.id.."_"..standing.suffix
@@ -80,6 +81,7 @@ for _, f in ipairs(FACTIONS) do
 end
 
 local function CheckReputationMilestones()
+  if not LeafVE_AchTest or not LeafVE_AchTest.AwardAchievement then return end
   local numFactions = GetNumFactions and GetNumFactions() or 0
   for i = 1, numFactions do
     local name, _, standingID = GetFactionInfo(i)

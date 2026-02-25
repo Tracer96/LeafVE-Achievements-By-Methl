@@ -33,6 +33,7 @@ local CLASS_ACHIEVEMENTS = {
 }
 
 local function RegisterIdentityAchievements()
+  if not LeafVE_AchTest or not LeafVE_AchTest.AddAchievement then return end
   for _, a in ipairs(RACE_ACHIEVEMENTS) do
     LeafVE_AchTest:AddAchievement(a.id, {
       id=a.id, name=a.name, desc=a.desc,
@@ -54,6 +55,7 @@ end
 -- Event Handler
 -- ============================================================
 local function CheckIdentity()
+  if not LeafVE_AchTest or not LeafVE_AchTest.AwardAchievement then return end
   local raceName = UnitRace("player")    -- e.g. "Human", "Night Elf", "Scourge"
   local className = UnitClass("player")  -- e.g. "Warrior", "Mage"
   if not raceName or not className then return end
