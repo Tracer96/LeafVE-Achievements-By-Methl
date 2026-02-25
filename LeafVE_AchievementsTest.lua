@@ -2918,12 +2918,16 @@ local lastDrownDamageTime = 0
 local DEATH_CLASSIFY_WINDOW = 3
 -- Track whether player was dead, to count only genuine resurrections.
 local playerWasDead = false
+-- Recent target tracking for fallback boss kill validation ("X dies." / "X has been slain.")
+local BOSS_TARGET_WINDOW = 30  -- seconds
+local recentTargets = {}       -- lowercase mob name -> last-targeted timestamp
 
 local ef = CreateFrame("Frame")
 ef:RegisterEvent("ADDON_LOADED")
 ef:RegisterEvent("PLAYER_LEVEL_UP")
 ef:RegisterEvent("PLAYER_MONEY")
 ef:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
+ef:RegisterEvent("PLAYER_TARGET_CHANGED")
 ef:RegisterEvent("PLAYER_DEAD")
 ef:RegisterEvent("PLAYER_ALIVE")
 ef:RegisterEvent("PLAYER_UNGHOST")
@@ -2947,14 +2951,66 @@ ef:SetScript("OnEvent", function()
     Print("Achievement System Loaded! Type /achtest")
     Debug("Debug mode is: "..tostring(LeafVE_AchTest.DEBUG))
   end
+  if event == "PLAYER_TARGET_CHANGED" then
+    local tname = UnitName("target")
+    if tname then recentTargets[string.lower(tname)] = time() end
+  end
   if event == "PLAYER_LEVEL_UP" then LeafVE_AchTest:CheckLevelAchievements() end
   if event == "PLAYER_MONEY" then LeafVE_AchTest:CheckGoldAchievements() end
   if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
-    -- "X is slain by Y." — boss kill tracking only; generic kills are handled by LeafVE_Ach_Kills.lua.
-    local mobName, killerName = string.match(arg1, "^(.+) is slain by (.-)%.?$")
-    if mobName and killerName and IsPartyOrSelf(killerName) then
-      LeafVE_AchTest:CheckBossKill(mobName)
+    -- Boss kill tracking only; generic kills are handled by LeafVE_Ach_Kills.lua.
+    local msg = arg1 or ""
+    local mobName
+    -- Scenarios 1-3: explicit "You/Your party/Your raid has slain X!"
+    mobName = string.match(msg, "^You have slain (.+)!$")
+      or string.match(msg, "^Your party has slain (.+)!$")
+      or string.match(msg, "^Your raid has slain (.+)!$")
+    -- Scenarios 4-6: "X is slain by Y.", "X slain by Y.", "X has been slain by Y." (dot or excl)
+    if not mobName then
+      local slainTarget, killerName = string.match(msg, "^(.+) is slain by (.-)[%.!]?$")
+      if not slainTarget then
+        slainTarget, killerName = string.match(msg, "^(.+) slain by (.-)[%.!]?$")
+      end
+      if not slainTarget then
+        slainTarget, killerName = string.match(msg, "^(.+) has been slain by (.-)[%.!]?$")
+      end
+      if slainTarget and killerName and IsPartyOrSelf(killerName) then
+        mobName = slainTarget
+      end
     end
+    -- Fallback: "X dies." or "X has been slain." — validate via recent target / party / combat
+    if not mobName then
+      local fallbackName = string.match(msg, "^(.+) dies%.$")
+        or string.match(msg, "^(.+) has been slain%.$")
+      if fallbackName then
+        local lname = string.lower(fallbackName)
+        local recentlyTargeted = recentTargets[lname]
+          and (time() - recentTargets[lname]) < BOSS_TARGET_WINDOW
+        local partyTargeting = false
+        if not recentlyTargeted then
+          local numRaid = GetNumRaidMembers()
+          local numParty = GetNumPartyMembers()
+          if numRaid > 0 then
+            for i = 1, numRaid do
+              if UnitName("raid"..i.."target") == fallbackName then
+                partyTargeting = true; break
+              end
+            end
+          elseif numParty > 0 then
+            for i = 1, numParty do
+              if UnitName("party"..i.."target") == fallbackName then
+                partyTargeting = true; break
+              end
+            end
+          end
+        end
+        local inCombat = UnitAffectingCombat and UnitAffectingCombat("player")
+        if recentlyTargeted or partyTargeting or inCombat then
+          mobName = fallbackName
+        end
+      end
+    end
+    if mobName then LeafVE_AchTest:CheckBossKill(mobName) end
   end
   if event == "PLAYER_DEAD" then
     playerWasDead = true
