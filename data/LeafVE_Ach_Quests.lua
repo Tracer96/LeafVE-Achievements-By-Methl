@@ -229,7 +229,7 @@ local QUEST_CHAINS = {
     name  = "Blessed Charger",
     desc  = "Complete the Paladin epic mount quest chain and receive the Charger.",
     points = 100,
-    icon  = "Interface\\Icons\\Ability_Mount_Charger",
+    icon  = "Interface\\Icons\\Spell_Holy_SealOfWrath",
     title = {id="title_lightsworn", name="the Lightsworn", prefix=false},
     steps = {
       "Emphasis on Effort",

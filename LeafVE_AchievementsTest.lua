@@ -7,11 +7,11 @@ LeafVE_AchTest_DB = LeafVE_AchTest_DB or {}
 LeafVE_AchTest.DEBUG = false -- Set to true for debug messages
 
 local THEME = {
-  bg = {0.05, 0.05, 0.06, 0.96},
+  bg = {0.02, 0.09, 0.03, 0.96},
   leaf = {0.20, 0.78, 0.35, 1.00},
   gold = {1.00, 0.82, 0.20, 1.00},
   orange = {1.00, 0.50, 0.00, 1.00},
-  border = {0.28, 0.28, 0.30, 1.00}
+  border = {0.10, 0.40, 0.12, 1.00}
 }
 
 local function Print(msg)
@@ -2172,6 +2172,12 @@ function LeafVE_AchTest.UI:Build()
   })
   f:SetBackdropColor(THEME.bg[1], THEME.bg[2], THEME.bg[3], THEME.bg[4])
   f:SetBackdropBorderColor(THEME.border[1], THEME.border[2], THEME.border[3], 1)
+
+  -- Dark gradient green overlay: top is slightly lighter green, bottom is very dark green
+  local grad = f:CreateTexture(nil, "BACKGROUND")
+  grad:SetAllPoints(f)
+  grad:SetTexture("Interface\\Tooltips\\UI-Tooltip-Background")
+  grad:SetGradientAlpha("VERTICAL", 0.04, 0.18, 0.05, 0.85, 0.01, 0.05, 0.01, 0.90)
   
   local header = CreateFrame("Frame", nil, f)
   header:SetPoint("TOPLEFT", f, "TOPLEFT", 4, -4)
@@ -2183,7 +2189,7 @@ function LeafVE_AchTest.UI:Build()
     tile = true, tileSize = 16, edgeSize = 8,
     insets = {left = 2, right = 2, top = 2, bottom = 2}
   })
-  header:SetBackdropColor(0.04, 0.04, 0.05, 1.0)
+  header:SetBackdropColor(0.02, 0.12, 0.03, 1.0)
   header:SetBackdropBorderColor(THEME.gold[1], THEME.gold[2], THEME.gold[3], 0.5)
 
   local title = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
