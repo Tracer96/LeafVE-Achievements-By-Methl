@@ -225,6 +225,24 @@ local function ShortName(name)
   return name
 end
 
+local function IsPartyOrSelf(name)
+  name = ShortName(name)
+  if not name then return false end
+  if name == ShortName(UnitName("player")) then return true end
+  local numRaid = GetNumRaidMembers and GetNumRaidMembers() or 0
+  if numRaid > 0 then
+    for i = 1, numRaid do
+      if UnitExists("raid"..i) and ShortName(UnitName("raid"..i)) == name then return true end
+    end
+  else
+    local numParty = GetNumPartyMembers and GetNumPartyMembers() or 0
+    for i = 1, numParty do
+      if UnitExists("party"..i) and ShortName(UnitName("party"..i)) == name then return true end
+    end
+  end
+  return false
+end
+
 local function FormatAchievementName(achID)
   if not achID then return "Unknown" end
   local formatted = string.gsub(achID, "raid_", "")
@@ -1254,6 +1272,14 @@ function LeafVE:OnBossKillChat(msg)
   local bossName = string.match(msg, "^You have slain (.+)!$")
     or string.match(msg, "^Your party has slain (.+)!$")
     or string.match(msg, "^Your raid has slain (.+)!$")
+
+  -- Scenario 6: server combat log format "X is slain by Y." — only credit if Y is self or party/raid.
+  if not bossName then
+    local mobName, killerName = string.match(msg, "^(.+) is slain by (.-)%.?$")
+    if mobName and killerName and IsPartyOrSelf(killerName) then
+      bossName = mobName
+    end
+  end
 
   -- Scenarios 4-5: no explicit killer (DoT tick, shared kill credit, environmental damage)
   -- Validate that our party was actually in the fight before crediting.
