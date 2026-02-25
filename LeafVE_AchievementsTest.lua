@@ -3477,11 +3477,8 @@ local function HookChatWithTitles()
         if title then
           Debug("Adding title: "..title.name.." (prefix: "..tostring(title.prefix)..")")
           local titleColor = title.legendary and "|cFFFF0000" or "|cFFFF7F00"
-          if title.prefix then
-            msg = titleColor.."["..title.name.."]|r "..msg
-          else
-            msg = msg.." "..titleColor.."["..title.name.."]|r"
-          end
+          -- Title always shows before the message text in guild chat
+          msg = titleColor.."["..title.name.."]|r "..msg
           Debug("Modified message: "..msg)
         else
           Debug("No title found for player")
