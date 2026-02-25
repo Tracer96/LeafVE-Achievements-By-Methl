@@ -1,5 +1,5 @@
 -- LeafVE_Ach_Reputation.lua
--- Faction reputation achievements (Friendly / Honored / Revered / Exalted).
+-- Faction reputation achievements (Revered / Exalted).
 -- Adapted from KeijinAchievementMonitor for LeafVE.
 -- Requires LeafVE_AchievementsTest.lua to be loaded first.
 --
@@ -41,8 +41,6 @@ local FACTIONS = {
 }
 
 local STANDINGS = {
-  {standingID=5, suffix="friendly", label="Friendly", points=5},
-  {standingID=6, suffix="honored",  label="Honored",  points=10},
   {standingID=7, suffix="revered",  label="Revered",  points=15},
   {standingID=8, suffix="exalted",  label="Exalted",  points=25},
 }
