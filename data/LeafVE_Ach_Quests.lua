@@ -205,6 +205,61 @@ local QUEST_CHAINS = {
     },
   },
 
+  -- ── Dreadsteed of Xoroth (Warlock Epic Mount) ─────────────
+  {
+    id    = "quest_dreadsteed",
+    name  = "Dreadsteed of Xoroth",
+    desc  = "Complete the Warlock epic mount quest chain and summon the Dreadsteed.",
+    points = 100,
+    icon  = "Interface\\Icons\\Ability_Mount_Nightmarehorse",
+    title = {id="title_dreadlord", name="the Dreadlord", prefix=false},
+    steps = {
+      "Seeking Stinky and Smelly",
+      "Klinfran the Crazed",
+      "Corruption",
+      "The Completed Orb",
+      "Imp Delivery",
+      "Dreadsteed of Xoroth",
+    },
+  },
+
+  -- ── Charger (Paladin Epic Mount) ───────────────────────────
+  {
+    id    = "quest_charger",
+    name  = "Blessed Charger",
+    desc  = "Complete the Paladin epic mount quest chain and receive the Charger.",
+    points = 100,
+    icon  = "Interface\\Icons\\Ability_Mount_Charger",
+    title = {id="title_lightsworn", name="the Lightsworn", prefix=false},
+    steps = {
+      "Emphasis on Effort",
+      "The Work of Grimand Elmore",
+      "Blessed Arcanite Barding",
+      "The Divination Scryer",
+      "Ancient Equine Spirit",
+      "Manna-Enriched Horse Feed",
+      "Grimand's Finest Work",
+      "Charger",
+    },
+  },
+
+  -- ── Quel'Serrar (Warrior / Paladin legendary blade) ────────
+  {
+    id    = "quest_quelserrar",
+    name  = "The Ancient Blade Reforged",
+    desc  = "Reforge Quel'Serrar by completing its legendary quest chain.",
+    points = 100,
+    icon  = "Interface\\Icons\\INV_Sword_39",
+    title = {id="title_blade_of_lore", name="Blade of Lore", prefix=false},
+    steps = {
+      "The Highborne's Token",
+      "A Worthy Vessel",
+      "The Emerald Dreamcatcher",
+      "Foror's Compendium",
+      "The Forging of Quel'Serrar",
+    },
+  },
+
 }
 
 -- ============================================================

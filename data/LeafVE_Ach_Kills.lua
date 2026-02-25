@@ -40,6 +40,12 @@ local NAMED_KILLS = {
   {id="kill_adder",       name="Adder Annihilator",        desc="Kill 50 Adders.",                             target="Adder",       value=50},
   {id="kill_toad",        name="No Time for Toads",        desc="Kill 50 Toads.",                              target="Toad",        value=50},
   {id="kill_fawn",        name="Forest Heartbreaker",      desc="Kill 50 Fawns.",                              target="Fawn",        value=50},
+  {id="kill_parrot",      name="Pretty Dead Polly",        desc="Kill 50 Parrots.",                            target="Parrot",      value=50},
+  {id="kill_crab",        name="Shell Crusher",            desc="Kill 50 Crabs.",                              target="Crab",        value=50},
+  {id="kill_turtle",      name="Slow and Slain",           desc="Kill 50 Turtles.",                            target="Turtle",      value=50},
+  {id="kill_bat",         name="Night Hunter",             desc="Kill 50 Bats.",                               target="Bat",         value=50},
+  {id="kill_scorpid",     name="Sting Stopper",            desc="Kill 50 Scorpids.",                           target="Scorpid",     value=50},
+  {id="kill_goat",        name="Mountain Menace",          desc="Kill 50 Goats.",                              target="Goat",        value=50},
 }
 
 -- Non-raid named boss/elite kills (one-shot)
@@ -51,6 +57,10 @@ local BOSS_KILLS = {
   {id="kill_sharptusk", name="Sharptusk Falls",      desc="Defeat Chief Sharptusk Thornmantle.",               target="Chief Sharptusk Thornmantle"},
   {id="kill_azuregos",  name="Blue Dragon Down",     desc="Defeat the world boss Azuregos in Azshara.",        target="Azuregos"},
   {id="kill_kazzak",    name="Lord of Doom",         desc="Defeat Lord Kazzak in the Blasted Lands.",          target="Lord Kazzak"},
+  {id="kill_emeriss",   name="Nightmare's Canopy",   desc="Defeat Emeriss, Dragon of Nightmare.",              target="Emeriss"},
+  {id="kill_lethon",    name="Shadow of the Dream",  desc="Defeat Lethon, Dragon of Nightmare.",               target="Lethon"},
+  {id="kill_taerar",    name="Shattered Nightmare",  desc="Defeat Taerar, Dragon of Nightmare.",               target="Taerar"},
+  {id="kill_ysondre",   name="Moonwarden's Bane",    desc="Defeat Ysondre, Dragon of Nightmare.",              target="Ysondre"},
 }
 
 -- Register all achievements

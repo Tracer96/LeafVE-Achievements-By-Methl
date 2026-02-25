@@ -1,5 +1,5 @@
 -- LeafVE_Ach_Reputation.lua
--- Faction reputation achievements (Friendly / Honored / Revered / Exalted).
+-- Faction reputation achievements (Revered / Exalted).
 -- Adapted from KeijinAchievementMonitor for LeafVE.
 -- Requires LeafVE_AchievementsTest.lua to be loaded first.
 --
