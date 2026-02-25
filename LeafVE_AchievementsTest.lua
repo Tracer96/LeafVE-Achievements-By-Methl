@@ -39,6 +39,11 @@ local function ShortName(name)
 end
 
 local function IsPartyOrSelf(name)
+  if not name or name == "" then return false end
+  -- Combat log uses WoW unit ID tokens ("player", "party1"…"party4", "raid1"…"raid40")
+  if name == "player" then return true end
+  if string.match(name, "^party%d+$") then return true end
+  if string.match(name, "^raid%d+$") then return true end
   name = ShortName(name)
   if not name then return false end
   if name == ShortName(UnitName("player")) then return true end
