@@ -880,7 +880,7 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   casual_loot_5000 = {counter="loots", goal=5000},
   -- Trades tracked via TRADE_CLOSED
   casual_trade_10 = {counter="trades", goal=10},
-  -- Generic kill milestones tracked via COMBAT_TEXT_UPDATE (KILLING_BLOW)
+  -- Generic kill milestones tracked via CHAT_MSG_COMBAT_HOSTILE_DEATH (player or party/raid member kill)
   kill_01    = {counter="genericKills", goal=1},
   kill_05    = {counter="genericKills", goal=5},
   kill_10    = {counter="genericKills", goal=10},
@@ -2920,10 +2920,13 @@ ef:SetScript("OnEvent", function()
   if event == "PLAYER_LEVEL_UP" then LeafVE_AchTest:CheckLevelAchievements() end
   if event == "PLAYER_MONEY" then LeafVE_AchTest:CheckGoldAchievements() end
   if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
-    -- Extract boss name from "Bossname dies." or "Bossname is slain!"
+    -- Extract boss name from "Bossname dies.", "Bossname is slain!", "Bossname has been slain.",
+    -- or "Bossname slain by Y." / "Bossname has been slain by Y." (party/raid member kill)
     local bossName = string.match(arg1, "^(.+) dies%.$")
                   or string.match(arg1, "^(.+) is slain!$")
                   or string.match(arg1, "^(.+) has been slain%.$")
+                  or string.match(arg1, "^(.+) slain by .+%.$")
+                  or string.match(arg1, "^(.+) has been slain by .+%.$")
     if bossName then
       LeafVE_AchTest:CheckBossKill(bossName)
     end
