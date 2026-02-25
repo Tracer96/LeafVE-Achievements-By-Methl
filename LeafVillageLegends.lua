@@ -1255,35 +1255,7 @@ function LeafVE:OnBossKillChat(msg)
     or string.match(msg, "^Your party has slain (.+)!$")
     or string.match(msg, "^Your raid has slain (.+)!$")
 
-  -- Scenario 4: "X is slain by Y." — server-specific kill credit message
-  if not bossName then
-    local mob, killer = string.match(msg, "^(.+) is slain by (.-)%.?$")
-    if mob and killer then
-      local ks = ShortName(killer)
-      local ms = ShortName(UnitName("player"))
-      if ks == ms then
-        bossName = mob
-      else
-        local numRaid = GetNumRaidMembers()
-        if numRaid > 0 then
-          for i = 1, numRaid do
-            if UnitExists("raid"..i) and ShortName(UnitName("raid"..i)) == ks then
-              bossName = mob; break
-            end
-          end
-        else
-          local numParty = GetNumPartyMembers()
-          for i = 1, numParty do
-            if UnitExists("party"..i) and ShortName(UnitName("party"..i)) == ks then
-              bossName = mob; break
-            end
-          end
-        end
-      end
-    end
-  end
-
-  -- Scenarios 5-6: no explicit killer (DoT tick, shared kill credit, environmental damage)
+  -- Scenarios 4-5: no explicit killer (DoT tick, shared kill credit, environmental damage)
   -- Validate that our party was actually in the fight before crediting.
   local isFallback = false
   if not bossName then
