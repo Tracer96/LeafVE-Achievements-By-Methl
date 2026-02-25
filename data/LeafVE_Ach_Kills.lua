@@ -179,12 +179,12 @@ killFrame:SetScript("OnEvent", function()
     -- so that group members (e.g. Methanel) count kills made by others (e.g. Methl)
     -- but random nearby players do not award undeserved credit.
     if not targetName then
-      local slainTarget, slainByName = string.match(msg, "^(.+) is slain by (.-)%.?$")
+      local slainTarget, slainByName = string.match(msg, "^(.+) is slain by (.-)[%.!]?$")
       if not slainTarget then
-        slainTarget, slainByName = string.match(msg, "^(.+) slain by (.-)%.?$")
+        slainTarget, slainByName = string.match(msg, "^(.+) slain by (.-)[%.!]?$")
       end
       if not slainTarget then
-        slainTarget, slainByName = string.match(msg, "^(.+) has been slain by (.-)%.?$")
+        slainTarget, slainByName = string.match(msg, "^(.+) has been slain by (.-)[%.!]?$")
       end
       if slainTarget and slainByName and LeafVE_AchTest and LeafVE_AchTest.ShortName then
         local myName = LeafVE_AchTest.ShortName(UnitName("player"))
