@@ -160,6 +160,16 @@ local ZONE_GROUP_ZONES = {
   },
 }
 
+local ZONE_NAME_ALIASES = {
+  ["Fargodeep Mine"]      = "The Fargodeep Mine",
+  ["The Fergodeep Mine"]  = "The Fargodeep Mine",
+  ["Fergodeep Mine"]      = "The Fargodeep Mine",
+}
+
+local function NormalizeZoneName(name)
+  return ZONE_NAME_ALIASES[name] or name
+end
+
 local ACHIEVEMENTS = {
   -- Leveling
   lvl_10={id="lvl_10",name="Level 10",desc="Reach level 10",category="Leveling",points=5,icon="Interface\\Icons\\INV_Misc_Bone_HumanSkull_01"},
@@ -3425,29 +3435,52 @@ zoneDiscFrame:SetScript("OnEvent", function()
   end
   local zoneName  = GetZoneText and GetZoneText() or ""
   local subzone   = GetSubZoneText and GetSubZoneText() or ""
+  -- Normalize names to match canonical entries in ZONE_GROUP_ZONES
+  zoneName = NormalizeZoneName(zoneName)
+  subzone  = NormalizeZoneName(subzone)
   -- Record new zone/subzone names and re-check all zone-group achievements
   local anyNew = false
+  local newlyDiscovered = {}
   if zoneName ~= "" and not LeafVE_AchTest_DB.exploredZones[me][zoneName] then
     LeafVE_AchTest_DB.exploredZones[me][zoneName] = true
     anyNew = true
+    newlyDiscovered[zoneName] = true
   end
   if subzone ~= "" and not LeafVE_AchTest_DB.exploredZones[me][subzone] then
     LeafVE_AchTest_DB.exploredZones[me][subzone] = true
     anyNew = true
+    newlyDiscovered[subzone] = true
   end
   if not anyNew then return end
-  -- Check every zone-group achievement
+  -- Check every zone-group achievement; notify on first discovery
+  local soundPlayed = false
   for groupKey, zones in pairs(ZONE_GROUP_ZONES) do
     local achId = ZONE_GROUP_ACH[groupKey] or ("explore_tw_"..groupKey)
-    if not LeafVE_AchTest:HasAchievement(me, achId) then
-      local allFound = true
+    local total = table.getn(zones)
+    local found = 0
+    local hasNew = false
+    for _, z in ipairs(zones) do
+      if LeafVE_AchTest_DB.exploredZones[me][z] then
+        found = found + 1
+      end
+      if newlyDiscovered[z] then
+        hasNew = true
+      end
+    end
+    if hasNew then
+      local achName = ACHIEVEMENTS[achId] and ACHIEVEMENTS[achId].name or achId
       for _, z in ipairs(zones) do
-        if not LeafVE_AchTest_DB.exploredZones[me][z] then
-          allFound = false
-          break
+        if newlyDiscovered[z] then
+          Print('Discovered "'..z..'" - '..found..'/'..total..' Locations for '..achName)
         end
       end
-      if allFound then
+      if not soundPlayed then
+        PlaySound("QUESTCOMPLETED")
+        soundPlayed = true
+      end
+    end
+    if not LeafVE_AchTest:HasAchievement(me, achId) then
+      if found == total then
         LeafVE_AchTest:AwardAchievement(achId)
       end
     end
