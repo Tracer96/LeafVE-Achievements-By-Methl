@@ -1519,6 +1519,17 @@ function LeafVE_AchTest:SetTitle(playerName, titleID, usePrefix)
   end
 end
 
+function LeafVE_AchTest:RemoveTitle(playerName)
+  EnsureDB()
+  playerName = ShortName(playerName or UnitName("player"))
+  if not playerName then return end
+  LeafVE_AchTest_DB.selectedTitles[playerName] = nil
+  Print("Title removed.")
+  if LeafVE_AchTest.UI and LeafVE_AchTest.UI.Refresh then
+    LeafVE_AchTest.UI:Refresh()
+  end
+end
+
 function LeafVE_AchTest:CheckLevelAchievements(silent)
   local level = UnitLevel("player")
   if level >= 5  then self:AwardAchievement("casual_level_5",  silent) end
@@ -3039,13 +3050,23 @@ function LeafVE_AchTest.UI:RefreshTitles()
       end
       frame.requirement:SetText("From: "..(achData and achData.name or "Unknown"))
       frame.requirement:SetTextColor(0.9, 0.9, 0.9)
+      local currentTitle = LeafVE_AchTest_DB and LeafVE_AchTest_DB.selectedTitles and LeafVE_AchTest_DB.selectedTitles[me]
+      local isEquipped = currentTitle and currentTitle.id == titleData.id
       frame.equipBtn:Enable()
       frame.equipBtn.titleID = titleData.id
       frame.equipBtn.titlePrefix = titleData.prefix
-      frame.equipBtn:SetScript("OnClick", function()
-        LeafVE_AchTest:SetTitle(me, this.titleID, this.titlePrefix)
-        LeafVE_AchTest.UI:Refresh()
-      end)
+      if isEquipped then
+        frame.equipBtn:SetText("Remove")
+        frame.equipBtn:SetScript("OnClick", function()
+          LeafVE_AchTest:RemoveTitle(me)
+        end)
+      else
+        frame.equipBtn:SetText("Equip")
+        frame.equipBtn:SetScript("OnClick", function()
+          LeafVE_AchTest:SetTitle(me, this.titleID, this.titlePrefix)
+          LeafVE_AchTest.UI:Refresh()
+        end)
+      end
     else
       frame:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
       frame.icon:SetDesaturated(true)
@@ -3225,7 +3246,7 @@ ef:SetScript("OnEvent", function()
   end
   if event == "CHAT_MSG_SYSTEM" then
     local msg = arg1 or ""
-    local winner, loser = string.match(msg, "^(.+) has defeated (.+) in a duel$")
+    local winner, loser = string.match(msg, "^(.-) has defeated (.+) in a duel$")
     if winner then
       local me = ShortName(UnitName("player"))
       if me and ShortName(winner) == me then
