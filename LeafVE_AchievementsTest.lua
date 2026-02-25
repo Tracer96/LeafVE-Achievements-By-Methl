@@ -89,7 +89,7 @@ local ZONE_GROUP_ACH = {
 local ZONE_GROUP_ZONES = {
   kalimdor = {"Durotar","Mulgore","The Barrens","Teldrassil","Darkshore","Ashenvale","Stonetalon Mountains","Desolace","Feralas","Thousand Needles","Tanaris","Dustwallow Marsh","Azshara","Felwood","Un'Goro Crater","Moonglade","Winterspring","Silithus"},
   eastern_kingdoms = {"Dun Morogh","Elwynn Forest","Tirisfal Glades","Silverpine Forest","Westfall","Redridge Mountains","Duskwood","Wetlands","Loch Modan","Hillsbrad Foothills","Alterac Mountains","Arathi Highlands","Badlands","Searing Gorge","Burning Steppes","The Hinterlands","Western Plaguelands","Eastern Plaguelands","Stranglethorn Vale","Swamp of Sorrows","Blasted Lands","Deadwind Pass"},
-  elwynn = {"Northshire","Northshire Abbey","Crystal Lake","Eastvale Logging Camp","Goldshire","Mirror Lake","Westbrook Garrison","Tower of Azora","Brackwell Pumpkin Patch","The Fargodeep Mine","Jasperlode Mine"},
+  elwynn = {"Northshire Valley","Northshire Abbey","Crystal Lake","Eastvale Logging Camp","Goldshire","Mirror Lake","Westbrook Garrison","Tower of Azora","Brackwell Pumpkin Patch","The Fargodeep Mine","Jasperlode Mine"},
   barrens = {"The Crossroads","Ratchet","Grol'dom Farm","Lushwater Oasis","Stagnant Oasis","Camp Taurajo","Mor'shan Base Camp","Blackthorn Ridge","The Wailing Caverns","Darsok's Rest","Far Watch Post"},
   balor = {
     "Bilgerat Compound","Ruins of Breezehaven","SI:7 Outpost",
@@ -161,9 +161,162 @@ local ZONE_GROUP_ZONES = {
 }
 
 local ZONE_NAME_ALIASES = {
-  ["Fargodeep Mine"]      = "The Fargodeep Mine",
-  ["The Fergodeep Mine"]  = "The Fargodeep Mine",
-  ["Fergodeep Mine"]      = "The Fargodeep Mine",
+  -- ── Elwynn Forest ──────────────────────────────────────────
+  ["Northshire"]              = "Northshire Valley",
+  ["Northshire Vineyards"]    = "Northshire Valley",
+  ["Northshire River"]        = "Northshire Valley",
+  ["Echo Ridge Mine"]         = "Northshire Valley",
+  ["Fargodeep Mine"]          = "The Fargodeep Mine",
+  ["The Fergodeep Mine"]      = "The Fargodeep Mine",
+  ["Fergodeep Mine"]          = "The Fargodeep Mine",
+  ["The Jasperlode Mine"]     = "Jasperlode Mine",
+  ["Jasper Lode Mine"]        = "Jasperlode Mine",
+  ["Jasperlode"]              = "Jasperlode Mine",
+  ["Eastvale"]                = "Eastvale Logging Camp",
+  ["East Vale Logging Camp"]  = "Eastvale Logging Camp",
+  ["Lion's Pride Inn"]        = "Goldshire",
+  ["Mirror Lake Orchard"]     = "Mirror Lake",
+  ["Westbrook"]               = "Westbrook Garrison",
+  ["Azora"]                   = "Tower of Azora",
+  ["Brackwell"]               = "Brackwell Pumpkin Patch",
+  ["Northshire Abby"]         = "Northshire Abbey",
+
+  -- ── Barrens ────────────────────────────────────────────────
+  ["Crossroads"]              = "The Crossroads",
+  ["The Ratchet"]             = "Ratchet",
+  ["Groldom Farm"]            = "Grol'dom Farm",
+  ["Grol'dom"]                = "Grol'dom Farm",
+  ["Lushwater"]               = "Lushwater Oasis",
+  ["Stagnant"]                = "Stagnant Oasis",
+  ["Taurajo"]                 = "Camp Taurajo",
+  ["Mor'shan"]                = "Mor'shan Base Camp",
+  ["Morshan Base Camp"]       = "Mor'shan Base Camp",
+  ["Wailing Caverns"]         = "The Wailing Caverns",
+  ["Darsoks Rest"]            = "Darsok's Rest",
+  ["Darsok's"]                = "Darsok's Rest",
+  ["Far Watch"]               = "Far Watch Post",
+  ["Farwatch Post"]           = "Far Watch Post",
+
+  -- ── Balor ──────────────────────────────────────────────────
+  ["Bilgerat"]                = "Bilgerat Compound",
+  ["Breezehaven"]             = "Ruins of Breezehaven",
+  ["SI7 Outpost"]             = "SI:7 Outpost",
+  ["SI:7"]                    = "SI:7 Outpost",
+  ["Sorrowmore"]              = "Sorrowmore Lake",
+  ["Stormbreaker"]            = "Stormbreaker Point",
+  ["Stormwrought"]            = "Stormwrought Castle",
+
+  -- ── Gilneas ────────────────────────────────────────────────
+  ["Blackthorn Camp"]         = "Blackthorn's Camp",
+  ["Blackthorns Camp"]        = "Blackthorn's Camp",
+  ["Brolok Mound"]            = "Brol'ok Mound",
+  ["Brol'ok"]                 = "Brol'ok Mound",
+  ["Dryrock Mine"]            = "The Dryrock Mine",
+  ["The Dryrock Pit"]         = "Dryrock Valley (The Dryrock Pit)",
+  ["Dryrock Valley"]          = "Dryrock Valley (The Dryrock Pit)",
+  ["Dryrock Pit"]             = "Dryrock Valley (The Dryrock Pit)",
+  ["Greymane Wall"]           = "The Greymane Wall",
+  ["Greymane's"]              = "Greymane's Watch",
+  ["Greymanes Watch"]         = "Greymane's Watch",
+  ["Hollow Web Cemetery"]     = "Hollow Web Cemetary",
+  ["Holloweb Cemetary"]       = "Hollow Web Cemetary",
+  ["Hollowweb Cemetery"]      = "Hollow Web Cemetary",
+  ["Overgrown Acre"]          = "The Overgrown Acre",
+
+  -- ── Northwind ──────────────────────────────────────────────
+  ["Northwind Logging"]       = "Northwind Logging Camp",
+  ["Birkhaven"]               = "Ruins of Birkhaven",
+  ["Stillheart"]              = "Stillheart Port",
+
+  -- ── Lapidis Isle ───────────────────────────────────────────
+  ["Caelans Rest"]            = "Caelan's Rest",
+  ["Caelan's"]                = "Caelan's Rest",
+  ["Gordosh Heights"]         = "Gor'dosh Heights",
+  ["Gor'dosh"]                = "Gor'dosh Heights",
+  ["Shanks Reef"]             = "Shank's Reef",
+  ["Shank's"]                 = "Shank's Reef",
+  ["Tower of Lapidis"]        = "The Tower of Lapidis",
+  ["Lapidis Tower"]           = "The Tower of Lapidis",
+  ["Wallowing Coast"]         = "The Wallowing Coast",
+  ["ZulHazu"]                 = "Zul'Hazu",
+  ["Zul Hazu"]                = "Zul'Hazu",
+
+  -- ── Gillijim's Isle ────────────────────────────────────────
+  ["Broken Reef"]             = "The Broken Reef",
+  ["Faelons Folly"]           = "Faelon's Folly",
+  ["Faelon's"]                = "Faelon's Folly",
+  ["Gillijim's Canyon"]       = "Gillijim Canyon",
+  ["Gillijim's Strand"]       = "Gillijim Strand",
+  ["Maulogg Post"]            = "Maul'ogg Post",
+  ["Maul'ogg"]                = "Maul'ogg Post",
+  ["Maulogg Refuge"]          = "Maul'ogg Refuge",
+  ["Zul'Razar Ruins"]         = "Ruins of Zul'Razar",
+  ["Silver Coast"]            = "The Silver Coast",
+  ["Silver Sandbar"]          = "The Silver Sandbar",
+  ["Tangled Wood"]            = "The Tangled Wood",
+  ["ZulRazar"]                = "Zul'Razar",
+  ["Zul Razar"]               = "Zul'Razar",
+
+  -- ── Scarlet Enclave ────────────────────────────────────────
+  ["Forbidding Sea"]          = "The Forbidding Sea",
+  ["Kings Harbor"]            = "King's Harbor",
+  ["King's"]                  = "King's Harbor",
+  ["Lights Point"]            = "Light's Point",
+  ["Light's"]                 = "Light's Point",
+
+  -- ── Grim Reaches ───────────────────────────────────────────
+  ["Grim Hollow"]             = "The Grim Hollow",
+  ["Stolgaz Keep"]            = "Ruins of Stolgaz Keep",
+  ["Ruins of Stolgaz"]        = "Ruins of Stolgaz Keep",
+  ["ZarmGeth Stronghold"]     = "Zarm'Geth Stronghold",
+  ["Zarm'Geth"]               = "Zarm'Geth Stronghold",
+
+  -- ── Tel'Abim ───────────────────────────────────────────────
+  ["Bixxles Storehouse"]      = "Bixxle's Storehouse",
+  ["Bixxle's"]                = "Bixxle's Storehouse",
+  ["Derelict Camp"]           = "The Derelict Camp",
+  ["Jagged Isles"]            = "The Jagged Isles",
+  ["Shallow Strand"]          = "The Shallow Strand",
+  ["Tazzos Shack"]            = "Tazzo's Shack",
+  ["Tazzo's"]                 = "Tazzo's Shack",
+  ["Washing Shore"]           = "The Washing Shore",
+
+  -- ── Hyjal ──────────────────────────────────────────────────
+  ["Emerald Gateway"]         = "The Emerald Gateway",
+  ["Ruins of Telennas"]       = "The Ruins of Telennas",
+  ["Telennas"]                = "The Ruins of Telennas",
+  ["ZulHathar"]               = "Zul'Hathar",
+  ["Zul Hathar"]              = "Zul'Hathar",
+  ["Malakajin"]               = "Malaka'jin",
+
+  -- ── Tirisfal Uplands ───────────────────────────────────────
+  ["Blacktower Inn"]          = "The Blacktower Inn",
+  ["Corinth Farmstead"]       = "The Corinth Farmstead",
+  ["The Corinth"]             = "The Corinth Farmstead",
+  ["IshnuDanil"]              = "Ishnu'Danil",
+  ["Ishnu Danil"]             = "Ishnu'Danil",
+  ["Jagged Hills"]            = "The Jagged Hills",
+  ["Lafford House"]           = "The Lafford House",
+  ["Remnants Camp"]           = "The Remnants Camp",
+  ["Rogue Heights"]           = "The Rogue Heights",
+  ["ShallaAran"]              = "Shalla'Aran",
+  ["Shalla Aran"]             = "Shalla'Aran",
+  ["Whispering Forest"]       = "The Whispering Forest",
+
+  -- ── Stonetalon TW ──────────────────────────────────────────
+  ["Talondeep Path"]          = "The Talondeep Path",
+
+  -- ── Arathi TW ──────────────────────────────────────────────
+  ["Zul'rasaz"]               = "Ruins of Zul'rasaz",
+  ["Ruins of Zulrasaz"]       = "Ruins of Zul'rasaz",
+
+  -- ── Badlands TW ────────────────────────────────────────────
+  ["Redbrands Digsite"]       = "Redbrand's Digsite",
+  ["Angor Fortress"]          = "Angor Digsite",
+
+  -- ── Ashenvale TW ───────────────────────────────────────────
+  ["Demon Fall"]              = "Demon Fall Ridge",
+  ["Warsong Lumber"]          = "Warsong Lumber Camp",
 }
 
 local function NormalizeZoneName(name)
