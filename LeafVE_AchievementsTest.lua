@@ -3231,8 +3231,7 @@ ef:SetScript("OnEvent", function()
             end
           end
         end
-        local inCombat = UnitAffectingCombat and UnitAffectingCombat("player")
-        if recentlyTargeted or partyTargeting or inCombat then
+        if recentlyTargeted or partyTargeting then
           mobName = fallbackName
         end
       end

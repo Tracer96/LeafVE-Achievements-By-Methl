@@ -233,9 +233,7 @@ killFrame:SetScript("OnEvent", function()
             end
           end
         end
-        -- Scenario 8: player is currently in combat (boss died mid-fight)
-        local inCombat = UnitAffectingCombat and UnitAffectingCombat("player")
-        if recentlyTargeted or partyTargeting or inCombat then
+        if recentlyTargeted or partyTargeting then
           targetName = fallbackName
         end
       end
