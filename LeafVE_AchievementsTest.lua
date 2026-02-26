@@ -571,7 +571,7 @@ local ACHIEVEMENTS = {
   elite_rag_10x={id="elite_rag_10x",name="Flame Conqueror",desc="Defeat Ragnaros 10 times",category="Elite",points=250,icon="Interface\\Icons\\Spell_Fire_LavaSpawn"},
   elite_kt_5x={id="elite_kt_5x",name="Frost Conqueror",desc="Defeat Kel'Thuzad 5 times",category="Elite",points=500,icon="Interface\\Icons\\Spell_Shadow_SoulGem"},
   elite_pvp_rank_14={id="elite_pvp_rank_14",name="Grand Marshal",desc="Achieve PvP Rank 14",category="Elite",points=1000,icon="Interface\\Icons\\INV_Sword_39"},
-  elite_ironman={id="elite_ironman",name="Ironman",desc="Reach level 60 without dying (tracked from addon install)",category="Elite",points=500,icon="Interface\\Icons\\INV_Helmet_74"},
+
   elite_rag_5x={id="elite_rag_5x",name="Molten Core Veteran",desc="Defeat Ragnaros 5 times",category="Elite",points=150,icon="Interface\\Icons\\Spell_Fire_Incinerate"},
   elite_gandling_5x={id="elite_gandling_5x",name="Necromancer's Bane",desc="Defeat Darkmaster Gandling 5 times",category="Elite",points=200,icon="Interface\\Icons\\Spell_Shadow_Charm"},
   elite_all_raids_complete={id="elite_all_raids_complete",name="Raid Completionist",desc="Complete every Classic raid at least once",category="Elite",points=500,icon="Interface\\Icons\\Spell_Holy_Resurrection",criteria_type="raid_meta"},
@@ -589,7 +589,7 @@ local ACHIEVEMENTS = {
   casual_epic_mount={id="casual_epic_mount",name="Epic Mount",desc="Obtain an epic mount",category="Casual",points=25,icon="Interface\\Icons\\Ability_Mount_JungleTiger"},
   casual_fall_death={id="casual_fall_death",name="Falling Star",desc="Die from falling 10 times",category="Casual",points=5,icon="Interface\\Icons\\Ability_Rogue_FeintedStrike"},
   casual_deaths_10={id="casual_deaths_10",name="First Casualty",desc="Die 10 times",category="Casual",points=5,icon="Interface\\Icons\\Spell_Shadow_DeathScream"},
-  casual_mount_60={id="casual_mount_60",name="First Mount",desc="Obtain your first mount at level 40",category="Casual",points=10,icon="Interface\\Icons\\Ability_Mount_Raptor"},
+  casual_mount_60={id="casual_mount_60",name="First Mount",desc="Obtain your first mount",category="Casual",points=10,icon="Interface\\Icons\\Ability_Mount_Raptor"},
   casual_hearthstone_use={id="casual_hearthstone_use",name="Frequent Traveler",desc="Use your hearthstone 50 times",category="Casual",points=10,icon="Interface\\Icons\\INV_Misc_Rune_01"},
   casual_guild_join={id="casual_guild_join",name="Guild Member",desc="Join a guild",category="Casual",points=5,icon="Interface\\Icons\\INV_Shirt_GuildTabard_01"},
   casual_hearthstone_1={id="casual_hearthstone_1",name="Home Is Where the Hearth Is",desc="Use your hearthstone for the first time",category="Casual",points=5,icon="Interface\\Icons\\INV_Misc_Rune_01"},
@@ -625,17 +625,17 @@ local ACHIEVEMENTS = {
   casual_trade_10={id="casual_trade_10",name="Trader",desc="Complete 10 trades with other players",category="Casual",points=10,icon="Interface\\Icons\\INV_Misc_Coin_01"},
 
   -- Legendary Achievements (officer-approved, require streaming or recording)
-  legendary_naked_dungeon={id="legendary_naked_dungeon",name="Bare Bones",desc="Clear any level-60 dungeon with your group wearing no armor at all. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Misc_Pelt_Wolf_01",manual=true},
-  legendary_full_clear_week={id="legendary_full_clear_week",name="Conqueror of All",desc="Clear MC, BWL, ZG, AQ20, AQ40, and Naxxramas all within a single calendar week. Must be verified by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Shadow_SoulGem",manual=true},
-  legendary_speed_run_brd={id="legendary_speed_run_brd",name="Speed Demon",desc="Complete a full clear of Blackrock Depths in under 30 minutes. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Fire_LavaSpawn",manual=true},
-  legendary_flawless_naxx={id="legendary_flawless_naxx",name="The Immortal",desc="Complete all of Naxxramas without any raid member dying the entire run. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Shadow_RaiseDead",manual=true},
-  legendary_solo_raid_boss={id="legendary_solo_raid_boss",name="The Unsupported",desc="Defeat any raid boss completely alone. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
-  legendary_duel_streak_100={id="legendary_duel_streak_100",name="Undefeated",desc="Win 100 consecutive duels without a single loss. Must be witnessed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Sword_62",manual=true},
-  legendary_ironman_60={id="legendary_ironman_60",name="Untouched by Death",desc="Reach level 60 without dying a single time. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Helmet_74",manual=true},
-  legendary_onyxia_10={id="legendary_onyxia_10",name="Onyxia 10-Man",desc="Defeat Onyxia with a raid of exactly 10 players. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",manual=true},
-  legendary_onyxia_5={id="legendary_onyxia_5",name="Onyxia 5-Man",desc="Defeat Onyxia with a group of exactly 5 players. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",manual=true},
-  legendary_solo_60_boss={id="legendary_solo_60_boss",name="Solo Dungeon Boss",desc="Defeat any level 60 dungeon boss completely alone. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
-  legendary_no_consumes_t2plus={id="legendary_no_consumes_t2plus",name="No Consumables Raid",desc="Complete a full Tier 2 or higher raid without any raid member using a single consumable. Must be streamed or recorded and approved by two officers.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Potion_01",manual=true},
+  legendary_naked_dungeon={id="legendary_naked_dungeon",name="Bare Bones",desc="Clear any level-60 dungeon with your group wearing no armor at all. Must be streamed or recorded and approved by an officer.",category="Legendary",points=1000,icon="Interface\\Icons\\INV_Misc_Pelt_Wolf_01",manual=true},
+  legendary_full_clear_week={id="legendary_full_clear_week",name="Conqueror of All",desc="Clear MC, BWL, ZG, AQ20, AQ40, and Naxxramas all within a single calendar week. Must be verified by an officer.",category="Legendary",points=1000,icon="Interface\\Icons\\Spell_Shadow_SoulGem",manual=true},
+  legendary_speed_run_brd={id="legendary_speed_run_brd",name="Speed Demon",desc="Complete a full clear of Blackrock Depths in under 30 minutes. Must be streamed or recorded and approved by an officer.",category="Legendary",points=1000,icon="Interface\\Icons\\Spell_Fire_LavaSpawn",manual=true},
+  legendary_flawless_naxx={id="legendary_flawless_naxx",name="The Immortal",desc="Complete all of Naxxramas without any raid member dying the entire run. Must be streamed or recorded and approved by an officer.",category="Legendary",points=1000,icon="Interface\\Icons\\Spell_Shadow_RaiseDead",manual=true},
+  legendary_solo_raid_boss={id="legendary_solo_raid_boss",name="The Unsupported",desc="Defeat any raid boss completely alone. Must be streamed or recorded and approved by an officer.",category="Legendary",points=1000,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
+  legendary_duel_streak_100={id="legendary_duel_streak_100",name="Undefeated",desc="Win 100 consecutive duels without a single loss. Must be witnessed or recorded and approved by an officer.",category="Legendary",points=1000,icon="Interface\\Icons\\INV_Sword_62",manual=true},
+  legendary_ironman_60={id="legendary_ironman_60",name="Untouched by Death",desc="Reach level 60 without dying a single time. Must be streamed or recorded and approved by an officer.",category="Legendary",points=1000,icon="Interface\\Icons\\INV_Helmet_74",manual=true},
+  legendary_onyxia_10={id="legendary_onyxia_10",name="Onyxia 10-Man",desc="Defeat Onyxia with a raid of exactly 10 players. Must be streamed or recorded and approved by an officer.",category="Legendary",points=1000,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",manual=true},
+  legendary_onyxia_5={id="legendary_onyxia_5",name="Onyxia 5-Man",desc="Defeat Onyxia with a group of exactly 5 players. Must be streamed or recorded and approved by an officer.",category="Legendary",points=1000,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",manual=true},
+  legendary_solo_60_boss={id="legendary_solo_60_boss",name="Solo Dungeon Boss",desc="Defeat any level 60 dungeon boss completely alone. Must be streamed or recorded and approved by an officer.",category="Legendary",points=1000,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
+  legendary_no_consumes_t2plus={id="legendary_no_consumes_t2plus",name="No Consumables Raid",desc="Complete a full Tier 2 or higher raid without any raid member using a single consumable. Must be streamed or recorded and approved by two officers.",category="Legendary",points=1000,icon="Interface\\Icons\\INV_Potion_01",manual=true},
 }
 
 local TITLES = {
@@ -689,7 +689,7 @@ local TITLES = {
   {id="title_death_knight",name="Death Knight",achievement="raid_naxx_four_horsemen",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
   
   -- Elite Achievement Titles
-  {id="title_ironman",name="the Ironman",achievement="elite_ironman",prefix=false,category="Elite",icon="Interface\\Icons\\INV_Helmet_74"},
+
   
   -- PvP Titles
   {id="title_warlord",name="Warlord",achievement="pvp_hk_5000",prefix=true,category="PvP",icon="Interface\\Icons\\INV_Sword_62"},
@@ -1052,8 +1052,6 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   elite_100_dungeons = {counter="dungeonRuns", goal=100},
   elite_25_raids     = {counter="raidRuns",    goal=25},
   elite_50_raids     = {counter="raidRuns",    goal=50},
-  -- Ironman: deaths must remain 0 to hit level 60
-  elite_ironman = {counter="deaths", goal=0},
   -- Resurrections tracked via PLAYER_ALIVE
   casual_resurrect_10 = {counter="resurrections", goal=10},
   casual_resurrect_50 = {counter="resurrections", goal=50},
@@ -2035,13 +2033,7 @@ local function CreateAchievementRow(parent)
       GameTooltip:AddLine(" ", 1, 1, 1)
       local prog = GetAchievementProgress(me, ad.id)
       if prog then
-        if ad.id == "elite_ironman" then
-          local label = prog.current == 0 and "|cFF00CC00No deaths recorded|r" or
-                        "|cFFFF4444"..prog.current.." death(s) recorded — run invalidated|r"
-          GameTooltip:AddLine(label, 1, 1, 1)
-        else
-          GameTooltip:AddLine(string.format("Progress: %d / %d", prog.current, prog.goal), 0.6, 0.8, 1.0)
-        end
+        GameTooltip:AddLine(string.format("Progress: %d / %d", prog.current, prog.goal), 0.6, 0.8, 1.0)
       end
       if ad.manual then
         GameTooltip:AddLine("|cFFFF8800Requires officer grant: /achgrant <name> "..ad.id.."|r", 1, 1, 1, true)
@@ -2403,6 +2395,21 @@ function LeafVE_AchTest.UI:Build()
     end
     LeafVE_AchTest_DB.achievements[target][achId] = {timestamp = Now(), points = ach.points}
     Print("|cFFFF0000[Admin Grant]|r "..target.." awarded: |cFF2DD35C"..ach.name.."|r (+"..ach.points.." pts)")
+    if IsInGuild() then
+      local achLink = "|cFF2DD35C|Hleafve_ach:"..achId.."|h["..ach.name.."]|h|r"
+      local guildMsg
+      if ach.category == "Legendary" and LEGENDARY_GUILD_MESSAGES[achId] then
+        local legendaryMsg = LEGENDARY_GUILD_MESSAGES[achId](target)
+        guildMsg = "|cFFFF0000[LEGENDARY]|r " .. legendaryMsg
+      else
+        guildMsg = "|cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+      end
+      if originalSendChatMessage then
+        originalSendChatMessage(guildMsg, "GUILD")
+      else
+        SendChatMessage(guildMsg, "GUILD")
+      end
+    end
     LeafVE_AchTest.UI:Refresh()
   end)
 
@@ -3654,6 +3661,21 @@ SlashCmdList["ACHGRANT"] = function(msg)
   end
   LeafVE_AchTest_DB.achievements[playerName][achId] = {timestamp = Now(), points = ach.points}
   Print("|cFFFF7F00[Admin Grant]|r "..playerName.." awarded: |cFF2DD35C"..ach.name.."|r (+"..ach.points.." pts)")
+  if IsInGuild() then
+    local achLink = "|cFF2DD35C|Hleafve_ach:"..achId.."|h["..ach.name.."]|h|r"
+    local guildMsg
+    if ach.category == "Legendary" and LEGENDARY_GUILD_MESSAGES[achId] then
+      local legendaryMsg = LEGENDARY_GUILD_MESSAGES[achId](playerName)
+      guildMsg = "|cFFFF0000[LEGENDARY]|r " .. legendaryMsg
+    else
+      guildMsg = "|cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+    end
+    if originalSendChatMessage then
+      originalSendChatMessage(guildMsg, "GUILD")
+    else
+      SendChatMessage(guildMsg, "GUILD")
+    end
+  end
   if LeafVE_AchTest.UI and LeafVE_AchTest.UI.Refresh then
     LeafVE_AchTest.UI:Refresh()
   end
