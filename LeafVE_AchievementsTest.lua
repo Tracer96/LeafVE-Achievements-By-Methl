@@ -3710,6 +3710,11 @@ SlashCmdList["ACHTEST"] = function(msg)
   LeafVE_AchTest.UI:Build()
 end
 
+SLASH_LEAFACH1 = "/leafach"
+SlashCmdList["LEAFACH"] = function()
+  LeafVE_AchTest.UI:Build()
+end
+
 SLASH_ACHTESTDEBUG1 = "/achtestdebug"
 SlashCmdList["ACHTESTDEBUG"] = function(msg)
   LeafVE_AchTest.DEBUG = not LeafVE_AchTest.DEBUG
@@ -3832,11 +3837,11 @@ minimapButton:SetFrameLevel(8)
 minimapButton:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
 
 -- Icon
-local icon = minimapButton:CreateTexture(nil, "BACKGROUND")
-icon:SetWidth(20)
-icon:SetHeight(20)
+local icon = minimapButton:CreateTexture(nil, "ARTWORK")
+icon:SetWidth(18)
+icon:SetHeight(18)
 icon:SetTexture("Interface\\Icons\\INV_Misc_Trophy_Gold")
-icon:SetPoint("CENTER", 0, 1)
+icon:SetPoint("CENTER", minimapButton, "CENTER", 0, 1)
 minimapButton.icon = icon
 
 -- Border
@@ -3848,9 +3853,12 @@ overlay:SetPoint("TOPLEFT", 0, 0)
 
 -- Position on minimap
 local function UpdateMinimapPosition()
-  local angle = 45 -- Default angle
+  EnsureDB()
+  if not LeafVE_AchTest_DB.minimapAngle then LeafVE_AchTest_DB.minimapAngle = 45 end
+  local angle = math.rad(LeafVE_AchTest_DB.minimapAngle)
   local x = math.cos(angle) * 80
   local y = math.sin(angle) * 80
+  minimapButton:ClearAllPoints()
   minimapButton:SetPoint("CENTER", Minimap, "CENTER", x, y)
 end
 
@@ -3868,11 +3876,11 @@ minimapButton:SetScript("OnDragStop", function()
   this:StopMovingOrSizing()
   local centerX, centerY = Minimap:GetCenter()
   local buttonX, buttonY = this:GetCenter()
-  local angle = math.atan2(buttonY - centerY, buttonX - centerX)
-  local x = math.cos(angle) * 80
-  local y = math.sin(angle) * 80
-  this:ClearAllPoints()
-  this:SetPoint("CENTER", Minimap, "CENTER", x, y)
+  local angle = math.deg(math.atan2(buttonY - centerY, buttonX - centerX))
+  if angle < 0 then angle = angle + 360 end
+  EnsureDB()
+  LeafVE_AchTest_DB.minimapAngle = angle
+  UpdateMinimapPosition()
 end)
 
 -- Click to open
