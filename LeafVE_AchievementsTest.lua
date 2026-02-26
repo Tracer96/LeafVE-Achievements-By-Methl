@@ -2346,6 +2346,7 @@ function LeafVE_AchTest.UI:Build()
     Print("Reset complete!")
     LeafVE_AchTest.UI:Refresh()
   end)
+  self.resetBtn = resetBtn
 
   -- ── Admin Panel (hidden by default) ─────────────────────────────────────
   local adminFrame = CreateFrame("Frame", nil, f)
@@ -2798,6 +2799,28 @@ function LeafVE_AchTest.UI:Refresh()
   local me = ShortName(UnitName("player") or "")
   local totalPoints = LeafVE_AchTest:GetTotalAchievementPoints(me)
   local currentTitle = LeafVE_AchTest:GetCurrentTitle(me)
+  local _, rankName = GetGuildInfo("player")
+  local hasAdminAccess = rankName ~= nil and (rankName == "Anbu" or rankName == "Sannin" or rankName == "Hokage")
+
+  if not hasAdminAccess and self.currentView == "admin" then
+    self.currentView = "achievements"
+  end
+
+  if self.adminTab then
+    if hasAdminAccess then
+      self.adminTab:Show()
+    else
+      self.adminTab:Hide()
+    end
+  end
+
+  if self.resetBtn then
+    if hasAdminAccess then
+      self.resetBtn:Show()
+    else
+      self.resetBtn:Hide()
+    end
+  end
   
   if self.pointsLabel then
     if currentTitle then
@@ -2827,8 +2850,14 @@ function LeafVE_AchTest.UI:Refresh()
   if self.currentView == "achievements" then
     if self.achTab then self.achTab:Disable() end
     if self.titlesTab then self.titlesTab:Enable() end
-    if self.adminTab then self.adminTab:Enable() end
-    if self.awardBtn then self.awardBtn:Show() end
+    if self.adminTab and hasAdminAccess then self.adminTab:Enable() end
+    if self.awardBtn then
+      if hasAdminAccess then
+        self.awardBtn:Show()
+      else
+        self.awardBtn:Hide()
+      end
+    end
     if self.searchLabel then self.searchLabel:Show() end
     if self.searchBox then self.searchBox:Show() end
     if self.clearBtn then self.clearBtn:Show() end
@@ -2856,7 +2885,7 @@ function LeafVE_AchTest.UI:Refresh()
   elseif self.currentView == "admin" then
     if self.achTab then self.achTab:Enable() end
     if self.titlesTab then self.titlesTab:Enable() end
-    if self.adminTab then self.adminTab:Disable() end
+    if self.adminTab and hasAdminAccess then self.adminTab:Disable() end
     if self.awardBtn then self.awardBtn:Hide() end
     if self.searchLabel then self.searchLabel:Hide() end
     if self.searchBox then self.searchBox:Hide() end
@@ -2872,7 +2901,7 @@ function LeafVE_AchTest.UI:Refresh()
   else
     if self.achTab then self.achTab:Enable() end
     if self.titlesTab then self.titlesTab:Disable() end
-    if self.adminTab then self.adminTab:Enable() end
+    if self.adminTab and hasAdminAccess then self.adminTab:Enable() end
     if self.awardBtn then self.awardBtn:Hide() end
     if self.searchLabel then self.searchLabel:Hide() end
     if self.searchBox then self.searchBox:Hide() end
