@@ -2282,8 +2282,19 @@ function LeafVE_AchTest.UI:Build()
   resetBtn:SetHeight(25)
   resetBtn:SetText("Reset")
   resetBtn:SetScript("OnClick", function()
-    LeafVE_AchTest_DB.achievements = {}
-    LeafVE_AchTest_DB.selectedTitles = {}
+    local _, rankName = GetGuildInfo("player")
+    if rankName ~= "Anbu" and rankName ~= "Sannin" and rankName ~= "Hokage" then
+      Print("Only Anbu, Sannin, or Hokage may reset achievements.")
+      return
+    end
+    LeafVE_AchTest_DB.achievements    = {}
+    LeafVE_AchTest_DB.selectedTitles  = {}
+    LeafVE_AchTest_DB.progressCounters = {}
+    LeafVE_AchTest_DB.exploredZones   = {}
+    LeafVE_AchTest_DB.dungeonProgress = {}
+    LeafVE_AchTest_DB.raidProgress    = {}
+    LeafVE_AchTest_DB.completedQuests = {}
+    LeafVE_AchTest_DB.peakGold        = {}
     Print("Reset complete!")
     LeafVE_AchTest.UI:Refresh()
   end)
@@ -3231,8 +3242,7 @@ ef:SetScript("OnEvent", function()
             end
           end
         end
-        local inCombat = UnitAffectingCombat and UnitAffectingCombat("player")
-        if recentlyTargeted or partyTargeting or inCombat then
+        if recentlyTargeted or partyTargeting then
           mobName = fallbackName
         end
       end
