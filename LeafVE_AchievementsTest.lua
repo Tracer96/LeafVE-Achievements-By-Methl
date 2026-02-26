@@ -1070,14 +1070,11 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   casual_trade_10 = {counter="trades", goal=10},
   -- Generic kill milestones tracked via CHAT_MSG_COMBAT_HOSTILE_DEATH (player or party/raid member kill)
   kill_01    = {counter="genericKills", goal=1},
-  kill_05    = {counter="genericKills", goal=5},
-  kill_10    = {counter="genericKills", goal=10},
-  kill_50    = {counter="genericKills", goal=50},
   kill_100   = {counter="genericKills", goal=100},
-  kill_200   = {counter="genericKills", goal=200},
   kill_500   = {counter="genericKills", goal=500},
   kill_1000  = {counter="genericKills", goal=1000},
   kill_10000 = {counter="genericKills", goal=10000},
+  kill_50000 = {counter="genericKills", goal=50000},
 }
 
 -- Returns {current, goal} or nil if no progress data exists for this achievement.
@@ -1423,36 +1420,36 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
   if not silent then
     self:ShowAchievementPopup(achievementID)
     Print("Achievement earned: "..achievement.name.." (+"..achievement.points.." pts)")
-  end
-  
-  -- Guild announcement — achievement name is a clickable hyperlink
-  if IsInGuild() then
-    local currentTitle = self:GetCurrentTitle(me)
-    local achLink = "|cFFFFD700|Hleafve_ach:"..achievementID.."|h["..achievement.name.."]|h|r"
-    local guildMsg = ""
 
-    -- Special legendary announcement with unique flavor text
-    if achievement.category == "Legendary" and LEGENDARY_GUILD_MESSAGES[achievementID] then
-      local legendaryMsg = LEGENDARY_GUILD_MESSAGES[achievementID](me)
-      guildMsg = "|cFFFF0000[LEGENDARY]|r " .. legendaryMsg
-    else
-      -- Normal achievement announcement
-      if currentTitle then
-        local titleColor = currentTitle.legendary and "|cFFFF0000" or "|cFFFF7F00"
-        guildMsg = titleColor.."["..currentTitle.name.."]|r |cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+    -- Guild announcement — achievement name is a clickable hyperlink
+    if IsInGuild() then
+      local currentTitle = self:GetCurrentTitle(me)
+      local achLink = "|cFFFFD700|Hleafve_ach:"..achievementID.."|h["..achievement.name.."]|h|r"
+      local guildMsg = ""
+
+      -- Special legendary announcement with unique flavor text
+      if achievement.category == "Legendary" and LEGENDARY_GUILD_MESSAGES[achievementID] then
+        local legendaryMsg = LEGENDARY_GUILD_MESSAGES[achievementID](me)
+        guildMsg = "|cFFFF0000[LEGENDARY]|r " .. legendaryMsg
       else
-        guildMsg = "|cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+        -- Normal achievement announcement
+        if currentTitle then
+          local titleColor = currentTitle.legendary and "|cFFFF0000" or "|cFFFF7F00"
+          guildMsg = titleColor.."["..currentTitle.name.."]|r |cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+        else
+          guildMsg = "|cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+        end
       end
-    end
 
-    -- Use original SendChatMessage to avoid adding title twice
-    if originalSendChatMessage then
-      originalSendChatMessage(guildMsg, "GUILD")
-    else
-      SendChatMessage(guildMsg, "GUILD")
-    end
+      -- Use original SendChatMessage to avoid adding title twice
+      if originalSendChatMessage then
+        originalSendChatMessage(guildMsg, "GUILD")
+      else
+        SendChatMessage(guildMsg, "GUILD")
+      end
 
-    Debug("Sent guild achievement: "..guildMsg)
+      Debug("Sent guild achievement: "..guildMsg)
+    end
   end
   
   if LeafVE_AchTest.UI and LeafVE_AchTest.UI.Refresh then
