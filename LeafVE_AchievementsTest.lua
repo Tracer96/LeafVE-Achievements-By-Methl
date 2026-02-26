@@ -374,6 +374,7 @@ local ACHIEVEMENTS = {
   dung_kc_complete={id="dung_kc_complete",name="Karazhan Crypt: Dungeon Clear",desc="Defeat all bosses in Karazhan Crypt",category="Dungeons",points=50,icon="Interface\\Icons\\Spell_Shadow_SoulGem",criteria_key="kc",criteria_type="dungeon"},
   dung_lbrs_complete={id="dung_lbrs_complete",name="Lower Blackrock Spire: Dungeon Clear",desc="Defeat all bosses in Lower Blackrock Spire",category="Dungeons",points=50,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",criteria_key="lbrs",criteria_type="dungeon"},
   dung_mara_complete={id="dung_mara_complete",name="Maraudon: Dungeon Clear",desc="Defeat all bosses in Maraudon",category="Dungeons",points=40,icon="Interface\\Icons\\INV_Misc_Root_02",criteria_key="mara",criteria_type="dungeon"},
+  dung_mara_princess={id="dung_mara_princess",name="Maraudon: Princess Theradras",desc="Defeat Princess Theradras in Maraudon",category="Dungeons",points=25,icon="Interface\\Icons\\INV_Misc_Root_02"},
   dung_rfc_complete={id="dung_rfc_complete",name="Ragefire Chasm: Dungeon Clear",desc="Defeat all bosses in Ragefire Chasm",category="Dungeons",points=15,icon="Interface\\Icons\\Spell_Fire_Incinerate",criteria_key="rfc",criteria_type="dungeon"},
   dung_rfdown_complete={id="dung_rfdown_complete",name="Razorfen Downs: Dungeon Clear",desc="Defeat all bosses in Razorfen Downs",category="Dungeons",points=35,icon="Interface\\Icons\\Spell_Shadow_RaiseDead",criteria_key="rfdown",criteria_type="dungeon"},
   dung_rfk_complete={id="dung_rfk_complete",name="Razorfen Kraul: Dungeon Clear",desc="Defeat all bosses in Razorfen Kraul",category="Dungeons",points=30,icon="Interface\\Icons\\INV_Misc_Head_Boar_01",criteria_key="rfk",criteria_type="dungeon"},
@@ -1427,7 +1428,7 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
   -- Guild announcement — achievement name is a clickable hyperlink
   if IsInGuild() then
     local currentTitle = self:GetCurrentTitle(me)
-    local achLink = "|cFF2DD35C|Hleafve_ach:"..achievementID.."|h["..achievement.name.."]|h|r"
+    local achLink = "|cFFFFD700|Hleafve_ach:"..achievementID.."|h["..achievement.name.."]|h|r"
     local guildMsg = ""
 
     -- Special legendary announcement with unique flavor text
@@ -1593,6 +1594,8 @@ LeafVE_AchTest.UI.titleCategoryFilter = "All"
 
 -- Boss kill tracking: raid bosses only — dungeon bosses are tracked via BOSS_TO_DUNGEON
 local BOSS_ACHIEVEMENTS = {
+  -- Dungeon bosses with standalone achievements
+  ["Princess Theradras"] = "dung_mara_princess",
   -- Molten Core
   ["Incindis"] = "raid_mc_incindis",
   ["Lucifron"] = "raid_mc_lucifron",
@@ -2407,7 +2410,7 @@ function LeafVE_AchTest.UI:Build()
     LeafVE_AchTest_DB.achievements[target][achId] = {timestamp = Now(), points = ach.points}
     Print("|cFFFF0000[Admin Grant]|r "..target.." awarded: |cFF2DD35C"..ach.name.."|r (+"..ach.points.." pts)")
     if IsInGuild() then
-      local achLink = "|cFF2DD35C|Hleafve_ach:"..achId.."|h["..ach.name.."]|h|r"
+      local achLink = "|cFFFFD700|Hleafve_ach:"..achId.."|h["..ach.name.."]|h|r"
       local guildMsg
       if ach.category == "Legendary" and LEGENDARY_GUILD_MESSAGES[achId] then
         local legendaryMsg = LEGENDARY_GUILD_MESSAGES[achId](target)
@@ -3672,7 +3675,7 @@ SlashCmdList["ACHGRANT"] = function(msg)
   LeafVE_AchTest_DB.achievements[playerName][achId] = {timestamp = Now(), points = ach.points}
   Print("|cFFFF7F00[Admin Grant]|r "..playerName.." awarded: |cFF2DD35C"..ach.name.."|r (+"..ach.points.." pts)")
   if IsInGuild() then
-    local achLink = "|cFF2DD35C|Hleafve_ach:"..achId.."|h["..ach.name.."]|h|r"
+    local achLink = "|cFFFFD700|Hleafve_ach:"..achId.."|h["..ach.name.."]|h|r"
     local guildMsg
     if ach.category == "Legendary" and LEGENDARY_GUILD_MESSAGES[achId] then
       local legendaryMsg = LEGENDARY_GUILD_MESSAGES[achId](playerName)
