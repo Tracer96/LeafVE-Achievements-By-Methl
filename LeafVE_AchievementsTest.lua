@@ -637,6 +637,12 @@ local ACHIEVEMENTS = {
   legendary_onyxia_5={id="legendary_onyxia_5",name="Onyxia 5-Man",desc="Defeat Onyxia with a group of exactly 5 players. Must be streamed or recorded and approved by an officer.",category="Legendary",points=1000,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",manual=true},
   legendary_solo_60_boss={id="legendary_solo_60_boss",name="Solo Dungeon Boss",desc="Defeat any level 60 dungeon boss completely alone. Must be streamed or recorded and approved by an officer.",category="Legendary",points=1000,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
   legendary_no_consumes_t2plus={id="legendary_no_consumes_t2plus",name="No Consumables Raid",desc="Complete a full Tier 2 or higher raid without any raid member using a single consumable. Must be streamed or recorded and approved by two officers.",category="Legendary",points=1000,icon="Interface\\Icons\\INV_Potion_01",manual=true},
+
+  -- Guild Rank Achievements (awarded based on in-game guild rank)
+  guild_rank_jonin={id="guild_rank_jonin",name="Jonin",desc="Awarded when promoted to Jonin (core raider).",category="Guild",points=50,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
+  guild_rank_anbu={id="guild_rank_anbu",name="Anbu",desc="Awarded when promoted to Anbu (officer).",category="Guild",points=100,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
+  guild_rank_sannin={id="guild_rank_sannin",name="Sannin",desc="Awarded when promoted to Sannin (Co-GM).",category="Guild",points=150,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
+  guild_rank_hokage={id="guild_rank_hokage",name="Hokage",desc="Awarded when promoted to Hokage (GM).",category="Guild",points=200,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
 }
 
 local TITLES = {
@@ -743,6 +749,12 @@ local TITLES = {
   {id="title_wyrmbane",name="Wyrmbane",achievement="legendary_onyxia_5",prefix=false,category="Legendary",icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",legendary=true},
   {id="title_one_man_army",name="the One-Man Army",achievement="legendary_solo_60_boss",prefix=false,category="Legendary",icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",legendary=true},
   {id="title_pure_mortal",name="the Pure Mortal",achievement="legendary_no_consumes_t2plus",prefix=false,category="Legendary",icon="Interface\\Icons\\INV_Potion_01",legendary=true},
+
+  -- Guild Rank Titles (BROWN - awarded by guild rank)
+  {id="title_jonin",name="Jonin",achievement="guild_rank_jonin",prefix=false,category="Guild",icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",guild=true},
+  {id="title_anbu",name="Anbu",achievement="guild_rank_anbu",prefix=false,category="Guild",icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",guild=true},
+  {id="title_sannin",name="Sannin",achievement="guild_rank_sannin",prefix=false,category="Guild",icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",guild=true},
+  {id="title_hokage",name="Hokage",achievement="guild_rank_hokage",prefix=false,category="Guild",icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",guild=true},
 }
 
 -- ==========================================
@@ -1404,6 +1416,13 @@ local LEGENDARY_GUILD_MESSAGES = {
   legendary_no_consumes_t2plus = function(name) return name .. " completed a Tier 2+ raid without a single consumable used by anyone. Pure skill, no potions. They are |cFFFF0000the Pure Mortal|r!" end,
 }
 
+local GUILD_RANK_GUILD_MESSAGES = {
+  guild_rank_jonin  = function(name) return name .. " has proven their strength and risen to the rank of Jonin. The Will of Fire burns bright within them!" end,
+  guild_rank_anbu   = function(name) return name .. " has been chosen to serve in the shadows. They now walk among the elite as Anbu — protectors of the village!" end,
+  guild_rank_sannin = function(name) return name .. " has transcended the ordinary. Their legend echoes across the land — they are now one of the Sannin!" end,
+  guild_rank_hokage = function(name) return name .. " has been entrusted with the fate of the village. All shinobi bow before the new Hokage!" end,
+}
+
 function LeafVE_AchTest:AwardAchievement(achievementID, silent)
   local playerName = UnitName("player")
   if not playerName or playerName == "" then return end
@@ -1431,11 +1450,15 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
       if achievement.category == "Legendary" and LEGENDARY_GUILD_MESSAGES[achievementID] then
         local legendaryMsg = LEGENDARY_GUILD_MESSAGES[achievementID](me)
         guildMsg = "|cFFFF0000[LEGENDARY]|r " .. legendaryMsg
+      -- Special guild rank announcement with unique Naruto flavor text
+      elseif achievement.category == "Guild" and GUILD_RANK_GUILD_MESSAGES[achievementID] then
+        local rankMsg = GUILD_RANK_GUILD_MESSAGES[achievementID](me)
+        guildMsg = "|cFF8B4513[GUILD RANK]|r " .. rankMsg
       else
         -- Normal achievement announcement
         if currentTitle then
-          local titleColor = currentTitle.legendary and "|cFFFF0000" or "|cFFFF7F00"
-          guildMsg = titleColor.."["..currentTitle.name.."]|r |cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+          local titleColor = currentTitle.legendary and "|cFFFF0000" or (currentTitle.guild and "|cFF8B4513" or "|cFFFF7F00")
+          guildMsg = titleColor..currentTitle.name.."]|r |cFF2DD35C[LeafVE Achievement]|r earned "..achLink
         else
           guildMsg = "|cFF2DD35C[LeafVE Achievement]|r earned "..achLink
         end
@@ -1510,7 +1533,7 @@ function LeafVE_AchTest:GetCurrentTitle(playerName)
   end
   for _, title in ipairs(TITLES) do
     if title.id == titleID then
-      return {id=title.id,name=title.name,achievement=title.achievement,prefix=asPrefix,legendary=title.legendary}
+      return {id=title.id,name=title.name,achievement=title.achievement,prefix=asPrefix,legendary=title.legendary,guild=title.guild}
     end
   end
   return nil
@@ -1850,6 +1873,21 @@ function LeafVE_AchTest:CheckProfessionAchievements()
   end
   if artisanCount >= 2 then
     self:AwardAchievement("prof_dual_artisan", true)
+  end
+end
+
+function LeafVE_AchTest:CheckGuildRankAchievements()
+  local _, rankName = GetGuildInfo("player")
+  if not rankName or rankName == "" then return end
+  local rankMap = {
+    ["Jonin"]  = "guild_rank_jonin",
+    ["Anbu"]   = "guild_rank_anbu",
+    ["Sannin"] = "guild_rank_sannin",
+    ["Hokage"] = "guild_rank_hokage",
+  }
+  local achId = rankMap[rankName]
+  if achId then
+    self:AwardAchievement(achId, true)
   end
 end
 
@@ -2246,6 +2284,11 @@ function LeafVE_AchTest.UI:Build()
   adminTab:SetHeight(25)
   adminTab:SetText("Admin")
   adminTab:SetScript("OnClick", function()
+    local _, rankName = GetGuildInfo("player")
+    if rankName ~= "Anbu" and rankName ~= "Sannin" and rankName ~= "Hokage" then
+      Print("Only Anbu, Sannin, or Hokage may access the Admin panel.")
+      return
+    end
     LeafVE_AchTest.UI.currentView = "admin"
     LeafVE_AchTest.UI:Refresh()
   end)
@@ -2258,6 +2301,11 @@ function LeafVE_AchTest.UI:Build()
   awardBtn:SetHeight(25)
   awardBtn:SetText("Award")
   awardBtn:SetScript("OnClick", function()
+    local _, rankName = GetGuildInfo("player")
+    if rankName ~= "Anbu" and rankName ~= "Sannin" and rankName ~= "Hokage" then
+      Print("Only Anbu, Sannin, or Hokage may use the Award button.")
+      return
+    end
     local me = ShortName(UnitName("player") or "")
     local playerAchievements = LeafVE_AchTest:GetPlayerAchievements(me)
     local availableAchievements = {}
@@ -2374,6 +2422,11 @@ function LeafVE_AchTest.UI:Build()
   adminGrantBtn:SetHeight(24)
   adminGrantBtn:SetText("Grant")
   adminGrantBtn:SetScript("OnClick", function()
+    local _, rankName = GetGuildInfo("player")
+    if rankName ~= "Anbu" and rankName ~= "Sannin" and rankName ~= "Hokage" then
+      Print("Only Anbu, Sannin, or Hokage may grant achievements.")
+      return
+    end
     local playerName = LeafVE_AchTest.UI.adminPlayerBox and LeafVE_AchTest.UI.adminPlayerBox:GetText() or ""
     local achId = LeafVE_AchTest.UI.adminAchBox and LeafVE_AchTest.UI.adminAchBox:GetText() or ""
     playerName = string.gsub(playerName, "^%s*(.-)%s*$", "%1")
@@ -2412,6 +2465,9 @@ function LeafVE_AchTest.UI:Build()
       if ach.category == "Legendary" and LEGENDARY_GUILD_MESSAGES[achId] then
         local legendaryMsg = LEGENDARY_GUILD_MESSAGES[achId](target)
         guildMsg = "|cFFFF0000[LEGENDARY]|r " .. legendaryMsg
+      elseif ach.category == "Guild" and GUILD_RANK_GUILD_MESSAGES[achId] then
+        local rankMsg = GUILD_RANK_GUILD_MESSAGES[achId](target)
+        guildMsg = "|cFF8B4513[GUILD RANK]|r " .. rankMsg
       else
         guildMsg = "|cFF2DD35C[LeafVE Achievement]|r earned "..achLink
       end
@@ -3184,6 +3240,7 @@ ef:SetScript("OnEvent", function()
     LeafVE_AchTest:CheckProfessionAchievements()
     LeafVE_AchTest:CheckQuestAchievements(true)
     LeafVE_AchTest:CheckPvPRankAchievements()
+    LeafVE_AchTest:CheckGuildRankAchievements()
     -- Backlog: award completions from previously stored boss kill progress + history
     LeafVE_AchTest:CheckBacklogAchievements()
     Print("Achievement System Loaded! Type /achtest")
@@ -3640,6 +3697,11 @@ end
 -- Example: /achgrant Naruto rfc_complete    or    /achgrant Naruto raid_mc_complete
 SLASH_ACHGRANT1 = "/achgrant"
 SlashCmdList["ACHGRANT"] = function(msg)
+  local _, rankName = GetGuildInfo("player")
+  if rankName ~= "Anbu" and rankName ~= "Sannin" and rankName ~= "Hokage" then
+    Print("Only Anbu, Sannin, or Hokage may grant achievements.")
+    return
+  end
   local target, achId = string.match(msg, "^(%S+)%s+(%S+)$")
   if not target or not achId then
     Print("Usage: /achgrant <PlayerName> <achievementId>")
@@ -3677,6 +3739,9 @@ SlashCmdList["ACHGRANT"] = function(msg)
     if ach.category == "Legendary" and LEGENDARY_GUILD_MESSAGES[achId] then
       local legendaryMsg = LEGENDARY_GUILD_MESSAGES[achId](playerName)
       guildMsg = "|cFFFF0000[LEGENDARY]|r " .. legendaryMsg
+    elseif ach.category == "Guild" and GUILD_RANK_GUILD_MESSAGES[achId] then
+      local rankMsg = GUILD_RANK_GUILD_MESSAGES[achId](playerName)
+      guildMsg = "|cFF8B4513[GUILD RANK]|r " .. rankMsg
     else
       guildMsg = "|cFF2DD35C[LeafVE Achievement]|r earned "..achLink
     end
@@ -3712,9 +3777,9 @@ local function HookChatWithTitles()
         local title = LeafVE_AchTest:GetCurrentTitle(me)
         if title then
           Debug("Adding title: "..title.name.." (prefix: "..tostring(title.prefix)..")")
-          local titleColor = title.legendary and "|cFFFF0000" or "|cFFFF7F00"
+          local titleColor = title.legendary and "|cFFFF0000" or (title.guild and "|cFF8B4513" or "|cFFFF7F00")
           -- Title always shows before the message text in guild chat
-          msg = titleColor.."["..title.name.."]|r "..msg
+          msg = titleColor..title.name.."]|r "..msg
           Debug("Modified message: "..msg)
         else
           Debug("No title found for player")
