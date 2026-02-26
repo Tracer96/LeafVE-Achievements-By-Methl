@@ -141,27 +141,13 @@ for _, ach in ipairs(GENERIC_KILLS) do
 end
 table.sort(GENERIC_MILESTONES, function(a, b) return a.value < b.value end)
 
--- Recent target tracking for fallback kill validation (scenarios 6-8)
-local BOSS_TARGET_WINDOW = 30  -- seconds; "X dies." counts if boss was targeted within this window
-local recentTargets_kill = {}  -- lowercase name -> last-targeted timestamp
-
 -- ============================================================
 -- Event Handler
 -- ============================================================
 local killFrame = CreateFrame("Frame")
 killFrame:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")  -- for generic, named, and boss kills
-killFrame:RegisterEvent("PLAYER_TARGET_CHANGED")          -- to track recent targets for fallback
 
 killFrame:SetScript("OnEvent", function()
-  -- Track player target changes for fallback kill validation
-  if event == "PLAYER_TARGET_CHANGED" then
-    local tname = UnitName("target")
-    if tname then
-      recentTargets_kill[string.lower(tname)] = time()
-    end
-    return
-  end
-
   -- All kill tracking via hostile death message
   if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
     local msg = arg1 or ""
@@ -197,41 +183,6 @@ killFrame:SetScript("OnEvent", function()
           if myName and killerShort == myName then
             playerKill = slainTarget
           end
-        end
-      end
-    end
-
-    -- Scenarios 4-5: no explicit killer (DoT tick, shared kill credit, etc.)
-    -- Validate that our party was actually in the fight before crediting.
-    if not targetName then
-      local fallbackName = string.match(msg, "^(.+) dies%.$")
-        or string.match(msg, "^(.+) has been slain%.$")
-      if fallbackName then
-        local lname = string.lower(fallbackName)
-        -- Scenario 6: player targeted the boss within the recent window
-        local recentlyTargeted = recentTargets_kill[lname]
-          and (time() - recentTargets_kill[lname]) < BOSS_TARGET_WINDOW
-        -- Scenario 7: a party/raid member currently has it targeted
-        local partyTargeting = false
-        if not recentlyTargeted then
-          local numRaid = GetNumRaidMembers()
-          local numParty = GetNumPartyMembers()
-          if numRaid > 0 then
-            for i = 1, numRaid do
-              if UnitName("raid"..i.."target") == fallbackName then
-                partyTargeting = true; break
-              end
-            end
-          elseif numParty > 0 then
-            for i = 1, numParty do
-              if UnitName("party"..i.."target") == fallbackName then
-                partyTargeting = true; break
-              end
-            end
-          end
-        end
-        if recentlyTargeted or partyTargeting then
-          targetName = fallbackName
         end
       end
     end
