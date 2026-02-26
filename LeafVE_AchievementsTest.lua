@@ -2800,7 +2800,7 @@ function LeafVE_AchTest.UI:Refresh()
   local totalPoints = LeafVE_AchTest:GetTotalAchievementPoints(me)
   local currentTitle = LeafVE_AchTest:GetCurrentTitle(me)
   local _, rankName = GetGuildInfo("player")
-  local hasAdminAccess = rankName == "Anbu" or rankName == "Sannin" or rankName == "Hokage"
+  local hasAdminAccess = rankName ~= nil and (rankName == "Anbu" or rankName == "Sannin" or rankName == "Hokage")
 
   if not hasAdminAccess and self.currentView == "admin" then
     self.currentView = "achievements"
