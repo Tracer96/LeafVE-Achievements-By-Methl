@@ -627,14 +627,15 @@ local ACHIEVEMENTS = {
   -- Legendary Achievements (officer-approved, require streaming or recording)
   legendary_naked_dungeon={id="legendary_naked_dungeon",name="Bare Bones",desc="Clear any level-60 dungeon with your group wearing no armor at all. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Misc_Pelt_Wolf_01",manual=true},
   legendary_full_clear_week={id="legendary_full_clear_week",name="Conqueror of All",desc="Clear MC, BWL, ZG, AQ20, AQ40, and Naxxramas all within a single calendar week. Must be verified by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Shadow_SoulGem",manual=true},
-  legendary_realm_first_60={id="legendary_realm_first_60",name="Realm First! Level 60",desc="Be the very first player on LeafVE to reach level 60. Must be verified by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
   legendary_speed_run_brd={id="legendary_speed_run_brd",name="Speed Demon",desc="Complete a full clear of Blackrock Depths in under 30 minutes. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Fire_LavaSpawn",manual=true},
   legendary_flawless_naxx={id="legendary_flawless_naxx",name="The Immortal",desc="Complete all of Naxxramas without any raid member dying the entire run. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Shadow_RaiseDead",manual=true},
   legendary_solo_raid_boss={id="legendary_solo_raid_boss",name="The Unsupported",desc="Defeat any raid boss completely alone. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
-  legendary_solo_ubrs={id="legendary_solo_ubrs",name="True Solo",desc="Complete Upper Blackrock Spire entirely alone with no group members. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",manual=true},
   legendary_duel_streak_100={id="legendary_duel_streak_100",name="Undefeated",desc="Win 100 consecutive duels without a single loss. Must be witnessed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Sword_62",manual=true},
   legendary_ironman_60={id="legendary_ironman_60",name="Untouched by Death",desc="Reach level 60 without dying a single time. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Helmet_74",manual=true},
-  legendary_world_first={id="legendary_world_first",name="World First",desc="Be in the first group on LeafVE to defeat a new raid boss on release day. Must be verified by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Crown_01",manual=true},
+  legendary_onyxia_10={id="legendary_onyxia_10",name="Onyxia 10-Man",desc="Defeat Onyxia with a raid of exactly 10 players. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",manual=true},
+  legendary_onyxia_5={id="legendary_onyxia_5",name="Onyxia 5-Man",desc="Defeat Onyxia with a group of exactly 5 players. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",manual=true},
+  legendary_solo_60_boss={id="legendary_solo_60_boss",name="Solo Dungeon Boss",desc="Defeat any level 60 dungeon boss completely alone. Must be streamed or recorded and approved by an officer.",category="Legendary",points=500,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
+  legendary_no_consumes_t2plus={id="legendary_no_consumes_t2plus",name="No Consumables Raid",desc="Complete a full Tier 2 or higher raid without any raid member using a single consumable. Must be streamed or recorded and approved by two officers.",category="Legendary",points=500,icon="Interface\\Icons\\INV_Potion_01",manual=true},
 }
 
 local TITLES = {
@@ -733,13 +734,14 @@ local TITLES = {
   {id="title_the_unsupported",name="the Unsupported",achievement="legendary_solo_raid_boss",prefix=false,category="Legendary",icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",legendary=true},
   {id="title_bare_bones",name="Bare Bones",achievement="legendary_naked_dungeon",prefix=false,category="Legendary",icon="Interface\\Icons\\INV_Misc_Pelt_Wolf_01",legendary=true},
   {id="title_undying",name="the Undying",achievement="legendary_ironman_60",prefix=false,category="Legendary",icon="Interface\\Icons\\INV_Helmet_74",legendary=true},
-  {id="title_world_first",name="World First",achievement="legendary_world_first",prefix=true,category="Legendary",icon="Interface\\Icons\\INV_Crown_01",legendary=true},
   {id="title_undefeated",name="the Undefeated",achievement="legendary_duel_streak_100",prefix=false,category="Legendary",icon="Interface\\Icons\\INV_Sword_62",legendary=true},
   {id="title_conqueror_of_all",name="Conqueror of All",achievement="legendary_full_clear_week",prefix=false,category="Legendary",icon="Interface\\Icons\\Spell_Shadow_SoulGem",legendary=true},
   {id="title_the_immortal_leg",name="the Immortal",achievement="legendary_flawless_naxx",prefix=false,category="Legendary",icon="Interface\\Icons\\Spell_Shadow_RaiseDead",legendary=true},
   {id="title_speed_demon",name="Speed Demon",achievement="legendary_speed_run_brd",prefix=false,category="Legendary",icon="Interface\\Icons\\Spell_Fire_LavaSpawn",legendary=true},
-  {id="title_true_solo",name="the True Solo",achievement="legendary_solo_ubrs",prefix=false,category="Legendary",icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",legendary=true},
-  {id="title_realm_first",name="Realm First",achievement="legendary_realm_first_60",prefix=true,category="Legendary",icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",legendary=true},
+  {id="title_dragonslayer_leg",name="Dragonslayer",achievement="legendary_onyxia_10",prefix=false,category="Legendary",icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",legendary=true},
+  {id="title_wyrmbane",name="Wyrmbane",achievement="legendary_onyxia_5",prefix=false,category="Legendary",icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",legendary=true},
+  {id="title_one_man_army",name="the One-Man Army",achievement="legendary_solo_60_boss",prefix=false,category="Legendary",icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",legendary=true},
+  {id="title_pure_mortal",name="the Pure Mortal",achievement="legendary_no_consumes_t2plus",prefix=false,category="Legendary",icon="Interface\\Icons\\INV_Potion_01",legendary=true},
 }
 
 -- ==========================================
@@ -1392,6 +1394,20 @@ function LeafVE_AchTest:ShowAchievementPopup(achievementID)
   PlaySound("LevelUp")
 end
 
+local LEGENDARY_GUILD_MESSAGES = {
+  legendary_naked_dungeon = function(name) return name .. " has conquered a dungeon wearing nothing but courage. Henceforth, they shall be known as |cFFFF0000Bare Bones|r!" end,
+  legendary_speed_run_brd = function(name) return name .. " blazed through Blackrock Depths in under 30 minutes! The fires of the mountain could not slow them. They have earned the title |cFFFF0000Speed Demon|r!" end,
+  legendary_flawless_naxx = function(name) return name .. " led a flawless raid through the halls of Naxxramas — not a single soul was lost. They are now |cFFFF0000the Immortal|r!" end,
+  legendary_solo_raid_boss = function(name) return name .. " has defeated a raid boss entirely alone. Against all odds, they stand victorious as |cFFFF0000the Unsupported|r!" end,
+  legendary_duel_streak_100 = function(name) return name .. " has won 100 consecutive duels without a single defeat. None can challenge them. They are |cFFFF0000the Undefeated|r!" end,
+  legendary_full_clear_week = function(name) return name .. " cleared every raid in Azeroth within a single week. No boss was left standing. They are now |cFFFF0000Conqueror of All|r!" end,
+  legendary_ironman_60 = function(name) return name .. " reached level 60 without dying a single time. Death itself could not claim them. They are |cFFFF0000the Undying|r!" end,
+  legendary_onyxia_10 = function(name) return name .. " slew Onyxia with only 10 heroes at their side. The broodmother falls, and " .. name .. " rises as |cFFFF0000Dragonslayer|r!" end,
+  legendary_onyxia_5 = function(name) return name .. " felled Onyxia with a mere 5 adventurers. A feat whispered of in legends. They have earned the title |cFFFF0000Wyrmbane|r!" end,
+  legendary_solo_60_boss = function(name) return name .. " walked into a level 60 dungeon alone and walked out victorious. They are |cFFFF0000the One-Man Army|r!" end,
+  legendary_no_consumes_t2plus = function(name) return name .. " completed a Tier 2+ raid without a single consumable used by anyone. Pure skill, no potions. They are |cFFFF0000the Pure Mortal|r!" end,
+}
+
 function LeafVE_AchTest:AwardAchievement(achievementID, silent)
   local playerName = UnitName("player")
   if not playerName or playerName == "" then return end
@@ -1416,12 +1432,18 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
     local achLink = "|cFF2DD35C|Hleafve_ach:"..achievementID.."|h["..achievement.name.."]|h|r"
     local guildMsg = ""
 
-    -- Build message: [Title] [LeafVE Achievement] earned [Achievement]
-    if currentTitle then
-      local titleColor = currentTitle.legendary and "|cFFFF0000" or "|cFFFF7F00"
-      guildMsg = titleColor.."["..currentTitle.name.."]|r |cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+    -- Special legendary announcement with unique flavor text
+    if achievement.category == "Legendary" and LEGENDARY_GUILD_MESSAGES[achievementID] then
+      local legendaryMsg = LEGENDARY_GUILD_MESSAGES[achievementID](me)
+      guildMsg = "|cFFFF0000[LEGENDARY]|r " .. legendaryMsg
     else
-      guildMsg = "|cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+      -- Normal achievement announcement
+      if currentTitle then
+        local titleColor = currentTitle.legendary and "|cFFFF0000" or "|cFFFF7F00"
+        guildMsg = titleColor.."["..currentTitle.name.."]|r |cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+      else
+        guildMsg = "|cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+      end
     end
 
     -- Use original SendChatMessage to avoid adding title twice
@@ -2159,7 +2181,7 @@ function LeafVE_AchTest.UI:Build()
   self.frame = f
   f:SetPoint("CENTER", 0, 0)
   f:SetWidth(870)
-  f:SetHeight(520)
+  f:SetHeight(580)
   f:EnableMouse(true)
   f:SetMovable(true)
   f:RegisterForDrag("LeftButton")
@@ -2398,9 +2420,10 @@ function LeafVE_AchTest.UI:Build()
 
   local LEGENDARY_IDS = {
     "legendary_solo_raid_boss","legendary_naked_dungeon","legendary_ironman_60",
-    "legendary_world_first","legendary_duel_streak_100","legendary_full_clear_week",
-    "legendary_flawless_naxx","legendary_speed_run_brd","legendary_solo_ubrs",
-    "legendary_realm_first_60",
+    "legendary_duel_streak_100","legendary_full_clear_week",
+    "legendary_flawless_naxx","legendary_speed_run_brd",
+    "legendary_onyxia_10","legendary_onyxia_5",
+    "legendary_solo_60_boss","legendary_no_consumes_t2plus",
   }
   local yLeg = -14
   for _, lid in ipairs(LEGENDARY_IDS) do
@@ -3409,6 +3432,9 @@ local MOUNT_PATTERNS = {
   "kodo", "tiger", "saber", "skeletal", "frostwolf", "nightsaber",
   "hawkstrider", "warhorse", "wyvern", "gryphon",
 }
+local MOUNT_EXACT_NAMES = {
+  ["dire wolf"] = true,
+}
 -- Epic mount spell name patterns (lowercase).
 local EPIC_MOUNT_PATTERNS = {
   "swift", "dreadsteed", "epic",
@@ -3419,6 +3445,7 @@ local EPIC_MOUNT_FULL = {
 }
 
 local function IsMountSpell(nameLower)
+  if MOUNT_EXACT_NAMES[nameLower] then return true end
   if not string.find(nameLower, "summon") then return false end
   for _, p in ipairs(MOUNT_PATTERNS) do
     if string.find(nameLower, p, 1, true) then return true end
