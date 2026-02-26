@@ -3105,6 +3105,10 @@ end
 -- Timestamps of the most recent fall and drowning damage; used to classify the cause of death.
 local lastFallDamageTime  = 0
 local lastDrownDamageTime = 0
+-- Trade state machine: only count a trade when both parties accept and the window closes.
+local tradeArmed      = false
+local tradeCandidate  = false
+local firedThisTrade  = false
 -- Maximum seconds between environmental damage and PLAYER_DEAD to classify cause of death.
 local DEATH_CLASSIFY_WINDOW = 3
 -- Track whether player was dead, to count only genuine resurrections.
@@ -3124,6 +3128,8 @@ ef:RegisterEvent("PLAYER_ALIVE")
 ef:RegisterEvent("PLAYER_UNGHOST")
 ef:RegisterEvent("TAXIMAP_CLOSED")
 ef:RegisterEvent("TRADE_CLOSED")
+ef:RegisterEvent("TRADE_SHOW")
+ef:RegisterEvent("TRADE_ACCEPT_UPDATE")
 ef:RegisterEvent("QUEST_COMPLETE")
 ef:RegisterEvent("PARTY_MEMBERS_CHANGED")
 ef:RegisterEvent("CHAT_MSG_SYSTEM")
@@ -3217,11 +3223,13 @@ ef:SetScript("OnEvent", function()
       if GetTime() - lastFallDamageTime < DEATH_CLASSIFY_WINDOW then
         local fallTotal = IncrCounter(me, "fallDeaths")
         if fallTotal >= 10 then LeafVE_AchTest:AwardAchievement("casual_fall_death") end
+        lastFallDamageTime = 0  -- prevent double-count if PLAYER_DEAD fires again
       end
       -- Check if death was caused by drowning (suffocation damage fired just before death)
       if GetTime() - lastDrownDamageTime < DEATH_CLASSIFY_WINDOW then
         local drownTotal = IncrCounter(me, "drownings")
         if drownTotal >= 10 then LeafVE_AchTest:AwardAchievement("casual_drown") end
+        lastDrownDamageTime = 0  -- prevent double-count if PLAYER_DEAD fires again
       end
     end
   end
@@ -3288,12 +3296,35 @@ ef:SetScript("OnEvent", function()
       if total >= 50 then LeafVE_AchTest:AwardAchievement("casual_flight_50") end
     end
   end
-  if event == "TRADE_CLOSED" then
-    local me = ShortName(UnitName("player"))
-    if me then
-      local total = IncrCounter(me, "trades")
-      if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_trade_10") end
+  if event == "TRADE_SHOW" then
+    tradeArmed     = true
+    tradeCandidate = false
+    firedThisTrade = false
+    Debug("TRADE_SHOW: trade state reset")
+  end
+  if event == "TRADE_ACCEPT_UPDATE" then
+    -- arg1 = player accept (1/0), arg2 = target accept (1/0)
+    if arg1 == 1 and arg2 == 1 then
+      tradeCandidate = true
+      Debug("TRADE_ACCEPT_UPDATE: both accepted, candidate=true")
+    else
+      tradeCandidate = false
+      Debug("TRADE_ACCEPT_UPDATE: accept retracted, candidate=false")
     end
+  end
+  if event == "TRADE_CLOSED" then
+    if tradeArmed and tradeCandidate and not firedThisTrade then
+      local me = ShortName(UnitName("player"))
+      if me then
+        local total = IncrCounter(me, "trades")
+        Debug("TRADE_CLOSED: completed trade #"..total)
+        if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_trade_10") end
+      end
+      firedThisTrade = true
+    else
+      Debug("TRADE_CLOSED: not a completed trade (armed="..tostring(tradeArmed).." candidate="..tostring(tradeCandidate).." fired="..tostring(firedThisTrade)..")")
+    end
+    tradeArmed = false
   end
 end)
 
@@ -3316,12 +3347,99 @@ envFrame:SetScript("OnEvent", function()
 end)
 
 -- ---------------------------------------------------------------------------
--- Hearthstone tracking
+-- Bank-full tracking
 -- ---------------------------------------------------------------------------
+
+local bankFrameOpen = false
+
+local function IsBankFull()
+  -- Main bank bag (-1); if it has 0 slots the bank is not accessible
+  local mainSlots = GetContainerNumSlots(-1)
+  if mainSlots == 0 then return false end
+  for slot = 1, mainSlots do
+    if not GetContainerItemInfo(-1, slot) then return false end
+  end
+  -- Bank bag containers 5-10 (only purchased bags will have slots > 0)
+  for bag = 5, 10 do
+    local bagSlots = GetContainerNumSlots(bag)
+    for slot = 1, bagSlots do
+      if not GetContainerItemInfo(bag, slot) then return false end
+    end
+  end
+  return true
+end
+
+local bankFrame = CreateFrame("Frame")
+bankFrame:RegisterEvent("BANKFRAME_OPENED")
+bankFrame:RegisterEvent("BANKFRAME_CLOSED")
+bankFrame:RegisterEvent("PLAYERBANKSLOTS_CHANGED")
+bankFrame:RegisterEvent("BAG_UPDATE")
+bankFrame:SetScript("OnEvent", function()
+  if event == "BANKFRAME_OPENED" then
+    bankFrameOpen = true
+    if IsBankFull() then
+      local me = ShortName(UnitName("player"))
+      if me then LeafVE_AchTest:AwardAchievement("casual_bank_full") end
+    end
+  elseif event == "BANKFRAME_CLOSED" then
+    bankFrameOpen = false
+  elseif (event == "PLAYERBANKSLOTS_CHANGED" or event == "BAG_UPDATE") and bankFrameOpen then
+    if IsBankFull() then
+      local me = ShortName(UnitName("player"))
+      if me then LeafVE_AchTest:AwardAchievement("casual_bank_full") end
+    end
+  end
+end)
+
+
 
 -- Time a Hearthstone cast started (0 = not casting); used by the Vanilla 1.12
 -- SPELLCAST_START / SPELLCAST_STOP path.
 local pendingHearthstoneStart = 0
+
+-- Mount cast pending state for casual_mount_60 / casual_epic_mount.
+local mountCastPending      = false
+local mountCastPendingTime  = 0
+local mountAwardedThisCast  = false
+local pendingMountIsEpic    = false
+-- Maximum seconds between a mount SPELLCAST_START and SPELLCAST_STOP to count as a successful cast.
+local MOUNT_CAST_WINDOW = 5
+local MOUNT_PATTERNS = {
+  "horse", "charger", "ram", "mechanostrider", "raptor", "wolf",
+  "kodo", "tiger", "saber", "skeletal", "frostwolf", "nightsaber",
+  "hawkstrider", "warhorse", "wyvern", "gryphon",
+}
+-- Epic mount spell name patterns (lowercase).
+local EPIC_MOUNT_PATTERNS = {
+  "swift", "dreadsteed", "epic",
+}
+-- Paladin/Warlock class mounts that are always considered epic.
+local EPIC_MOUNT_FULL = {
+  "summon dreadsteed", "summon charger",
+}
+
+local function IsMountSpell(nameLower)
+  if not string.find(nameLower, "summon") then return false end
+  for _, p in ipairs(MOUNT_PATTERNS) do
+    if string.find(nameLower, p, 1, true) then return true end
+  end
+  return false
+end
+
+local function IsEpicMountSpell(nameLower)
+  for _, p in ipairs(EPIC_MOUNT_FULL) do
+    if string.find(nameLower, p, 1, true) then return true end
+  end
+  for _, p in ipairs(EPIC_MOUNT_PATTERNS) do
+    if string.find(nameLower, p, 1, true) then
+      -- Must also look like a mount (contain summon or be a known class mount name)
+      if string.find(nameLower, "summon") or string.find(nameLower, "mount") then
+        return true
+      end
+    end
+  end
+  return false
+end
 
 local spellFrame = CreateFrame("Frame")
 spellFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
@@ -3358,6 +3476,15 @@ spellFrame:SetScript("OnEvent", function()
     if string.find(spellName, "^hearthstone") then
       pendingHearthstoneStart = GetTime()
     end
+    -- Mount detection
+    local isEpicMount = IsEpicMountSpell(spellName)
+    if IsMountSpell(spellName) or isEpicMount then
+      mountCastPending     = true
+      mountCastPendingTime = GetTime()
+      mountAwardedThisCast = false
+      pendingMountIsEpic   = isEpicMount
+      Debug("SPELLCAST_START: mount spell detected: "..(arg1 or ""))
+    end
 
   elseif event == "SPELLCAST_STOP" then
     if pendingHearthstoneStart > 0 then
@@ -3370,9 +3497,25 @@ spellFrame:SetScript("OnEvent", function()
       end
       pendingHearthstoneStart = 0
     end
+    -- Mount cast completed (SPELLCAST_STOP fires on success in Vanilla 1.12)
+    if mountCastPending and not mountAwardedThisCast and (GetTime() - mountCastPendingTime) <= MOUNT_CAST_WINDOW then
+      local me = ShortName(UnitName("player"))
+      if me then
+        LeafVE_AchTest:AwardAchievement("casual_mount_60")
+        if pendingMountIsEpic then
+          LeafVE_AchTest:AwardAchievement("casual_epic_mount")
+        end
+        Debug("SPELLCAST_STOP: mount awarded")
+      end
+      mountAwardedThisCast = true
+      mountCastPending     = false
+    end
 
   elseif event == "SPELLCAST_INTERRUPTED" or event == "SPELLCAST_FAILED" then
     pendingHearthstoneStart = 0
+    mountCastPending        = false
+    pendingMountIsEpic      = false
+    Debug("SPELLCAST_INTERRUPTED/FAILED: mount cast cancelled")
   end
 end)
 
