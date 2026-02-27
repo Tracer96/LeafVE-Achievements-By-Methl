@@ -133,6 +133,12 @@ end
 -- ============================================================
 -- Event Handler
 -- ============================================================
+
+-- Startup guard: remains false until a short delay after PLAYER_ENTERING_WORLD
+-- so that SKILL_LINES_CHANGED events fired during the initial login data load
+-- are always treated as silent (no guild-chat announcements).
+local skillCheckReady = false
+
 local skillFrame = CreateFrame("Frame")
 skillFrame:RegisterEvent("CHAT_MSG_SKILL")        -- fires on every skill-up
 skillFrame:RegisterEvent("SKILL_LINES_CHANGED")   -- fires when skill list updates
@@ -147,12 +153,15 @@ skillFrame:SetScript("OnEvent", function()
     CheckSkillMilestones(true)  -- silent: backlog check on load
   elseif event == "PLAYER_ENTERING_WORLD" then
     CheckSkillMilestones(true)  -- silent: initial scan on login/reload
+    -- Reset the guard on each login/reload so the delay applies again,
+    -- then allow live skill-up announcements after the burst settles.
+    skillCheckReady = false
+    C_Timer.After(3, function() skillCheckReady = true end)
   elseif event == "CHAT_MSG_SKILL" then
     CheckSkillMilestones(false) -- not silent: live skill-up, show popup
   elseif event == "SKILL_LINES_CHANGED" then
-    -- Guard against firing during initial data load before the world is entered;
-    -- only announce non-silently once the addon is fully initialized.
-    if LeafVE_AchTest and LeafVE_AchTest.initialized then
+    -- Only announce non-silently once the startup delay has elapsed.
+    if skillCheckReady then
       CheckSkillMilestones(false)
     else
       CheckSkillMilestones(true)
