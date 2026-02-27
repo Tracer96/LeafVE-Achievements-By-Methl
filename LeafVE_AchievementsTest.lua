@@ -5,6 +5,7 @@ LeafVE_AchTest = LeafVE_AchTest or {}
 LeafVE_AchTest.name = "LeafVE_AchievementsTest"
 LeafVE_AchTest_DB = LeafVE_AchTest_DB or {}
 LeafVE_AchTest.DEBUG = false -- Set to true for debug messages
+LeafVE_AchTest.initialized = false -- set to true after initial backlog check
 
 local THEME = {
   bg = {0.02, 0.09, 0.03, 0.96},
@@ -3276,6 +3277,7 @@ ef:SetScript("OnEvent", function()
     LeafVE_AchTest:CheckGuildRankAchievements()
     -- Backlog: award completions from previously stored boss kill progress + history
     LeafVE_AchTest:CheckBacklogAchievements()
+    LeafVE_AchTest.initialized = true
     Print("Achievement System Loaded! Type /achtest")
     Debug("Debug mode is: "..tostring(LeafVE_AchTest.DEBUG))
   end
@@ -3283,8 +3285,8 @@ ef:SetScript("OnEvent", function()
     local tname = UnitName("target")
     if tname then recentTargets[string.lower(tname)] = time() end
   end
-  if event == "PLAYER_LEVEL_UP" then LeafVE_AchTest:CheckLevelAchievements() end
-  if event == "PLAYER_MONEY" then LeafVE_AchTest:CheckGoldAchievements() end
+  if event == "PLAYER_LEVEL_UP" then LeafVE_AchTest:CheckLevelAchievements(not LeafVE_AchTest.initialized) end
+  if event == "PLAYER_MONEY" then LeafVE_AchTest:CheckGoldAchievements(not LeafVE_AchTest.initialized) end
   if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
     -- Boss kill tracking only; generic kills are handled by LeafVE_Ach_Kills.lua.
     local msg = arg1 or ""
