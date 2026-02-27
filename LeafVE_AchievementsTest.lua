@@ -3247,6 +3247,8 @@ local playerWasDead = false
 local BOSS_TARGET_WINDOW = 30  -- seconds
 local recentTargets = {}       -- lowercase mob name -> last-targeted timestamp
 
+local addonLoaded = false  -- set true after initial backlog check; guards against pre-load event spam
+
 local ef = CreateFrame("Frame")
 ef:RegisterEvent("ADDON_LOADED")
 ef:RegisterEvent("PLAYER_LEVEL_UP")
@@ -3276,6 +3278,7 @@ ef:SetScript("OnEvent", function()
     LeafVE_AchTest:CheckGuildRankAchievements()
     -- Backlog: award completions from previously stored boss kill progress + history
     LeafVE_AchTest:CheckBacklogAchievements()
+    addonLoaded = true
     Print("Achievement System Loaded! Type /achtest")
     Debug("Debug mode is: "..tostring(LeafVE_AchTest.DEBUG))
   end
@@ -3283,8 +3286,8 @@ ef:SetScript("OnEvent", function()
     local tname = UnitName("target")
     if tname then recentTargets[string.lower(tname)] = time() end
   end
-  if event == "PLAYER_LEVEL_UP" then LeafVE_AchTest:CheckLevelAchievements() end
-  if event == "PLAYER_MONEY" then LeafVE_AchTest:CheckGoldAchievements() end
+  if event == "PLAYER_LEVEL_UP" then LeafVE_AchTest:CheckLevelAchievements(not addonLoaded) end
+  if event == "PLAYER_MONEY" then LeafVE_AchTest:CheckGoldAchievements(not addonLoaded) end
   if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
     -- Boss kill tracking only; generic kills are handled by LeafVE_Ach_Kills.lua.
     local msg = arg1 or ""

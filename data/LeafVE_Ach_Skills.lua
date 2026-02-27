@@ -147,7 +147,9 @@ skillFrame:SetScript("OnEvent", function()
     CheckSkillMilestones(true)  -- silent: backlog check on load
   elseif event == "PLAYER_ENTERING_WORLD" then
     CheckSkillMilestones(true)  -- silent: initial scan on login/reload
-  elseif event == "CHAT_MSG_SKILL" or event == "SKILL_LINES_CHANGED" then
+  elseif event == "CHAT_MSG_SKILL" then
     CheckSkillMilestones(false) -- not silent: live skill-up, show popup
+  elseif event == "SKILL_LINES_CHANGED" then
+    CheckSkillMilestones(true)  -- silent: fires on login when skill data loads, not just on skill-ups
   end
 end)
