@@ -5,6 +5,7 @@ LeafVE_AchTest = LeafVE_AchTest or {}
 LeafVE_AchTest.name = "LeafVE_AchievementsTest"
 LeafVE_AchTest_DB = LeafVE_AchTest_DB or {}
 LeafVE_AchTest.DEBUG = false -- Set to true for debug messages
+LeafVE_AchTest.initializing = true -- Grace period: suppress announcements until after login settles
 
 local THEME = {
   bg = {0.02, 0.09, 0.03, 0.96},
@@ -1428,6 +1429,7 @@ local GUILD_RANK_GUILD_MESSAGES = {
 }
 
 function LeafVE_AchTest:AwardAchievement(achievementID, silent)
+  if self.initializing then silent = true end
   local playerName = UnitName("player")
   if not playerName or playerName == "" then return end
   local me = ShortName(playerName)
@@ -3991,6 +3993,28 @@ hookFrame:SetScript("OnEvent", function()
       if hookTimer >= 3 then
         HookChatWithTitles()
         hookFrame:SetScript("OnUpdate", nil)
+      end
+    end)
+  end
+end)
+
+-- Initialization grace period: hold the initializing flag for 8 seconds after
+-- PLAYER_ENTERING_WORLD.  Login-time events such as PLAYER_MONEY and
+-- SKILL_LINES_CHANGED fire in the first few seconds; keeping the flag set for
+-- 8 seconds ensures all of those early triggers are treated as silent and do
+-- not announce to guild chat on a fresh install or after a /reload.
+local initFrame = CreateFrame("Frame")
+initFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+initFrame:SetScript("OnEvent", function()
+  if event == "PLAYER_ENTERING_WORLD" then
+    LeafVE_AchTest.initializing = true
+    local initTimer = 0
+    this:SetScript("OnUpdate", function()
+      initTimer = initTimer + arg1
+      if initTimer >= 8 then
+        LeafVE_AchTest.initializing = false
+        Debug("Initialization grace period ended.")
+        this:SetScript("OnUpdate", nil)
       end
     end)
   end
