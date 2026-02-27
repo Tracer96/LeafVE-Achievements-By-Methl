@@ -1215,7 +1215,11 @@ function LeafVE_AchTest:OnAddonMessage(prefix, message, channel, sender)
   
   sender = ShortName(sender)
   if not sender then return end
-  
+
+  -- Never overwrite our own achievements from a sync message — local data is authoritative
+  local me = ShortName(UnitName("player"))
+  if sender == me then return end
+
   Debug("Received addon message from "..sender)
   
   -- Parse sync message
