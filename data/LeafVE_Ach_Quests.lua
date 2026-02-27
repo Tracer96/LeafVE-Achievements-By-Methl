@@ -287,7 +287,8 @@ local function ExtractQuestName(msg)
 end
 
 -- Check whether a chain is complete and award if so.
-local function CheckChain(me, chain)
+-- Pass silent=true when calling from a backlog/login scan.
+local function CheckChain(me, chain, silent)
   if LeafVE_AchTest:HasAchievement(me, chain.id) then return end
   if not LeafVE_AchTest_DB or not LeafVE_AchTest_DB.completedQuests then return end
   local cq = LeafVE_AchTest_DB.completedQuests[me]
@@ -295,7 +296,7 @@ local function CheckChain(me, chain)
   for _, step in ipairs(chain.steps) do
     if not cq[string.lower(step)] then return end
   end
-  LeafVE_AchTest:AwardAchievement(chain.id, false)
+  LeafVE_AchTest:AwardAchievement(chain.id, silent)
 end
 
 -- Record a quest completion and check chains.
@@ -368,7 +369,7 @@ questFrame:SetScript("OnEvent", function()
                LeafVE_AchTest.ShortName(UnitName("player"))
     if me then
       for _, chain in ipairs(QUEST_CHAINS) do
-        CheckChain(me, chain)
+        CheckChain(me, chain, true)
       end
     end
     return
