@@ -147,7 +147,15 @@ skillFrame:SetScript("OnEvent", function()
     CheckSkillMilestones(true)  -- silent: backlog check on load
   elseif event == "PLAYER_ENTERING_WORLD" then
     CheckSkillMilestones(true)  -- silent: initial scan on login/reload
-  elseif event == "CHAT_MSG_SKILL" or event == "SKILL_LINES_CHANGED" then
+  elseif event == "CHAT_MSG_SKILL" then
     CheckSkillMilestones(false) -- not silent: live skill-up, show popup
+  elseif event == "SKILL_LINES_CHANGED" then
+    -- Guard against firing during initial data load before the world is entered;
+    -- only announce non-silently once the addon is fully initialized.
+    if LeafVE_AchTest and LeafVE_AchTest.initialized then
+      CheckSkillMilestones(false)
+    else
+      CheckSkillMilestones(true)
+    end
   end
 end)
