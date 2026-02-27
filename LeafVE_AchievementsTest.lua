@@ -5,6 +5,7 @@ LeafVE_AchTest = LeafVE_AchTest or {}
 LeafVE_AchTest.name = "LeafVE_AchievementsTest"
 LeafVE_AchTest_DB = LeafVE_AchTest_DB or {}
 LeafVE_AchTest.DEBUG = false -- Set to true for debug messages
+LeafVE_AchTest.initialized = false -- Set to true after PLAYER_ENTERING_WORLD backlog scan
 
 local THEME = {
   bg = {0.02, 0.09, 0.03, 0.96},
@@ -3249,6 +3250,7 @@ local recentTargets = {}       -- lowercase mob name -> last-targeted timestamp
 
 local ef = CreateFrame("Frame")
 ef:RegisterEvent("ADDON_LOADED")
+ef:RegisterEvent("PLAYER_ENTERING_WORLD")
 ef:RegisterEvent("PLAYER_LEVEL_UP")
 ef:RegisterEvent("PLAYER_MONEY")
 ef:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
@@ -3279,12 +3281,18 @@ ef:SetScript("OnEvent", function()
     Print("Achievement System Loaded! Type /achtest")
     Debug("Debug mode is: "..tostring(LeafVE_AchTest.DEBUG))
   end
+  if event == "PLAYER_ENTERING_WORLD" then
+    -- Re-run silent backlog checks now that player data (money, level) is available
+    LeafVE_AchTest:CheckLevelAchievements(true)
+    LeafVE_AchTest:CheckGoldAchievements(true)
+    LeafVE_AchTest.initialized = true
+  end
   if event == "PLAYER_TARGET_CHANGED" then
     local tname = UnitName("target")
     if tname then recentTargets[string.lower(tname)] = time() end
   end
-  if event == "PLAYER_LEVEL_UP" then LeafVE_AchTest:CheckLevelAchievements() end
-  if event == "PLAYER_MONEY" then LeafVE_AchTest:CheckGoldAchievements() end
+  if event == "PLAYER_LEVEL_UP" and LeafVE_AchTest.initialized then LeafVE_AchTest:CheckLevelAchievements() end
+  if event == "PLAYER_MONEY" and LeafVE_AchTest.initialized then LeafVE_AchTest:CheckGoldAchievements() end
   if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
     -- Boss kill tracking only; generic kills are handled by LeafVE_Ach_Kills.lua.
     local msg = arg1 or ""
