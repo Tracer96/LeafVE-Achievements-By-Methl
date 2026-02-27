@@ -1495,7 +1495,7 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
           end
         end
         if allDone then
-          self:AwardAchievement(metaId, false)
+          self:AwardAchievement(metaId, silent)
         end
       end
     end
