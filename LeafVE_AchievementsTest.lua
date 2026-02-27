@@ -3247,6 +3247,30 @@ local playerWasDead = false
 -- Recent target tracking for fallback boss kill validation ("X dies." / "X has been slain.")
 local BOSS_TARGET_WINDOW = 30  -- seconds
 local recentTargets = {}       -- lowercase mob name -> last-targeted timestamp
+-- Quest log snapshot: used to diff on QUEST_FINISHED to detect actual turn-ins.
+local questLogSnapshot = {}
+-- Manual taxi state tracking (UnitOnTaxi does not exist in vanilla 1.12).
+local isOnTaxi = false
+local taxiMapJustClosed = false
+
+-- Taxi state frame: tracks TAXIMAP_CLOSED + control events to detect flight paths.
+local taxiFrame = CreateFrame("Frame")
+taxiFrame:RegisterEvent("TAXIMAP_CLOSED")
+taxiFrame:RegisterEvent("PLAYER_CONTROL_LOST")
+taxiFrame:RegisterEvent("PLAYER_CONTROL_GAINED")
+taxiFrame:SetScript("OnEvent", function()
+  if event == "TAXIMAP_CLOSED" then
+    taxiMapJustClosed = true
+  elseif event == "PLAYER_CONTROL_LOST" then
+    if taxiMapJustClosed then
+      isOnTaxi = true
+      taxiMapJustClosed = false
+    end
+  elseif event == "PLAYER_CONTROL_GAINED" then
+    isOnTaxi = false
+    taxiMapJustClosed = false
+  end
+end)
 
 local ef = CreateFrame("Frame")
 ef:RegisterEvent("ADDON_LOADED")
@@ -3262,7 +3286,8 @@ ef:RegisterEvent("TAXIMAP_CLOSED")
 ef:RegisterEvent("TRADE_CLOSED")
 ef:RegisterEvent("TRADE_SHOW")
 ef:RegisterEvent("TRADE_ACCEPT_UPDATE")
-ef:RegisterEvent("QUEST_COMPLETE")
+ef:RegisterEvent("QUEST_FINISHED")
+ef:RegisterEvent("QUEST_LOG_UPDATE")
 ef:RegisterEvent("PARTY_MEMBERS_CHANGED")
 ef:RegisterEvent("CHAT_MSG_SYSTEM")
 
@@ -3371,11 +3396,41 @@ ef:SetScript("OnEvent", function()
       end
     end
   end
-  if event == "QUEST_COMPLETE" then
+  if event == "QUEST_LOG_UPDATE" then
+    -- Snapshot the quest log so we can diff on QUEST_FINISHED.
+    questLogSnapshot = {}
+    local numEntries = GetNumQuestLogEntries and GetNumQuestLogEntries() or 0
+    for i = 1, numEntries do
+      local title = GetQuestLogTitle and GetQuestLogTitle(i)
+      if title and title ~= "" then
+        questLogSnapshot[title] = true
+      end
+    end
+  end
+  if event == "QUEST_FINISHED" then
+    -- Diff the current quest log against the snapshot; a missing title means turn-in.
     local me = ShortName(UnitName("player"))
     if me then
-      IncrCounter(me, "quests")
-      LeafVE_AchTest:CheckQuestAchievements()
+      local numEntries = GetNumQuestLogEntries and GetNumQuestLogEntries() or 0
+      local currentLog = {}
+      for i = 1, numEntries do
+        local title = GetQuestLogTitle and GetQuestLogTitle(i)
+        if title and title ~= "" then
+          currentLog[title] = true
+        end
+      end
+      local questTurnedIn = false
+      for title in pairs(questLogSnapshot) do
+        if not currentLog[title] then
+          questTurnedIn = true
+          break
+        end
+      end
+      if questTurnedIn then
+        IncrCounter(me, "quests")
+        LeafVE_AchTest:CheckQuestAchievements()
+      end
+      questLogSnapshot = currentLog
     end
   end
   if event == "PARTY_MEMBERS_CHANGED" then
@@ -3425,13 +3480,21 @@ ef:SetScript("OnEvent", function()
     end
   end
   if event == "TAXIMAP_CLOSED" then
-    -- TAXIMAP_CLOSED fires when taxi map closes; we check if a flight was taken
-    -- by checking if the player is on a taxi after closing the map
+    -- Use a short delay to allow PLAYER_CONTROL_LOST to fire and set isOnTaxi.
     local me = ShortName(UnitName("player"))
-    if me and UnitOnTaxi and UnitOnTaxi("player") then
-      local total = IncrCounter(me, "flights")
-      if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_flight_10") end
-      if total >= 50 then LeafVE_AchTest:AwardAchievement("casual_flight_50") end
+    if me then
+      local elapsed = 0
+      ef:SetScript("OnUpdate", function()
+        elapsed = elapsed + arg1
+        if elapsed >= 0.5 then
+          ef:SetScript("OnUpdate", nil)
+          if isOnTaxi or (UnitOnTaxi and UnitOnTaxi("player")) then
+            local total = IncrCounter(me, "flights")
+            if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_flight_10") end
+            if total >= 50 then LeafVE_AchTest:AwardAchievement("casual_flight_50") end
+          end
+        end
+      end)
     end
   end
   if event == "TRADE_SHOW" then
@@ -3929,7 +3992,7 @@ zoneDiscFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 zoneDiscFrame:SetScript("OnEvent", function()
   -- Skip discovery while on a taxi/flight path; subzone transitions during
   -- flight should not count as explored for achievement purposes.
-  if UnitOnTaxi and UnitOnTaxi("player") then return end
+  if isOnTaxi or (UnitOnTaxi and UnitOnTaxi("player")) then return end
   local me = ShortName(UnitName("player"))
   if not me then return end
   EnsureDB()
