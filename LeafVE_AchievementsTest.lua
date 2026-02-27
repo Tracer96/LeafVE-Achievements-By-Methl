@@ -3927,6 +3927,9 @@ zoneDiscFrame:RegisterEvent("ZONE_CHANGED")
 zoneDiscFrame:RegisterEvent("ZONE_CHANGED_INDOORS")
 zoneDiscFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 zoneDiscFrame:SetScript("OnEvent", function()
+  -- Skip discovery while on a taxi/flight path; subzone transitions during
+  -- flight should not count as explored for achievement purposes.
+  if UnitOnTaxi and UnitOnTaxi("player") then return end
   local me = ShortName(UnitName("player"))
   if not me then return end
   EnsureDB()
