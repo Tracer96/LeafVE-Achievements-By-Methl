@@ -1,5 +1,5 @@
 -- LeafVE Achievement System - v1.4.0 - More Titles + Title Search Bar
--- Guild message: [Title] [LeafVE Achievement] earned [Achievement]
+-- Guild message: [Title] [LeafVE Achievement] has earned [Achievement]
 
 LeafVE_AchTest = LeafVE_AchTest or {}
 LeafVE_AchTest.name = "LeafVE_AchievementsTest"
@@ -1463,9 +1463,9 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
         -- Normal achievement announcement
         if currentTitle then
           local titleColor = currentTitle.legendary and "|cFFFF0000" or (currentTitle.guild and "|cFF8B4513" or "|cFFFF7F00")
-          guildMsg = titleColor..currentTitle.name.."]|r |cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+          guildMsg = titleColor..currentTitle.name.."]|r |cFF2DD35C[LeafVE Achievement]|r has earned "..achLink
         else
-          guildMsg = "|cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+          guildMsg = "|cFF2DD35C[LeafVE Achievement]|r has earned "..achLink
         end
       end
 
@@ -3743,6 +3743,7 @@ end)
 -- Track fish catches via loot messages
 local lootFrame = CreateFrame("Frame")
 lootFrame:RegisterEvent("CHAT_MSG_LOOT")
+lootFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 -- Keywords (lowercase) for matching fish item names in loot messages.
 local FISH_KEYWORDS = {
   "fish", "snapper", "catfish", "smallfish", "grudgeon", "mightfish",
@@ -3778,6 +3779,10 @@ lootFrame:SetScript("OnEvent", function()
       if lootTotal >= 1000 then LeafVE_AchTest:AwardAchievement("casual_loot_1000") end
       if lootTotal >= 5000 then LeafVE_AchTest:AwardAchievement("casual_loot_5000") end
     end
+  elseif event == "PLAYER_REGEN_DISABLED" then
+    -- Entering combat; can't be fishing, so clear the bobber/cast flags.
+    fishingBobberActive = false
+    fishingCastPending  = false
   end
 end)
 
