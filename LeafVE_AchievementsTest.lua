@@ -39,6 +39,9 @@ local function ShortName(name)
   return name
 end
 
+-- Cached short name of the local player, set once reliably to avoid UnitName() timing issues
+local cachedPlayerShortName = nil
+
 local function IsPartyOrSelf(name)
   if not name or name == "" then return false end
   -- Combat log uses WoW unit ID tokens ("player", "party1"…"party4", "raid1"…"raid40")
@@ -1218,8 +1221,14 @@ function LeafVE_AchTest:OnAddonMessage(prefix, message, channel, sender)
   if not sender then return end
 
   -- Never overwrite our own achievements from a sync message — local data is authoritative
-  local me = ShortName(UnitName("player"))
-  if sender == me then return end
+  -- Lazily cache the player's short name to avoid UnitName() returning nil during loading.
+  if not cachedPlayerShortName then
+    local pName = UnitName("player")
+    if pName and pName ~= "" then
+      cachedPlayerShortName = string.lower(ShortName(pName))
+    end
+  end
+  if cachedPlayerShortName and string.lower(sender) == cachedPlayerShortName then return end
 
   Debug("Received addon message from "..sender)
   
@@ -1300,14 +1309,17 @@ broadcastFrame:SetScript("OnUpdate", function()
 end)
 
 -- Broadcast shortly after login
+local loginBroadcastDone = false
 local loginBroadcast = CreateFrame("Frame")
 loginBroadcast:RegisterEvent("PLAYER_ENTERING_WORLD")
 loginBroadcast:SetScript("OnEvent", function()
   if event == "PLAYER_ENTERING_WORLD" then
+    if loginBroadcastDone then return end
     local waitTimer = 0
     this:SetScript("OnUpdate", function()
       waitTimer = waitTimer + arg1
       if waitTimer >= 5 then
+        loginBroadcastDone = true
         LeafVE_AchTest:BroadcastAchievements()
         this:SetScript("OnUpdate", nil)
         this:UnregisterEvent("PLAYER_ENTERING_WORLD")
@@ -1446,7 +1458,7 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
     Print("Achievement earned: "..achievement.name.." (+"..achievement.points.." pts)")
 
     -- Guild announcement — achievement name is a clickable hyperlink
-    if IsInGuild() then
+    if IsInGuild() and not achievements[achievementID].guildAnnounced then
       local currentTitle = self:GetCurrentTitle(me)
       local achLink = "|cFFFFD700|Hleafve_ach:"..achievementID.."|h["..achievement.name.."]|h|r"
       local guildMsg = ""
@@ -1470,6 +1482,7 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
       end
 
       -- Use original SendChatMessage to avoid adding title twice
+      achievements[achievementID].guildAnnounced = true
       if originalSendChatMessage then
         originalSendChatMessage(guildMsg, "GUILD")
       else
