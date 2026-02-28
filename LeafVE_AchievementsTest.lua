@@ -3605,6 +3605,10 @@ local mountAwardedThisCast  = false
 local pendingMountIsEpic    = false
 -- Maximum seconds between a mount SPELLCAST_START and SPELLCAST_STOP to count as a successful cast.
 local MOUNT_CAST_WINDOW = 5
+
+-- Fishing cast state: set when the player casts "Fishing"; cleared on interruption.
+local fishingCastPending  = false
+local fishingBobberActive = false
 local MOUNT_PATTERNS = {
   "horse", "charger", "ram", "mechanostrider", "raptor", "wolf",
   "kodo", "tiger", "saber", "skeletal", "frostwolf", "nightsaber",
@@ -3681,6 +3685,11 @@ spellFrame:SetScript("OnEvent", function()
     if string.find(spellName, "^hearthstone") then
       pendingHearthstoneStart = GetTime()
     end
+    -- Fishing detection
+    if string.find(spellName, "^fishing") then
+      fishingCastPending  = true
+      fishingBobberActive = false
+    end
     -- Mount detection
     local isEpicMount = IsEpicMountSpell(spellName)
     if IsMountSpell(spellName) or isEpicMount then
@@ -3702,6 +3711,11 @@ spellFrame:SetScript("OnEvent", function()
       end
       pendingHearthstoneStart = 0
     end
+    -- Fishing cast completed: bobber has been placed in water.
+    if fishingCastPending then
+      fishingBobberActive = true
+      fishingCastPending  = false
+    end
     -- Mount cast completed (SPELLCAST_STOP fires on success in Vanilla 1.12)
     if mountCastPending and not mountAwardedThisCast and (GetTime() - mountCastPendingTime) <= MOUNT_CAST_WINDOW then
       local me = ShortName(UnitName("player"))
@@ -3720,6 +3734,8 @@ spellFrame:SetScript("OnEvent", function()
     pendingHearthstoneStart = 0
     mountCastPending        = false
     pendingMountIsEpic      = false
+    fishingCastPending      = false
+    fishingBobberActive     = false
     Debug("SPELLCAST_INTERRUPTED/FAILED: mount cast cancelled")
   end
 end)
@@ -3744,7 +3760,8 @@ lootFrame:SetScript("OnEvent", function()
     for _, kw in ipairs(FISH_KEYWORDS) do
       if string.find(msg, kw, 1, true) then isFish = true; break end
     end
-    if isFish then
+    if isFish and fishingBobberActive then
+      fishingBobberActive = false
       local me = ShortName(UnitName("player"))
       if me then
         local total = IncrCounter(me, "fish")
