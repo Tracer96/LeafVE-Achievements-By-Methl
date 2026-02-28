@@ -139,6 +139,9 @@ end
 -- are always treated as silent (no guild-chat announcements).
 local skillCheckReady = false
 
+local skillDelayFrame = CreateFrame("Frame")
+local skillDelayElapsed = 0
+
 local skillFrame = CreateFrame("Frame")
 skillFrame:RegisterEvent("CHAT_MSG_SKILL")        -- fires on every skill-up
 skillFrame:RegisterEvent("SKILL_LINES_CHANGED")   -- fires when skill list updates
@@ -156,7 +159,14 @@ skillFrame:SetScript("OnEvent", function()
     -- Reset the guard on each login/reload so the delay applies again,
     -- then allow live skill-up announcements after the burst settles.
     skillCheckReady = false
-    C_Timer.After(3, function() skillCheckReady = true end)
+    skillDelayElapsed = 0
+    skillDelayFrame:SetScript("OnUpdate", function()
+      skillDelayElapsed = skillDelayElapsed + arg1
+      if skillDelayElapsed >= 3 then
+        skillCheckReady = true
+        skillDelayFrame:SetScript("OnUpdate", nil)
+      end
+    end)
   elseif event == "CHAT_MSG_SKILL" then
     CheckSkillMilestones(false) -- not silent: live skill-up, show popup
   elseif event == "SKILL_LINES_CHANGED" then
