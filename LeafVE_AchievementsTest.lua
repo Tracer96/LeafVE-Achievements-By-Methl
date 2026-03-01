@@ -1,4 +1,4 @@
--- LeafVE Achievement System - v2.0.0 - More Titles + Title Search Bar
+-- LeafVE Achievement System - v2.0.2 - More Titles + Title Search Bar
 -- Guild message: [Title] [LeafVE Achievement] has earned [Achievement]
 
 LeafVE_AchTest = LeafVE_AchTest or {}
@@ -1306,11 +1306,15 @@ broadcastFrame:SetScript("OnUpdate", function()
   end
 end)
 
--- Broadcast shortly after login
+-- Broadcast shortly after login (ONCE only, not on every zone change or addon load)
 local loginBroadcast = CreateFrame("Frame")
 loginBroadcast:RegisterEvent("PLAYER_ENTERING_WORLD")
 loginBroadcast:SetScript("OnEvent", function()
   if event == "PLAYER_ENTERING_WORLD" then
+    -- Only broadcast on the very first login, not on zone transitions or reloads from other addons
+    if LeafVE_AchTest.loginBroadcastDone then return end
+    LeafVE_AchTest.loginBroadcastDone = true
+
     local waitTimer = 0
     this:SetScript("OnUpdate", function()
       waitTimer = waitTimer + arg1
