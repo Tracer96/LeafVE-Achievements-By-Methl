@@ -1,7 +1,7 @@
 ## Interface: 11200
 ## Title: LeafVE Achievements
 ## Notes: Achievement system for LeafVE private server
-## Version: 2.0.1
+## Version: 2.0.2
 ## SavedVariablesPerCharacter: LeafVE_AchTest_DB
 
 data\LeafVE_ConsumablesDB.lua
