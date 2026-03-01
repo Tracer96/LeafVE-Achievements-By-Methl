@@ -1311,13 +1311,13 @@ local loginBroadcast = CreateFrame("Frame")
 loginBroadcast:RegisterEvent("PLAYER_ENTERING_WORLD")
 loginBroadcast:SetScript("OnEvent", function()
   if event == "PLAYER_ENTERING_WORLD" then
+    this:UnregisterEvent("PLAYER_ENTERING_WORLD")
     local waitTimer = 0
     this:SetScript("OnUpdate", function()
       waitTimer = waitTimer + arg1
       if waitTimer >= 5 then
         LeafVE_AchTest:BroadcastAchievements()
         this:SetScript("OnUpdate", nil)
-        this:UnregisterEvent("PLAYER_ENTERING_WORLD")
       end
     end)
   end
@@ -1503,7 +1503,7 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
           end
         end
         if allDone then
-          self:AwardAchievement(metaId, false)
+          self:AwardAchievement(metaId, silent)
         end
       end
     end
@@ -3308,15 +3308,17 @@ ef:SetScript("OnEvent", function()
   end
   if event == "PLAYER_ENTERING_WORLD" then
     -- Re-run silent backlog checks now that live player data is available
-    EnsureDB()
-    LeafVE_AchTest:CheckLevelAchievements(true)
-    LeafVE_AchTest:CheckGoldAchievements(true)
-    LeafVE_AchTest:CheckProfessionAchievements(true)
-    LeafVE_AchTest:CheckQuestAchievements(true)
-    LeafVE_AchTest:CheckPvPRankAchievements(true)
-    LeafVE_AchTest:CheckGuildRankAchievements(true)
-    LeafVE_AchTest:CheckBacklogAchievements()
-    LeafVE_AchTest.initialized = true
+    if not LeafVE_AchTest.initialized then
+      EnsureDB()
+      LeafVE_AchTest:CheckLevelAchievements(true)
+      LeafVE_AchTest:CheckGoldAchievements(true)
+      LeafVE_AchTest:CheckProfessionAchievements(true)
+      LeafVE_AchTest:CheckQuestAchievements(true)
+      LeafVE_AchTest:CheckPvPRankAchievements(true)
+      LeafVE_AchTest:CheckGuildRankAchievements(true)
+      LeafVE_AchTest:CheckBacklogAchievements()
+      LeafVE_AchTest.initialized = true
+    end
   end
   if event == "PLAYER_TARGET_CHANGED" then
     local tname = UnitName("target")
