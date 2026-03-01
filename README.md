@@ -1,6 +1,6 @@
 # LeafVE Achievements
 
-**Version:** 1.4.1 · **Interface:** 11200 (Vanilla WoW / Turtle WoW 1.12)  
+**Version:** 2.0.0 · **Interface:** 11200 (Vanilla WoW / Turtle WoW 1.12)  
 **Author:** Methl · **Server:** LeafVE private server
 
 A comprehensive, self-contained achievement system for the LeafVE Vanilla WoW private server.  
