@@ -1180,10 +1180,10 @@ function LeafVE_AchTest:CheckQuestAchievements(silent)
 end
 
 -- Check PvP rank achievement
-function LeafVE_AchTest:CheckPvPRankAchievements()
+function LeafVE_AchTest:CheckPvPRankAchievements(silent)
   if not UnitPVPRank then return end
   local rank = UnitPVPRank("player") or 0
-  if rank >= 14 then self:AwardAchievement("elite_pvp_rank_14", true) end
+  if rank >= 14 then self:AwardAchievement("elite_pvp_rank_14", silent) end
 end
 
 -- ==========================================
@@ -1853,7 +1853,7 @@ function LeafVE_AchTest:CheckBacklogAchievements()
 end
 
 -- Backlog: check profession skill levels via API and award any earned achievements
-function LeafVE_AchTest:CheckProfessionAchievements()
+function LeafVE_AchTest:CheckProfessionAchievements(silent)
   local profMap = {
     ["Alchemy"]       = "prof_alchemy_300",
     ["Blacksmithing"] = "prof_blacksmithing_300",
@@ -1877,18 +1877,18 @@ function LeafVE_AchTest:CheckProfessionAchievements()
       if achId then
         Debug("Found profession: "..skillName.." at rank "..tostring(skillRank))
         if skillRank and skillRank >= 300 then
-          self:AwardAchievement(achId, true)
+          self:AwardAchievement(achId, silent)
           artisanCount = artisanCount + 1
         end
       end
     end
   end
   if artisanCount >= 2 then
-    self:AwardAchievement("prof_dual_artisan", true)
+    self:AwardAchievement("prof_dual_artisan", silent)
   end
 end
 
-function LeafVE_AchTest:CheckGuildRankAchievements()
+function LeafVE_AchTest:CheckGuildRankAchievements(silent)
   local _, rankName = GetGuildInfo("player")
   if not rankName or rankName == "" then return end
   local rankMap = {
@@ -1899,7 +1899,7 @@ function LeafVE_AchTest:CheckGuildRankAchievements()
   }
   local achId = rankMap[rankName]
   if achId then
-    self:AwardAchievement(achId, true)
+    self:AwardAchievement(achId, silent)
   end
 end
 
@@ -3301,22 +3301,21 @@ ef:RegisterEvent("CHAT_MSG_SYSTEM")
 ef:SetScript("OnEvent", function()
   if event == "ADDON_LOADED" and arg1 == LeafVE_AchTest.name then
     EnsureDB()
-    -- Backlog: auto-award anything already earned that can be queried via the API
-    LeafVE_AchTest:CheckLevelAchievements(true)
-    LeafVE_AchTest:CheckGoldAchievements(true)
-    LeafVE_AchTest:CheckProfessionAchievements()
-    LeafVE_AchTest:CheckQuestAchievements(true)
-    LeafVE_AchTest:CheckPvPRankAchievements()
-    LeafVE_AchTest:CheckGuildRankAchievements()
     -- Backlog: award completions from previously stored boss kill progress + history
     LeafVE_AchTest:CheckBacklogAchievements()
     Print("Achievement System Loaded! Type /achtest")
     Debug("Debug mode is: "..tostring(LeafVE_AchTest.DEBUG))
   end
   if event == "PLAYER_ENTERING_WORLD" then
-    -- Re-run silent backlog checks now that player data (money, level) is available
+    -- Re-run silent backlog checks now that live player data is available
+    EnsureDB()
     LeafVE_AchTest:CheckLevelAchievements(true)
     LeafVE_AchTest:CheckGoldAchievements(true)
+    LeafVE_AchTest:CheckProfessionAchievements(true)
+    LeafVE_AchTest:CheckQuestAchievements(true)
+    LeafVE_AchTest:CheckPvPRankAchievements(true)
+    LeafVE_AchTest:CheckGuildRankAchievements(true)
+    LeafVE_AchTest:CheckBacklogAchievements()
     LeafVE_AchTest.initialized = true
   end
   if event == "PLAYER_TARGET_CHANGED" then
