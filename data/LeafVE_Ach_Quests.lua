@@ -3,6 +3,13 @@
 -- Quest completions are detected via CHAT_MSG_SYSTEM: Quest "Name" completed.
 -- Requires LeafVE_AchievementsTest.lua to be loaded first.
 
+-- Lua 5.0 compatibility: string.match does not exist in vanilla WoW
+local function smatch(str, pattern)
+  local s, _, c1, c2, c3 = string.find(str, pattern)
+  if s then return c1 or true, c2, c3 end
+  return nil
+end
+
 -- ============================================================
 -- Quest Chain Definitions
 -- Each chain has an achievement + optional title reward.
@@ -271,8 +278,8 @@ local QUEST_CHAINS = {
 local function ExtractQuestName(msg)
   if type(msg) ~= "string" then return nil end
   -- Primary pattern: Quest "Name" completed. (straight or curly quotes)
-  local name = string.match(msg, 'Quest "([^"]+)" completed%.')
-               or string.match(msg, "Quest '([^']+)' completed%.")
+  local name = smatch(msg, 'Quest "([^"]+)" completed%.')
+               or smatch(msg, "Quest '([^']+)' completed%.")
   if name and name ~= "" then return name end
   -- Fallback: ends with " completed."
   if string.find(msg, " completed%.") then

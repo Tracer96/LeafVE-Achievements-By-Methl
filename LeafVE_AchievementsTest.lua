@@ -29,6 +29,13 @@ end
 
 local function Now() return time() end
 
+-- Lua 5.0 compatibility: string.match does not exist in vanilla WoW
+local function smatch(str, pattern)
+  local s, _, c1, c2, c3 = string.find(str, pattern)
+  if s then return c1 or true, c2, c3 end
+  return nil
+end
+
 local function ShortName(name)
   if not name or name == "" then 
     name = UnitName("player")
@@ -43,8 +50,8 @@ local function IsPartyOrSelf(name)
   if not name or name == "" then return false end
   -- Combat log uses WoW unit ID tokens ("player", "party1"…"party4", "raid1"…"raid40")
   if name == "player" then return true end
-  if string.match(name, "^party%d+$") then return true end
-  if string.match(name, "^raid%d+$") then return true end
+  if smatch(name, "^party%d+$") then return true end
+  if smatch(name, "^raid%d+$") then return true end
   name = ShortName(name)
   if not name then return false end
   if name == ShortName(UnitName("player")) then return true end
@@ -1833,7 +1840,7 @@ function LeafVE_AchTest:CheckBacklogAchievements()
   -- corresponding dungeon clear achievement (the run was validated by that addon).
   if LeafVE_DB and LeafVE_DB.pointHistory and LeafVE_DB.pointHistory[me] then
     for _, entry in ipairs(LeafVE_DB.pointHistory[me]) do
-      local zone = entry.reason and string.match(entry.reason, "^Instance completion: (.+)$")
+      local zone = entry.reason and smatch(entry.reason, "^Instance completion: (.+)$")
       if zone then
         local achId = ZONE_TO_DUNGEON_ACH[zone]
         if achId and ACHIEVEMENTS[achId] and not self:HasAchievement(me, achId) then
@@ -3323,17 +3330,17 @@ ef:SetScript("OnEvent", function()
     local msg = arg1 or ""
     local mobName
     -- Scenarios 1-3: explicit "You/Your party/Your raid has slain X!"
-    mobName = string.match(msg, "^You have slain (.+)!$")
-      or string.match(msg, "^Your party has slain (.+)!$")
-      or string.match(msg, "^Your raid has slain (.+)!$")
+    mobName = smatch(msg, "^You have slain (.+)!$")
+      or smatch(msg, "^Your party has slain (.+)!$")
+      or smatch(msg, "^Your raid has slain (.+)!$")
     -- Scenarios 4-6: "X is slain by Y.", "X slain by Y.", "X has been slain by Y." (dot or excl)
     if not mobName then
-      local slainTarget, killerName = string.match(msg, "^(.+) is slain by (.-)[%.!]?$")
+      local slainTarget, killerName = smatch(msg, "^(.+) is slain by (.-)[%.!]?$")
       if not slainTarget then
-        slainTarget, killerName = string.match(msg, "^(.+) slain by (.-)[%.!]?$")
+        slainTarget, killerName = smatch(msg, "^(.+) slain by (.-)[%.!]?$")
       end
       if not slainTarget then
-        slainTarget, killerName = string.match(msg, "^(.+) has been slain by (.-)[%.!]?$")
+        slainTarget, killerName = smatch(msg, "^(.+) has been slain by (.-)[%.!]?$")
       end
       if slainTarget and killerName and IsPartyOrSelf(killerName) then
         mobName = slainTarget
@@ -3341,8 +3348,8 @@ ef:SetScript("OnEvent", function()
     end
     -- Fallback: "X dies." or "X has been slain." — validate via recent target / party / combat
     if not mobName then
-      local fallbackName = string.match(msg, "^(.+) dies%.$")
-        or string.match(msg, "^(.+) has been slain%.$")
+      local fallbackName = smatch(msg, "^(.+) dies%.$")
+        or smatch(msg, "^(.+) has been slain%.$")
       if fallbackName then
         local lname = string.lower(fallbackName)
         local recentlyTargeted = recentTargets[lname]
@@ -3454,7 +3461,7 @@ ef:SetScript("OnEvent", function()
   end
   if event == "CHAT_MSG_SYSTEM" then
     local msg = arg1 or ""
-    local winner, loser = string.match(msg, "^(.-) has defeated (.+) in a duel$")
+    local winner, loser = smatch(msg, "^(.-) has defeated (.+) in a duel$")
     if winner then
       local me = ShortName(UnitName("player"))
       if me and ShortName(winner) == me then
@@ -3792,7 +3799,7 @@ emoteFrame:RegisterEvent("CHAT_MSG_TEXT_EMOTE")
 emoteFrame:SetScript("OnEvent", function()
   if event == "CHAT_MSG_TEXT_EMOTE" then
     -- arg2 is the sender name; only count emotes from the local player
-    local senderName = arg2 and string.match(arg2, "^([^%-]+)") or ""
+    local senderName = arg2 and smatch(arg2, "^([^%-]+)") or ""
     local me = ShortName(UnitName("player"))
     if me and ShortName(senderName) == me then
       local total = IncrCounter(me, "emotes")
@@ -3833,7 +3840,7 @@ SlashCmdList["ACHGRANT"] = function(msg)
     Print("Only Anbu, Sannin, or Hokage may grant achievements.")
     return
   end
-  local target, achId = string.match(msg, "^(%S+)%s+(%S+)$")
+  local target, achId = smatch(msg, "^(%S+)%s+(%S+)$")
   if not target or not achId then
     Print("Usage: /achgrant <PlayerName> <achievementId>")
     Print("Example: /achgrant Naruto dung_rfc_complete")

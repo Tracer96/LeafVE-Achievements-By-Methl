@@ -3,6 +3,13 @@
 -- Tracks generic kill counts, named critter/mob kills, and non-raid boss kills.
 -- Requires LeafVE_AchievementsTest.lua to be loaded first.
 
+-- Lua 5.0 compatibility: string.match does not exist in vanilla WoW
+local function smatch(str, pattern)
+  local s, _, c1, c2, c3 = string.find(str, pattern)
+  if s then return c1 or true, c2, c3 end
+  return nil
+end
+
 -- ============================================================
 -- Achievement Definitions
 -- ============================================================
@@ -152,22 +159,22 @@ killFrame:SetScript("OnEvent", function()
   if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
     local msg = arg1 or ""
     -- Scenarios 1-3: explicit killer message (player, party, or raid landing the blow)
-    local playerKill = string.match(msg, "^You have slain (.+)!$")
+    local playerKill = smatch(msg, "^You have slain (.+)!$")
     local targetName = playerKill
-      or string.match(msg, "^Your party has slain (.+)!$")
-      or string.match(msg, "^Your raid has slain (.+)!$")
+      or smatch(msg, "^Your party has slain (.+)!$")
+      or smatch(msg, "^Your raid has slain (.+)!$")
 
     -- Scenario 9: "X is slain by Y.", "X slain by Y.", or "X has been slain by Y."
     -- Credit the kill only when the killer is the player or a party/raid member,
     -- so that group members (e.g. Methanel) count kills made by others (e.g. Methl)
     -- but random nearby players do not award undeserved credit.
     if not targetName then
-      local slainTarget, slainByName = string.match(msg, "^(.+) is slain by (.-)[%.!]?$")
+      local slainTarget, slainByName = smatch(msg, "^(.+) is slain by (.-)[%.!]?$")
       if not slainTarget then
-        slainTarget, slainByName = string.match(msg, "^(.+) slain by (.-)[%.!]?$")
+        slainTarget, slainByName = smatch(msg, "^(.+) slain by (.-)[%.!]?$")
       end
       if not slainTarget then
-        slainTarget, slainByName = string.match(msg, "^(.+) has been slain by (.-)[%.!]?$")
+        slainTarget, slainByName = smatch(msg, "^(.+) has been slain by (.-)[%.!]?$")
       end
       if slainTarget and slainByName and LeafVE_AchTest and LeafVE_AchTest.ShortName then
         local myName = LeafVE_AchTest.ShortName(UnitName("player"))
