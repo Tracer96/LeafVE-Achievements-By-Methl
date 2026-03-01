@@ -1,4 +1,4 @@
--- LeafVE Achievement System - v1.4.0 - More Titles + Title Search Bar
+-- LeafVE Achievement System - v2.0.0 - More Titles + Title Search Bar
 -- Guild message: [Title] [LeafVE Achievement] has earned [Achievement]
 
 LeafVE_AchTest = LeafVE_AchTest or {}
