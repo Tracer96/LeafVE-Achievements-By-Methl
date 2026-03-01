@@ -72,6 +72,7 @@ local function EnsureDB()
   if not LeafVE_AchTest_DB.progressCounters then LeafVE_AchTest_DB.progressCounters = {} end
   if not LeafVE_AchTest_DB.completedQuests then LeafVE_AchTest_DB.completedQuests = {} end
   if not LeafVE_AchTest_DB.peakGold then LeafVE_AchTest_DB.peakGold = {} end
+  if not LeafVE_AchTest_DB.playerClasses then LeafVE_AchTest_DB.playerClasses = {} end
 end
 
 
@@ -1207,6 +1208,13 @@ function LeafVE_AchTest:BroadcastAchievements()
   else
     Debug("No achievements to broadcast")
   end
+
+  -- Also broadcast class so others can show class icon in portrait fallback
+  local _, myClass = UnitClass("player")
+  if myClass then
+    SendAddonMessage("LeafVEAch", "CLASS:"..myClass, "GUILD")
+    Debug("Broadcast class: "..myClass)
+  end
 end
 
 -- Receive other players' achievements (FIXED for Vanilla WoW)
@@ -1277,6 +1285,17 @@ function LeafVE_AchTest:OnAddonMessage(prefix, message, channel, sender)
       LeafVE.UI:ShowPlayerCard(sender)
     end
   end
+
+  -- Handle class broadcast for portrait fallback
+  if string.sub(message, 1, 6) == "CLASS:" then
+    local className = string.sub(message, 7)
+    if className and className ~= "" then
+      EnsureDB()
+      LeafVE_AchTest_DB.playerClasses[sender] = className
+      Debug("Stored class for "..sender..": "..className)
+    end
+    return
+  end
 end
 
 -- Register addon message listener
@@ -1287,6 +1306,61 @@ syncFrame:SetScript("OnEvent", function()
     LeafVE_AchTest:OnAddonMessage(arg1, arg2, arg3, arg4)
   end
 end)
+
+-- Sets the portrait texture on portraitTexFrame for the given playerName.
+-- Uses a live unit portrait if the player is nearby, otherwise falls back
+-- to the stored class icon. Call this instead of SetPortraitTexture directly.
+function LeafVE_AchTest:GetPortraitForPlayer(playerName, portraitTexFrame)
+  local shortName = ShortName(playerName)
+
+  -- Try to find the player as a live unit first
+  local targetUnit = nil
+  if shortName == ShortName(UnitName("player")) then
+    targetUnit = "player"
+  else
+    local numRaid = GetNumRaidMembers and GetNumRaidMembers() or 0
+    if numRaid > 0 then
+      for i = 1, numRaid do
+        if UnitExists("raid"..i) and ShortName(UnitName("raid"..i)) == shortName then
+          targetUnit = "raid"..i
+          break
+        end
+      end
+    else
+      local numParty = GetNumPartyMembers and GetNumPartyMembers() or 0
+      for i = 1, numParty do
+        if UnitExists("party"..i) and ShortName(UnitName("party"..i)) == shortName then
+          targetUnit = "party"..i
+          break
+        end
+      end
+    end
+  end
+
+  if targetUnit and UnitExists(targetUnit) then
+    -- Player is nearby: use live portrait
+    SetPortraitTexture(portraitTexFrame, targetUnit)
+    return
+  end
+
+  -- Player is out of range: fall back to class icon
+  EnsureDB()
+  local className = LeafVE_AchTest_DB.playerClasses[shortName]
+
+  if className then
+    local classUpper = string.upper(className)
+    local coords = CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[classUpper]
+    if coords then
+      portraitTexFrame:SetTexture("Interface\\WorldStateFrame\\Icons-Classes")
+      portraitTexFrame:SetTexCoord(unpack(coords))
+      return
+    end
+  end
+
+  -- Ultimate fallback: question mark
+  portraitTexFrame:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
+  portraitTexFrame:SetTexCoord(0, 1, 0, 1)
+end
 
 -- Auto-broadcast on login and every 5 minutes
 local broadcastTimer = 0
