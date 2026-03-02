@@ -183,7 +183,7 @@ The hook is installed 3 seconds after `PLAYER_ENTERING_WORLD` to avoid interferi
 
 ## SavedVariables
 
-All data is persisted in `LeafVE_AchTest_DB` (defined in the `.toc` file):
+### `LeafVE_AchTest_DB` (per-character)
 
 | Key | Description |
 |---|---|
@@ -194,8 +194,13 @@ All data is persisted in `LeafVE_AchTest_DB` (defined in the `.toc` file):
 | `raidProgress` | Per-raid boss kill tracking. |
 | `progressCounters` | Generic numeric counters (kills, emotes, etc.). |
 | `completedQuests` | Completed quest chain steps per player character. |
-| `peakGold` | Highest gold amount ever held per player character. |
 | `minimapAngle` | Saved minimap button angle (in degrees, 0–360). |
+
+### `LeafVE_AchTest_GlobalDB` (global)
+
+| Key | Description |
+|---|---|
+| `peakGold` | Highest gold amount ever held, keyed per player name. Stored globally so spending gold never causes achievement progress to go backwards. |
 
 ---
 

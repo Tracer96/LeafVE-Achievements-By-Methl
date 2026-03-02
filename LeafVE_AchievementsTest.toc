@@ -2,6 +2,7 @@
 ## Title: LeafVE Achievements
 ## Notes: Achievement system for LeafVE private server
 ## Version: 2.0.3
+## SavedVariables: LeafVE_AchTest_GlobalDB
 ## SavedVariablesPerCharacter: LeafVE_AchTest_DB
 data\LeafVE_ConsumablesDB.lua
 LeafVE_AchievementsTest.lua
