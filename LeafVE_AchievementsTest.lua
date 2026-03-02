@@ -78,7 +78,9 @@ local function EnsureDB()
   if not LeafVE_AchTest_DB.raidProgress then LeafVE_AchTest_DB.raidProgress = {} end
   if not LeafVE_AchTest_DB.progressCounters then LeafVE_AchTest_DB.progressCounters = {} end
   if not LeafVE_AchTest_DB.completedQuests then LeafVE_AchTest_DB.completedQuests = {} end
-  if not LeafVE_AchTest_DB.peakGold then LeafVE_AchTest_DB.peakGold = {} end
+  -- Global DB for data that should persist regardless of individual character actions
+  if not LeafVE_AchTest_GlobalDB then LeafVE_AchTest_GlobalDB = {} end
+  if not LeafVE_AchTest_GlobalDB.peakGold then LeafVE_AchTest_GlobalDB.peakGold = {} end
 end
 
 
@@ -1107,7 +1109,7 @@ local function GetAchievementProgress(me, achId)
   if def.api == "hk" then
     current = (GetPVPLifetimeHonorableKills and GetPVPLifetimeHonorableKills()) or 0
   elseif def.api == "gold" then
-    local peak = (me and LeafVE_AchTest_DB and LeafVE_AchTest_DB.peakGold and LeafVE_AchTest_DB.peakGold[me]) or 0
+    local peak = (me and LeafVE_AchTest_GlobalDB and LeafVE_AchTest_GlobalDB.peakGold and LeafVE_AchTest_GlobalDB.peakGold[me]) or 0
     local cur = math.floor((GetMoney and GetMoney() or 0) / 10000)
     current = math.max(peak, cur)
   elseif def.api == "quests" then
@@ -1609,10 +1611,10 @@ function LeafVE_AchTest:CheckGoldAchievements(silent)
   EnsureDB()
   local current = math.floor((GetMoney and GetMoney() or 0) / 10000)
   -- Update peak gold: only ever goes up, so spending gold never resets progress
-  local peak = LeafVE_AchTest_DB.peakGold[me] or 0
+  local peak = LeafVE_AchTest_GlobalDB.peakGold[me] or 0
   if current > peak then
     peak = current
-    LeafVE_AchTest_DB.peakGold[me] = peak
+    LeafVE_AchTest_GlobalDB.peakGold[me] = peak
   end
   if peak >= 10   then self:AwardAchievement("gold_10",   silent) end
   if peak >= 100  then self:AwardAchievement("gold_100",  silent) end
@@ -2358,7 +2360,7 @@ function LeafVE_AchTest.UI:Build()
     LeafVE_AchTest_DB.dungeonProgress = {}
     LeafVE_AchTest_DB.raidProgress    = {}
     LeafVE_AchTest_DB.completedQuests = {}
-    LeafVE_AchTest_DB.peakGold        = {}
+    LeafVE_AchTest_GlobalDB.peakGold  = {}
     Print("Reset complete!")
     LeafVE_AchTest.UI:Refresh()
   end)
