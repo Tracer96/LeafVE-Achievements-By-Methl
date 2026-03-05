@@ -1,4 +1,4 @@
--- LeafVE Achievement System - v2.0.2 - More Titles + Title Search Bar
+-- LeafVE Achievement System - v2.1.0 - More Titles + Title Search Bar
 -- Guild message: [Title] [LeafVE Achievement] has earned [Achievement]
 
 LeafVE_AchTest = LeafVE_AchTest or {}
@@ -4346,6 +4346,7 @@ hookFrame:SetScript("OnEvent", function()
 end)
 
 Print("LeafVE Achievement System loaded successfully!")
+
 
 
 
