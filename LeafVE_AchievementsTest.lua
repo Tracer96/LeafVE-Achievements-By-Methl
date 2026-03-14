@@ -1,4 +1,4 @@
--- LeafVE Achievement System - v2.1.0 - More Titles + Title Search Bar
+-- LeafVE Achievement System - v2.0 - More Titles + Title Search Bar
 -- Guild message: [Title] [LeafVE Achievement] has earned [Achievement]
 
 LeafVE_AchTest = LeafVE_AchTest or {}
@@ -60,6 +60,31 @@ local function ShortName(name)
   return name
 end
 
+local function Trim(s)
+  return string.gsub(s or "", "^%s*(.-)%s*$", "%1")
+end
+
+local function IsOfficerRank(rankName)
+  return rankName == "Anbu" or rankName == "Sannin" or rankName == "Hokage"
+end
+
+local function ResolveGuildMemberName(name)
+  local query = ShortName(Trim(name))
+  if not query or query == "" then return nil end
+  if not IsInGuild or not IsInGuild() then return nil end
+  if GuildRoster then GuildRoster() end
+  local total = GetNumGuildMembers and GetNumGuildMembers() or 0
+  local needle = string.lower(query)
+  for i = 1, total do
+    local fullName = GetGuildRosterInfo and GetGuildRosterInfo(i)
+    local shortName = ShortName(fullName)
+    if shortName and string.lower(shortName) == needle then
+      return shortName
+    end
+  end
+  return nil
+end
+
 local function IsPartyOrSelf(name)
   if not name or name == "" then return false end
   -- Combat log uses WoW unit ID tokens ("player", "party1"…"party4", "raid1"…"raid40")
@@ -91,6 +116,7 @@ local function EnsureDB()
   if not LeafVE_AchTest_DB.dungeonProgress then LeafVE_AchTest_DB.dungeonProgress = {} end
   if not LeafVE_AchTest_DB.raidProgress then LeafVE_AchTest_DB.raidProgress = {} end
   if not LeafVE_AchTest_DB.progressCounters then LeafVE_AchTest_DB.progressCounters = {} end
+  if not LeafVE_AchTest_DB.progressCache then LeafVE_AchTest_DB.progressCache = {} end
   if not LeafVE_AchTest_DB.completedQuests then LeafVE_AchTest_DB.completedQuests = {} end
   if not LeafVE_AchTest_DB.peakGold then LeafVE_AchTest_DB.peakGold = {} end
   if not LeafVE_AchTest_DB.goldEarnedTotal then LeafVE_AchTest_DB.goldEarnedTotal = {} end
@@ -104,7 +130,15 @@ local ZONE_GROUP_ACH = {
   eastern_kingdoms = "explore_eastern_kingdoms",
   elwynn           = "casual_explore_elwynn",
   barrens          = "casual_explore_barrens",
+  stonetalon_tw    = "explore_tw_stonetalon",
+  arathi_tw        = "explore_tw_arathi",
+  badlands_tw      = "explore_tw_badlands",
+  ashenvale_tw     = "explore_tw_ashenvale",
 }
+
+local function GetZoneGroupAchievementId(groupKey)
+  return ZONE_GROUP_ACH[groupKey] or ("explore_tw_"..groupKey)
+end
 
 -- Zone-group → list of discoverable zone/subzone names.
 -- Kalimdor and Eastern Kingdoms use major zone names (tracked via GetZoneText).
@@ -636,7 +670,6 @@ local ACHIEVEMENTS = {
   casual_emote_25={id="casual_emote_25",name="Emotive",desc="Use 25 emotes on other players",category="Casual",points=5,icon="Interface\\Icons\\INV_Misc_Toy_07"},
   casual_epic_mount={id="casual_epic_mount",name="Epic Mount",desc="Obtain an epic mount",category="Casual",points=25,icon="Interface\\Icons\\Ability_Mount_JungleTiger"},
   casual_fall_death={id="casual_fall_death",name="Falling Star",desc="Die from falling 10 times",category="Casual",points=5,icon="Interface\\Icons\\Ability_Rogue_FeintedStrike"},
-  casual_deaths_10={id="casual_deaths_10",name="First Casualty",desc="Die 10 times",category="Casual",points=5,icon="Interface\\Icons\\Spell_Shadow_DeathScream"},
   casual_mount_60={id="casual_mount_60",name="First Mount",desc="Obtain your first mount",category="Casual",points=10,icon="Interface\\Icons\\Ability_Mount_Raptor"},
   casual_hearthstone_use={id="casual_hearthstone_use",name="Frequent Traveler",desc="Use your hearthstone 50 times",category="Casual",points=10,icon="Interface\\Icons\\INV_Misc_Rune_01"},
   casual_guild_join={id="casual_guild_join",name="Guild Member",desc="Join a guild",category="Casual",points=5,icon="Interface\\Icons\\INV_Shirt_GuildTabard_01"},
@@ -653,9 +686,6 @@ local ACHIEVEMENTS = {
   casual_party_join={id="casual_party_join",name="Team Player",desc="Join 50 groups",category="Casual",points=10,icon="Interface\\Icons\\INV_Misc_GroupNeedMore"},
   casual_fish_25={id="casual_fish_25",name="Weekend Angler",desc="Catch 25 fish",category="Casual",points=5,icon="Interface\\Icons\\Trade_Fishing"},
   -- Leveling extras (from KAM)
-  -- Death extras (from KAM)
-  casual_deaths_5={id="casual_deaths_5",name="First Steps to Death",desc="Die 5 times",category="Casual",points=3,icon="Interface\\Icons\\Spell_Shadow_DeathScream"},
-  casual_deaths_25={id="casual_deaths_25",name="Quarter Century of Defeats",desc="Die 25 times",category="Casual",points=5,icon="Interface\\Icons\\INV_Misc_Spyglass_03"},
   -- Resurrection tracking
   casual_resurrect_50={id="casual_resurrect_50",name="Phoenix",desc="Get resurrected 50 times",category="Casual",points=25,icon="Interface\\Icons\\Spell_Holy_Resurrection"},
   casual_resurrect_10={id="casual_resurrect_10",name="Second Wind",desc="Get resurrected 10 times",category="Casual",points=10,icon="Interface\\Icons\\Spell_Holy_Resurrection"},
@@ -690,6 +720,18 @@ local ACHIEVEMENTS = {
   guild_rank_anbu={id="guild_rank_anbu",name="Anbu",desc="Awarded when promoted to Anbu (officer).",category="Guild",points=100,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
   guild_rank_sannin={id="guild_rank_sannin",name="Sannin",desc="Awarded when promoted to Sannin (Co-GM).",category="Guild",points=150,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
   guild_rank_hokage={id="guild_rank_hokage",name="Hokage",desc="Awarded when promoted to Hokage (GM).",category="Guild",points=200,icon="Interface\\Icons\\Spell_Holy_BlessingOfStrength",manual=true},
+
+  -- High-Effort Trackable Achievements
+  elite_epochbreaker={id="elite_epochbreaker",name="Conqueror of Ages",desc="Defeat Ragnaros, Nefarian, C'Thun, and Kel'Thuzad at least 5 times each.",category="Elite",points=250,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black",criteria_type="ach_meta",criteria_ids={"elite_rag_5x","elite_nef_5x","elite_cthun_5x","elite_kt_5x"}},
+  pvp_bg_win_250={id="pvp_bg_win_250",name="Grand Battlemaster",desc="Win 250 battlegrounds.",category="PvP",points=150,icon="Interface\\Icons\\INV_BannerPVP_02"},
+  pvp_bg_all_100={id="pvp_bg_all_100",name="Banner of War",desc="Win 100 Warsong Gulch, 100 Arathi Basin, and 100 Alterac Valley matches.",category="PvP",points=220,icon="Interface\\Icons\\INV_Banner_02"},
+  pvp_duel_streak_25={id="pvp_duel_streak_25",name="Unbroken Duelist",desc="Win 25 duels in a row without a loss.",category="PvP",points=180,icon="Interface\\Icons\\INV_Sword_62"},
+  casual_quest_streak_200={id="casual_quest_streak_200",name="Iron Questline",desc="Turn in 200 quests without dying.",category="Casual",points=120,icon="Interface\\Icons\\INV_Misc_Book_09"},
+  explore_world_pathfinder={id="explore_world_pathfinder",name="World Pathfinder",desc="Complete all major exploration achievements across Azeroth and Turtle zones.",category="Exploration",points=200,icon="Interface\\Icons\\INV_Misc_Map_01",criteria_type="ach_meta",criteria_ids={"explore_world_explorer","explore_tw_balor","explore_tw_gillijim","explore_tw_gilneas","explore_tw_hyjal","explore_tw_lapidis","explore_tw_northwind","explore_tw_telabim","explore_tw_grim_reaches","explore_tw_scarlet_enclave","explore_tw_tirisfal_uplands","explore_tw_arathi","explore_tw_ashenvale","explore_tw_badlands","explore_tw_stonetalon"}},
+  gold_50000={id="gold_50000",name="Azeroth's Ledger",desc="Accumulate 50,000 lifetime gold earned.",category="Gold",points=180,icon="Interface\\Icons\\INV_Misc_Coin_17"},
+  gold_ah_emperor={id="gold_ah_emperor",name="Market Emperor",desc="Post 1000 auctions and place 500 bids.",category="Gold",points=150,icon="Interface\\Icons\\INV_Misc_Coin_08"},
+  elite_100_unique_bosses={id="elite_100_unique_bosses",name="Trophy Hunter Supreme",desc="Defeat 100 unique tracked bosses.",category="Elite",points=180,icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black"},
+  kill_100000={id="kill_100000",name="Slayer Eternal",desc="Defeat 100,000 enemies.",category="Kills",points=200,icon="Interface\\Icons\\INV_Sword_27"},
 }
 
 local TITLES = {
@@ -743,6 +785,16 @@ local TITLES = {
   {id="title_death_knight",name="Death Knight",achievement="raid_naxx_four_horsemen",prefix=false,category="Raids",icon="Interface\\Icons\\Spell_Shadow_RaiseDead"},
   
   -- Elite Achievement Titles
+  {id="title_epochbreaker",name="the Epochbreaker",achievement="elite_epochbreaker",prefix=false,category="Elite",icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black"},
+  {id="title_trophy_reaper",name="the Trophy Reaper",achievement="elite_100_unique_bosses",prefix=false,category="Elite",icon="Interface\\Icons\\INV_Misc_Head_Dragon_Black"},
+  {id="title_endless",name="the Endless",achievement="kill_100000",prefix=false,category="Elite",icon="Interface\\Icons\\INV_Sword_27"},
+  {id="title_unfaltering",name="the Unfaltering",achievement="casual_quest_streak_200",prefix=false,category="Elite",icon="Interface\\Icons\\INV_Misc_Book_09"},
+  {id="title_farstrider",name="the Farstrider",achievement="explore_world_pathfinder",prefix=false,category="Elite",icon="Interface\\Icons\\INV_Misc_Map_01"},
+  {id="title_goldbound",name="the Goldbound",achievement="gold_50000",prefix=false,category="Elite",icon="Interface\\Icons\\INV_Misc_Coin_17"},
+  {id="title_coinlord",name="the Coinlord",achievement="gold_ah_emperor",prefix=false,category="Elite",icon="Interface\\Icons\\INV_Misc_Coin_08"},
+  {id="title_warbanner",name="the Warbanner",achievement="pvp_bg_all_100",prefix=false,category="Elite",icon="Interface\\Icons\\INV_Banner_02"},
+  {id="title_unbroken",name="the Unbroken",achievement="pvp_duel_streak_25",prefix=false,category="Elite",icon="Interface\\Icons\\INV_Sword_62"},
+  {id="title_grand_battlemaster",name="the Battlemaster",achievement="pvp_bg_win_250",prefix=false,category="Elite",icon="Interface\\Icons\\INV_BannerPVP_02"},
 
   
   -- PvP Titles
@@ -1197,9 +1249,11 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   pvp_duel_25  = {counter="duels", goal=25},
   pvp_duel_50  = {counter="duels", goal=50},
   pvp_duel_100 = {counter="duels", goal=100},
+  pvp_duel_streak_25 = {counter="duelStreak", goal=25},
   pvp_bg_win_1  = {counter="bgWins", goal=1},
   pvp_bg_win_10 = {counter="bgWins", goal=10},
   pvp_bg_win_50 = {counter="bgWins", goal=50},
+  pvp_bg_win_250 = {counter="bgWins", goal=250},
   pvp_wsg_win_10 = {counter="bgWinsWSG", goal=10},
   pvp_ab_win_10  = {counter="bgWinsAB", goal=10},
   pvp_av_win_10  = {counter="bgWinsAV", goal=10},
@@ -1209,14 +1263,13 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   gold_500  = {api="gold", goal=500},
   gold_1000 = {api="gold", goal=1000},
   gold_5000 = {api="gold", goal=5000},
+  gold_50000 = {api="gold", goal=50000},
   -- Quests: prefer GetNumQuestsCompleted(), fall back to tracked counter
   casual_quest_100  = {api="quests", counter="quests", goal=100},
   casual_quest_500  = {api="quests", counter="quests", goal=500},
   casual_quest_1000 = {api="quests", counter="quests", goal=1000},
+  casual_quest_streak_200 = {counter="questsSinceDeath", goal=200},
   -- Deaths tracked via PLAYER_DEAD event
-  casual_deaths_5   = {counter="deaths", goal=5},
-  casual_deaths_10  = {counter="deaths", goal=10},
-  casual_deaths_25  = {counter="deaths", goal=25},
   casual_deaths_50  = {counter="deaths", goal=50},
   casual_deaths_100 = {counter="deaths", goal=100},
   casual_fall_death = {counter="fallDeaths", goal=10},
@@ -1254,6 +1307,7 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   elite_500_bosses     = {counter="totalBossKills",  goal=500},
   elite_25_unique_bosses = {counter="uniqueBossKills", goal=25},
   elite_50_unique_bosses = {counter="uniqueBossKills", goal=50},
+  elite_100_unique_bosses = {counter="uniqueBossKills", goal=100},
   -- Dungeon and raid run counts
   elite_50_dungeons  = {counter="dungeonRuns", goal=50},
   elite_100_dungeons = {counter="dungeonRuns", goal=100},
@@ -1263,7 +1317,7 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   elite_50_raids     = {counter="raidRuns",    goal=50},
   elite_100_raids    = {counter="raidRuns",    goal=100},
   elite_250_raids    = {counter="raidRuns",    goal=250},
-  -- Resurrections tracked via PLAYER_ALIVE
+  -- Resurrections tracked via accepted player resurrection requests
   casual_resurrect_10 = {counter="resurrections", goal=10},
   casual_resurrect_50 = {counter="resurrections", goal=50},
   -- Flight paths tracked via TAXIMAP_CLOSED
@@ -1296,12 +1350,48 @@ local ACHIEVEMENT_PROGRESS_DEF = {
   kill_1000  = {counter="genericKills", goal=1000},
   kill_10000 = {counter="genericKills", goal=10000},
   kill_50000 = {counter="genericKills", goal=50000},
+  kill_100000 = {counter="genericKills", goal=100000},
 }
 
+-- Counter name -> list of achievement IDs that use that counter.
+-- Used to immediately persist progress cache whenever counters change.
+local PROGRESS_DEF_BY_COUNTER = {}
+for achId, def in pairs(ACHIEVEMENT_PROGRESS_DEF) do
+  if def.counter then
+    if not PROGRESS_DEF_BY_COUNTER[def.counter] then
+      PROGRESS_DEF_BY_COUNTER[def.counter] = {}
+    end
+    table.insert(PROGRESS_DEF_BY_COUNTER[def.counter], achId)
+  end
+end
+
 -- Returns {current, goal} or nil if no progress data exists for this achievement.
+local function GetCachedProgress(playerName, achId)
+  if not playerName or not LeafVE_AchTest_DB or not LeafVE_AchTest_DB.progressCache then return 0 end
+  local p = LeafVE_AchTest_DB.progressCache[playerName]
+  if not p then return 0 end
+  return tonumber(p[achId]) or 0
+end
+
+local function CacheProgress(playerName, achId, value)
+  if not playerName or not achId then return end
+  local n = tonumber(value) or 0
+  if n < 0 then n = 0 end
+  EnsureDB()
+  if not LeafVE_AchTest_DB.progressCache[playerName] then
+    LeafVE_AchTest_DB.progressCache[playerName] = {}
+  end
+  local p = LeafVE_AchTest_DB.progressCache[playerName]
+  local prev = tonumber(p[achId]) or 0
+  if n > prev then
+    p[achId] = n
+  end
+end
+
 local function GetAchievementProgress(me, achId)
   local def = ACHIEVEMENT_PROGRESS_DEF[achId]
   if not def then return nil end
+  EnsureDB()
 
   local current = 0
 
@@ -1337,6 +1427,13 @@ local function GetAchievementProgress(me, achId)
     end
   end
 
+  -- Use persisted max progress so temporary API failures never regress progress UI.
+  local cached = GetCachedProgress(me, achId)
+  if cached > current then
+    current = cached
+  end
+  CacheProgress(me, achId, current)
+
   return {current = current, goal = def.goal}
 end
 
@@ -1348,6 +1445,28 @@ local function IncrCounter(playerName, counterName, amount)
   end
   local c = LeafVE_AchTest_DB.progressCounters[playerName]
   c[counterName] = (c[counterName] or 0) + (amount or 1)
+  local related = PROGRESS_DEF_BY_COUNTER[counterName]
+  if related then
+    for _, achId in ipairs(related) do
+      CacheProgress(playerName, achId, c[counterName])
+    end
+  end
+  return c[counterName]
+end
+
+local function SetCounter(playerName, counterName, value)
+  EnsureDB()
+  if not LeafVE_AchTest_DB.progressCounters[playerName] then
+    LeafVE_AchTest_DB.progressCounters[playerName] = {}
+  end
+  local c = LeafVE_AchTest_DB.progressCounters[playerName]
+  c[counterName] = value
+  local related = PROGRESS_DEF_BY_COUNTER[counterName]
+  if related then
+    for _, achId in ipairs(related) do
+      CacheProgress(playerName, achId, c[counterName])
+    end
+  end
   return c[counterName]
 end
 
@@ -1355,6 +1474,7 @@ end
 -- can add achievements and interact with the DB without duplicating locals.
 LeafVE_AchTest.ShortName     = ShortName
 LeafVE_AchTest.IncrCounter   = IncrCounter
+LeafVE_AchTest.SetCounter    = SetCounter
 LeafVE_AchTest.IsPartyOrSelf = IsPartyOrSelf
 function LeafVE_AchTest:AddAchievement(id, data)
   ACHIEVEMENTS[id] = data
@@ -1362,6 +1482,22 @@ end
 -- Allow external modules to register tooltip progress definitions.
 function LeafVE_AchTest:RegisterProgressDef(achId, def)
   ACHIEVEMENT_PROGRESS_DEF[achId] = def
+  if def and def.counter then
+    if not PROGRESS_DEF_BY_COUNTER[def.counter] then
+      PROGRESS_DEF_BY_COUNTER[def.counter] = {}
+    end
+    local list = PROGRESS_DEF_BY_COUNTER[def.counter]
+    local exists = false
+    for _, existingId in ipairs(list) do
+      if existingId == achId then
+        exists = true
+        break
+      end
+    end
+    if not exists then
+      table.insert(list, achId)
+    end
+  end
 end
 -- Allow external modules to add titles.
 function LeafVE_AchTest:AddTitle(titleData)
@@ -1372,17 +1508,19 @@ end
 function LeafVE_AchTest:CheckQuestAchievements(silent)
   local me = ShortName(UnitName("player"))
   if not me then return end
+  EnsureDB()
+  local pc = LeafVE_AchTest_DB.progressCounters[me]
+  local streak = (pc and pc.questsSinceDeath) or 0
   local total
   if GetNumQuestsCompleted then
     total = GetNumQuestsCompleted() or 0
   else
-    EnsureDB()
-    local pc = LeafVE_AchTest_DB.progressCounters[me]
     total = (pc and pc.quests) or 0
   end
   if total >= 100  then self:AwardAchievement("casual_quest_100",  silent) end
   if total >= 500  then self:AwardAchievement("casual_quest_500",  silent) end
   if total >= 1000 then self:AwardAchievement("casual_quest_1000", silent) end
+  if streak >= 200 then self:AwardAchievement("casual_quest_streak_200", silent) end
 end
 
 -- Check PvP rank achievement
@@ -1445,10 +1583,17 @@ local function CheckBattlegroundAchievementsForPlayer(me, silent)
   if wins >= 1  then LeafVE_AchTest:AwardAchievement("pvp_bg_win_1", silent) end
   if wins >= 10 then LeafVE_AchTest:AwardAchievement("pvp_bg_win_10", silent) end
   if wins >= 50 then LeafVE_AchTest:AwardAchievement("pvp_bg_win_50", silent) end
+  if wins >= 250 then LeafVE_AchTest:AwardAchievement("pvp_bg_win_250", silent) end
 
-  if (p.bgWinsWSG or 0) >= 10 then LeafVE_AchTest:AwardAchievement("pvp_wsg_win_10", silent) end
-  if (p.bgWinsAB or 0)  >= 10 then LeafVE_AchTest:AwardAchievement("pvp_ab_win_10", silent) end
-  if (p.bgWinsAV or 0)  >= 10 then LeafVE_AchTest:AwardAchievement("pvp_av_win_10", silent) end
+  local wsgWins = p.bgWinsWSG or 0
+  local abWins = p.bgWinsAB or 0
+  local avWins = p.bgWinsAV or 0
+  if wsgWins >= 10 then LeafVE_AchTest:AwardAchievement("pvp_wsg_win_10", silent) end
+  if abWins  >= 10 then LeafVE_AchTest:AwardAchievement("pvp_ab_win_10", silent) end
+  if avWins  >= 10 then LeafVE_AchTest:AwardAchievement("pvp_av_win_10", silent) end
+  if wsgWins >= 100 and abWins >= 100 and avWins >= 100 then
+    LeafVE_AchTest:AwardAchievement("pvp_bg_all_100", silent)
+  end
 end
 
 function LeafVE_AchTest:CheckBattlegroundAchievements(silent)
@@ -1505,6 +1650,9 @@ local function CheckAuctionHouseAchievementsForPlayer(me, silent)
   local bids = p.ahBids or 0
   if bids >= 10  then LeafVE_AchTest:AwardAchievement("gold_ah_bid_10", silent) end
   if bids >= 100 then LeafVE_AchTest:AwardAchievement("gold_ah_bid_100", silent) end
+  if posts >= 1000 and bids >= 500 then
+    LeafVE_AchTest:AwardAchievement("gold_ah_emperor", silent)
+  end
 end
 
 function LeafVE_AchTest:CheckAuctionHouseAchievements(silent)
@@ -1674,6 +1822,50 @@ function LeafVE_AchTest:HasAchievement(playerName, achievementID)
   return achievements[achievementID] ~= nil
 end
 
+function LeafVE_AchTest:CheckExplorationAchievements(silent, newlyDiscovered)
+  local me = ShortName(UnitName("player"))
+  if not me then return end
+  EnsureDB()
+  if not LeafVE_AchTest_DB.exploredZones[me] then return end
+
+  local discovered = LeafVE_AchTest_DB.exploredZones[me]
+  local soundPlayed = false
+
+  for groupKey, zones in pairs(ZONE_GROUP_ZONES) do
+    local achId = GetZoneGroupAchievementId(groupKey)
+    local achMeta = ACHIEVEMENTS[achId]
+    if achMeta then
+      local total = table.getn(zones)
+      local found = 0
+      local hasNew = false
+      for _, z in ipairs(zones) do
+        if discovered[z] then
+          found = found + 1
+        end
+        if newlyDiscovered and newlyDiscovered[z] then
+          hasNew = true
+        end
+      end
+
+      if hasNew and not silent then
+        for _, z in ipairs(zones) do
+          if newlyDiscovered[z] then
+            Print('Discovered "'..z..'" - '..found..'/'..total..' Locations for '..achMeta.name)
+          end
+        end
+        if not soundPlayed then
+          PlaySound("QUESTCOMPLETED")
+          soundPlayed = true
+        end
+      end
+
+      if found == total and not self:HasAchievement(me, achId) then
+        self:AwardAchievement(achId, silent)
+      end
+    end
+  end
+end
+
 function LeafVE_AchTest:ShowAchievementPopup(achievementID)
   local achievement = ACHIEVEMENTS[achievementID]
   if not achievement then return end
@@ -1766,6 +1958,98 @@ local GUILD_RANK_GUILD_MESSAGES = {
   guild_rank_hokage = function(name) return name .. " has been entrusted with the fate of the village. All shinobi bow before the new Hokage!" end,
 }
 
+local function NormalizeGrantAchievementId(rawAchId)
+  local achId = string.lower(Trim(rawAchId))
+  if achId == "" then return "" end
+  if ACHIEVEMENTS[achId] then return achId end
+  local prefixes = {
+    "dung_","raid_","explore_","casual_","elite_",
+    "pvp_","gold_","prof_","guild_rank_","legendary_","lvl_",
+  }
+  for _, prefix in ipairs(prefixes) do
+    local candidate = prefix..achId
+    if ACHIEVEMENTS[candidate] then
+      return candidate
+    end
+  end
+  return achId
+end
+
+local function BuildAdminAchievementOptions()
+  local options = {}
+  for achId, achData in pairs(ACHIEVEMENTS) do
+    table.insert(options, {
+      id = achId,
+      name = achData and achData.name or achId,
+      category = achData and achData.category or "Misc",
+    })
+  end
+  table.sort(options, function(a, b)
+    local ac = string.lower(a.category or "")
+    local bc = string.lower(b.category or "")
+    if ac ~= bc then return ac < bc end
+    local an = string.lower(a.name or "")
+    local bn = string.lower(b.name or "")
+    if an ~= bn then return an < bn end
+    return a.id < b.id
+  end)
+  return options
+end
+
+local function BuildGuildAchievementMessage(playerName, achId, ach)
+  local achLink = "|cFFFFD700|Hleafve_ach:"..achId.."|h["..ach.name.."]|h|r"
+  if ach.category == "Legendary" and LEGENDARY_GUILD_MESSAGES[achId] then
+    return "|cFFFF0000[LEGENDARY]|r " .. LEGENDARY_GUILD_MESSAGES[achId](playerName)
+  end
+  if ach.category == "Guild" and GUILD_RANK_GUILD_MESSAGES[achId] then
+    return "|cFF8B4513[GUILD RANK]|r " .. GUILD_RANK_GUILD_MESSAGES[achId](playerName)
+  end
+  return "|cFF2DD35C[LeafVE Achievement]|r earned "..achLink
+end
+
+function LeafVE_AchTest:AdminGrantAchievement(targetInput, achInput, requireGuildMember)
+  local targetText = Trim(targetInput)
+  local achId = NormalizeGrantAchievementId(achInput)
+  if targetText == "" or achId == "" then
+    return false, "Enter a player name and achievement ID."
+  end
+  local target = ResolveGuildMemberName(targetText)
+  if not target then
+    if requireGuildMember then
+      return false, "Guild member not found: "..targetText
+    end
+    target = ShortName(targetText)
+  end
+  if not target or target == "" then
+    return false, "Invalid player name."
+  end
+  local ach = ACHIEVEMENTS[achId]
+  if not ach then
+    return false, "Unknown achievement ID: "..achId
+  end
+
+  local achievements = self:GetPlayerAchievements(target)
+  if achievements[achId] then
+    return false, target.." already has: "..ach.name
+  end
+  achievements[achId] = {timestamp = Now(), points = ach.points}
+
+  if IsInGuild and IsInGuild() then
+    local guildMsg = BuildGuildAchievementMessage(target, achId, ach)
+    if originalSendChatMessage then
+      originalSendChatMessage(guildMsg, "GUILD")
+    else
+      SendChatMessage(guildMsg, "GUILD")
+    end
+  end
+
+  if LeafVE_AchTest.UI and LeafVE_AchTest.UI.Refresh then
+    LeafVE_AchTest.UI:Refresh()
+  end
+
+  return true, target, ach
+end
+
 function LeafVE_AchTest:AwardAchievement(achievementID, silent)
   local playerName = UnitName("player")
   if not playerName or playerName == "" then return end
@@ -1834,7 +2118,8 @@ function LeafVE_AchTest:AwardAchievement(achievementID, silent)
           end
         end
         if allDone then
-          self:AwardAchievement(metaId, false)
+          -- Preserve the caller's notification mode: backlog/login scans must stay silent.
+          self:AwardAchievement(metaId, silent)
         end
       end
     end
@@ -1915,19 +2200,52 @@ function LeafVE_AchTest:RemoveTitle(playerName)
   end
 end
 
-function LeafVE_AchTest:CheckLevelAchievements(silent)
-  local level = UnitLevel("player")
-  if level >= 5  then self:AwardAchievement("casual_level_5",  silent) end
-  if level >= 10 then self:AwardAchievement("lvl_10",          silent) end
-  if level >= 15 then self:AwardAchievement("casual_level_15", silent) end
-  if level >= 20 then self:AwardAchievement("lvl_20",          silent) end
-  if level >= 25 then self:AwardAchievement("casual_level_25", silent) end
-  if level >= 30 then self:AwardAchievement("lvl_30",          silent) end
-  if level >= 35 then self:AwardAchievement("casual_level_35", silent) end
-  if level >= 40 then self:AwardAchievement("lvl_40",          silent) end
-  if level >= 45 then self:AwardAchievement("casual_level_45", silent) end
-  if level >= 50 then self:AwardAchievement("lvl_50",          silent) end
-  if level >= 60 then self:AwardAchievement("lvl_60",          silent) end
+local LEVEL_MILESTONE_IDS = {
+  [5]  = "casual_level_5",
+  [10] = "lvl_10",
+  [15] = "casual_level_15",
+  [20] = "lvl_20",
+  [25] = "casual_level_25",
+  [30] = "lvl_30",
+  [35] = "casual_level_35",
+  [40] = "lvl_40",
+  [45] = "casual_level_45",
+  [50] = "lvl_50",
+  [60] = "lvl_60",
+}
+
+local LEVEL_MILESTONE_ORDER = {5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60}
+
+function LeafVE_AchTest:CheckLevelAchievements(silent, levelOverride, exactOnly)
+  local level = tonumber(levelOverride) or UnitLevel("player") or 0
+  if exactOnly then
+    local achId = LEVEL_MILESTONE_IDS[level]
+    if achId then
+      self:AwardAchievement(achId, silent)
+    end
+    return
+  end
+
+  for _, milestone in ipairs(LEVEL_MILESTONE_ORDER) do
+    if level >= milestone then
+      self:AwardAchievement(LEVEL_MILESTONE_IDS[milestone], silent)
+    end
+  end
+end
+
+-- Award all level milestone achievements crossed in the inclusive [fromLevel, toLevel] range.
+function LeafVE_AchTest:AwardLevelMilestonesBetween(fromLevel, toLevel, silent)
+  local a = tonumber(fromLevel) or 0
+  local b = tonumber(toLevel) or 0
+  if b < a then return end
+  for _, milestone in ipairs(LEVEL_MILESTONE_ORDER) do
+    if milestone >= a and milestone <= b then
+      local achId = LEVEL_MILESTONE_IDS[milestone]
+      if achId then
+        self:AwardAchievement(achId, silent)
+      end
+    end
+  end
 end
 
 local function UpdateLifetimeGoldForPlayer(me)
@@ -1967,6 +2285,7 @@ function LeafVE_AchTest:CheckGoldAchievements(silent)
   if earned >= 500  then self:AwardAchievement("gold_500",  silent) end
   if earned >= 1000 then self:AwardAchievement("gold_1000", silent) end
   if earned >= 5000 then self:AwardAchievement("gold_5000", silent) end
+  if earned >= 50000 then self:AwardAchievement("gold_50000", silent) end
 end
 
 function LeafVE_AchTest:CheckRunMilestoneAchievements(silent)
@@ -1986,6 +2305,20 @@ function LeafVE_AchTest:CheckRunMilestoneAchievements(silent)
   if raidRuns >= 50  then self:AwardAchievement("elite_50_raids", silent) end
   if raidRuns >= 100 then self:AwardAchievement("elite_100_raids", silent) end
   if raidRuns >= 250 then self:AwardAchievement("elite_250_raids", silent) end
+end
+
+-- Re-evaluate all progress-based achievements from persisted counters/API values.
+-- This catches achievements that should have been awarded in prior sessions even
+-- if a specific live event was missed.
+function LeafVE_AchTest:CheckCachedProgressAchievements(silent)
+  local me = ShortName(UnitName("player"))
+  if not me then return end
+  for achId in pairs(ACHIEVEMENT_PROGRESS_DEF) do
+    local p = GetAchievementProgress(me, achId)
+    if p and p.current and p.goal and p.current >= p.goal then
+      self:AwardAchievement(achId, silent)
+    end
+  end
 end
 
 LeafVE_AchTest.UI = {}
@@ -2325,6 +2658,29 @@ function LeafVE_AchTest:CheckMetaAchievements(silent)
   if allDungeons then self:AwardAchievement("elite_all_dungeons_complete", silent) end
 end
 
+-- Re-check all achievement-meta chains (criteria_type="ach_meta") from persisted data.
+-- This ensures newly added meta achievements award immediately on login when requirements
+-- were completed in earlier sessions.
+function LeafVE_AchTest:CheckAchievementMetaAchievements(silent)
+  local me = ShortName(UnitName("player"))
+  if not me then return end
+
+  for achId, achData in pairs(ACHIEVEMENTS) do
+    if achData.criteria_type == "ach_meta" and achData.criteria_ids and not self:HasAchievement(me, achId) then
+      local allDone = true
+      for _, reqId in ipairs(achData.criteria_ids) do
+        if not self:HasAchievement(me, reqId) then
+          allDone = false
+          break
+        end
+      end
+      if allDone then
+        self:AwardAchievement(achId, silent)
+      end
+    end
+  end
+end
+
 function LeafVE_AchTest:CheckBossKill(bossName)
   local group = BOSS_GROUP_ALIASES[bossName]
   if group then
@@ -2392,6 +2748,7 @@ function LeafVE_AchTest:CheckBossKill(bossName)
       local unique = IncrCounter(me, "uniqueBossKills")
       if unique >= 25 then self:AwardAchievement("elite_25_unique_bosses") end
       if unique >= 50 then self:AwardAchievement("elite_50_unique_bosses") end
+      if unique >= 100 then self:AwardAchievement("elite_100_unique_bosses") end
     end
   end
 end
@@ -2573,14 +2930,51 @@ local function CreateAchievementRow(parent)
     if ad._questSteps then
       local cq = LeafVE_AchTest_DB and LeafVE_AchTest_DB.completedQuests
       local myQ = cq and cq[me]
-      local done, total = 0, table.getn(ad._questSteps)
+      local done, total = 0, 0
+      local normalizeQuestKey = LeafVE_AchTest and LeafVE_AchTest.NormalizeQuestStepKey
       GameTooltip:AddLine(" ", 1, 1, 1)
       for _, step in ipairs(ad._questSteps) do
-        if myQ and myQ[string.lower(step)] then
-          done = done + 1
-          GameTooltip:AddLine("|cFF00CC00[x]|r "..step, 0.9, 0.9, 0.9)
-        else
-          GameTooltip:AddLine("|cFF666666[ ]|r "..step, 0.5, 0.5, 0.5)
+        local stepName = step
+        local needed = 1
+        if type(step) == "table" then
+          stepName = step.name or step[1]
+          needed = tonumber(step.count) or tonumber(step.required) or 1
+          if needed < 1 then needed = 1 end
+        end
+        if type(stepName) == "string" and stepName ~= "" then
+          local key = normalizeQuestKey and normalizeQuestKey(stepName) or string.lower(stepName)
+          local stepDone = 0
+          local v = myQ and key and myQ[key]
+          if type(v) == "number" then
+            stepDone = v
+          elseif v then
+            stepDone = 1
+          end
+          if stepDone <= 0 and myQ then
+            -- Backward compatibility for pre-normalized quest keys.
+            local legacy = myQ[string.lower(stepName)]
+            if type(legacy) == "number" then
+              stepDone = legacy
+            elseif legacy then
+              stepDone = 1
+            end
+          end
+
+          local contribution = stepDone
+          if contribution > needed then contribution = needed end
+          done = done + contribution
+          total = total + needed
+
+          local label = stepName
+          if needed > 1 then
+            label = string.format("%s (%d/%d)", stepName, contribution, needed)
+          end
+
+          if stepDone >= needed then
+            GameTooltip:AddLine("|cFF00CC00[x]|r "..label, 0.9, 0.9, 0.9)
+          else
+            GameTooltip:AddLine("|cFF666666[ ]|r "..label, 0.5, 0.5, 0.5)
+          end
         end
       end
       GameTooltip:AddLine(string.format("Progress: %d / %d quests", done, total), 1.0, 0.82, 0.2)
@@ -2714,7 +3108,7 @@ function LeafVE_AchTest.UI:Build()
   adminTab:SetText("Admin")
   adminTab:SetScript("OnClick", function()
     local _, rankName = GetGuildInfo("player")
-    if rankName ~= "Anbu" and rankName ~= "Sannin" and rankName ~= "Hokage" then
+    if not IsOfficerRank(rankName) then
       Print("Only Anbu, Sannin, or Hokage may access the Admin panel.")
       return
     end
@@ -2731,7 +3125,7 @@ function LeafVE_AchTest.UI:Build()
   awardBtn:SetText("Award")
   awardBtn:SetScript("OnClick", function()
     local _, rankName = GetGuildInfo("player")
-    if rankName ~= "Anbu" and rankName ~= "Sannin" and rankName ~= "Hokage" then
+    if not IsOfficerRank(rankName) then
       Print("Only Anbu, Sannin, or Hokage may use the Award button.")
       return
     end
@@ -2760,13 +3154,14 @@ function LeafVE_AchTest.UI:Build()
   resetBtn:SetText("Reset")
   resetBtn:SetScript("OnClick", function()
     local _, rankName = GetGuildInfo("player")
-    if rankName ~= "Anbu" and rankName ~= "Sannin" and rankName ~= "Hokage" then
+    if not IsOfficerRank(rankName) then
       Print("Only Anbu, Sannin, or Hokage may reset achievements.")
       return
     end
     LeafVE_AchTest_DB.achievements    = {}
     LeafVE_AchTest_DB.selectedTitles  = {}
     LeafVE_AchTest_DB.progressCounters = {}
+    LeafVE_AchTest_DB.progressCache    = {}
     LeafVE_AchTest_DB.exploredZones   = {}
     LeafVE_AchTest_DB.dungeonProgress = {}
     LeafVE_AchTest_DB.raidProgress    = {}
@@ -2848,6 +3243,144 @@ function LeafVE_AchTest.UI:Build()
   adminAchBox:SetScript("OnEnterPressed", function() this:ClearFocus() end)
   self.adminAchBox = adminAchBox
 
+  local adminDropdownLabel = adminFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+  adminDropdownLabel:SetPoint("TOPLEFT", adminAchLabel, "BOTTOMLEFT", 0, -18)
+  adminDropdownLabel:SetText("Select Achievement:")
+
+  local adminAchOptions = BuildAdminAchievementOptions()
+  local adminAchLookup = {}
+  local adminAchCategories = {}
+  local adminAchByCategory = {}
+  for _, option in ipairs(adminAchOptions) do
+    option.display = "["..option.category.."] "..option.name.." ("..option.id..")"
+    adminAchLookup[string.lower(option.id)] = option
+    if not adminAchByCategory[option.category] then
+      adminAchByCategory[option.category] = {}
+      table.insert(adminAchCategories, option.category)
+    end
+    table.insert(adminAchByCategory[option.category], option)
+  end
+  table.sort(adminAchCategories, function(a, b)
+    return string.lower(a) < string.lower(b)
+  end)
+  self.adminAchLookup = adminAchLookup
+
+  local adminAchDropdown = CreateFrame("Frame", "LeafVE_AchTestAdminAchDropdown", adminFrame, "UIDropDownMenuTemplate")
+  adminAchDropdown:SetPoint("TOPLEFT", adminDropdownLabel, "BOTTOMLEFT", -16, 4)
+  UIDropDownMenu_SetWidth(440, adminAchDropdown)
+  UIDropDownMenu_JustifyText("LEFT", adminAchDropdown)
+  UIDropDownMenu_SetText("Select an achievement...", adminAchDropdown)
+  local ACH_DROPDOWN_PAGE_SIZE = 24
+  UIDropDownMenu_Initialize(adminAchDropdown, function(arg1, arg2, arg3)
+    -- Vanilla dropdown callbacks vary by caller: either (level, menuList)
+    -- or (self, level, menuList). Normalize both forms.
+    local level, menuValue
+    if type(arg1) == "number" then
+      level = arg1
+      menuValue = arg2
+    else
+      level = arg2
+      menuValue = arg3
+    end
+    level = tonumber(level) or UIDROPDOWNMENU_MENU_LEVEL or 1
+    if menuValue == nil and level > 1 then
+      menuValue = UIDROPDOWNMENU_MENU_VALUE
+    end
+    local selectedAch = string.lower(Trim(adminAchBox:GetText() or ""))
+
+    local function AddAchievementOption(option)
+      local achId = option.id
+      local display = option.display
+      local info = {}
+      info.text = display
+      info.checked = (selectedAch == string.lower(achId))
+      info.func = function()
+        UIDropDownMenu_SetText(display, adminAchDropdown)
+        adminAchBox:SetText(achId)
+        if CloseDropDownMenus then CloseDropDownMenus() end
+      end
+      UIDropDownMenu_AddButton(info, level)
+    end
+
+    if level == 1 then
+      for catIndex, category in ipairs(adminAchCategories) do
+        local list = adminAchByCategory[category]
+        local info = {}
+        info.text = category.." ("..table.getn(list)..")"
+        info.hasArrow = 1
+        info.notCheckable = 1
+        info.value = "CAT:"..catIndex
+        UIDropDownMenu_AddButton(info, level)
+      end
+      return
+    end
+
+    local tokenKind, tokenCatIndex, tokenPage = nil, nil, nil
+    if type(menuValue) == "string" then
+      tokenKind, tokenCatIndex, tokenPage = string.match(menuValue, "^(%u+):(%d+):?(%d*)$")
+    end
+    local catIndex = tonumber(tokenCatIndex or "")
+    local category = catIndex and adminAchCategories[catIndex]
+    local list = category and adminAchByCategory[category] or nil
+    if not list then return end
+
+    if level == 2 and tokenKind == "CAT" then
+      local total = table.getn(list)
+      if total <= ACH_DROPDOWN_PAGE_SIZE then
+        for i = 1, total do
+          AddAchievementOption(list[i])
+        end
+      else
+        local pageCount = math.ceil(total / ACH_DROPDOWN_PAGE_SIZE)
+        for page = 1, pageCount do
+          local firstIndex = ((page - 1) * ACH_DROPDOWN_PAGE_SIZE) + 1
+          local lastIndex = page * ACH_DROPDOWN_PAGE_SIZE
+          if lastIndex > total then lastIndex = total end
+          local info = {}
+          info.text = string.format("Page %d (%d-%d)", page, firstIndex, lastIndex)
+          info.hasArrow = 1
+          info.notCheckable = 1
+          info.value = "PAGE:"..catIndex..":"..page
+          UIDropDownMenu_AddButton(info, level)
+        end
+      end
+      return
+    end
+
+    if level == 3 and tokenKind == "PAGE" then
+      local page = tonumber(tokenPage or "") or 1
+      local firstIndex = ((page - 1) * ACH_DROPDOWN_PAGE_SIZE) + 1
+      local lastIndex = page * ACH_DROPDOWN_PAGE_SIZE
+      local total = table.getn(list)
+      if lastIndex > total then lastIndex = total end
+      for i = firstIndex, lastIndex do
+        AddAchievementOption(list[i])
+      end
+    end
+  end)
+  self.adminAchDropdown = adminAchDropdown
+
+  local function SyncAdminDropdownFromInput()
+    local key = string.lower(Trim(adminAchBox:GetText() or ""))
+    local match = key ~= "" and adminAchLookup[key] or nil
+    if match then
+      UIDropDownMenu_SetText(match.display, adminAchDropdown)
+    else
+      UIDropDownMenu_SetText("Select an achievement...", adminAchDropdown)
+    end
+  end
+  adminAchBox:SetScript("OnEscapePressed", function()
+    this:ClearFocus()
+    SyncAdminDropdownFromInput()
+  end)
+  adminAchBox:SetScript("OnEnterPressed", function()
+    this:ClearFocus()
+    SyncAdminDropdownFromInput()
+  end)
+  adminAchBox:SetScript("OnTextChanged", function()
+    SyncAdminDropdownFromInput()
+  end)
+
   local adminGrantBtn = CreateFrame("Button", nil, adminFrame, "UIPanelButtonTemplate")
   adminGrantBtn:SetPoint("LEFT", adminAchBox, "RIGHT", 10, 0)
   adminGrantBtn:SetWidth(80)
@@ -2855,68 +3388,46 @@ function LeafVE_AchTest.UI:Build()
   adminGrantBtn:SetText("Grant")
   adminGrantBtn:SetScript("OnClick", function()
     local _, rankName = GetGuildInfo("player")
-    if rankName ~= "Anbu" and rankName ~= "Sannin" and rankName ~= "Hokage" then
+    if not IsOfficerRank(rankName) then
       Print("Only Anbu, Sannin, or Hokage may grant achievements.")
       return
     end
     local playerName = LeafVE_AchTest.UI.adminPlayerBox and LeafVE_AchTest.UI.adminPlayerBox:GetText() or ""
     local achId = LeafVE_AchTest.UI.adminAchBox and LeafVE_AchTest.UI.adminAchBox:GetText() or ""
-    playerName = string.gsub(playerName, "^%s*(.-)%s*$", "%1")
-    achId = string.gsub(achId, "^%s*(.-)%s*$", "%1")
-    if playerName == "" or achId == "" then
-      Print("|cFFFF4444Admin: Enter a player name and achievement ID.|r")
+    local ok, targetOrError, achOrNil = LeafVE_AchTest:AdminGrantAchievement(playerName, achId, false)
+    if not ok then
+      Print("|cFFFF4444Admin: "..targetOrError.."|r")
       return
     end
-    -- Prefix dung_ or raid_ if bare key given
-    if not string.find(achId, "^dung_") and not string.find(achId, "^raid_") and not string.find(achId, "^legendary_") then
-      if ACHIEVEMENTS["dung_"..achId] then
-        achId = "dung_"..achId
-      elseif ACHIEVEMENTS["raid_"..achId] then
-        achId = "raid_"..achId
-      end
-    end
-    local ach = ACHIEVEMENTS[achId]
-    if not ach then
-      Print("|cFFFF4444Admin: Unknown achievement ID: "..achId.."|r")
+    Print("|cFFFF0000[Admin Grant]|r "..targetOrError.." awarded: |cFF2DD35C"..achOrNil.name.."|r (+"..achOrNil.points.." pts)")
+  end)
+
+  local adminGrantGuildBtn = CreateFrame("Button", nil, adminFrame, "UIPanelButtonTemplate")
+  adminGrantGuildBtn:SetPoint("TOPLEFT", adminGrantBtn, "BOTTOMLEFT", 0, -6)
+  adminGrantGuildBtn:SetWidth(110)
+  adminGrantGuildBtn:SetHeight(22)
+  adminGrantGuildBtn:SetText("Grant Guildie")
+  adminGrantGuildBtn:SetScript("OnClick", function()
+    local _, rankName = GetGuildInfo("player")
+    if not IsOfficerRank(rankName) then
+      Print("Only Anbu, Sannin, or Hokage may grant achievements.")
       return
     end
-    local target = ShortName(playerName)
-    EnsureDB()
-    if not LeafVE_AchTest_DB.achievements[target] then
-      LeafVE_AchTest_DB.achievements[target] = {}
-    end
-    if LeafVE_AchTest_DB.achievements[target][achId] then
-      Print("|cFFFFCC00Admin: "..target.." already has: "..ach.name.."|r")
+    local playerName = LeafVE_AchTest.UI.adminPlayerBox and LeafVE_AchTest.UI.adminPlayerBox:GetText() or ""
+    local achId = LeafVE_AchTest.UI.adminAchBox and LeafVE_AchTest.UI.adminAchBox:GetText() or ""
+    local ok, targetOrError, achOrNil = LeafVE_AchTest:AdminGrantAchievement(playerName, achId, true)
+    if not ok then
+      Print("|cFFFF4444Admin: "..targetOrError.."|r")
       return
     end
-    LeafVE_AchTest_DB.achievements[target][achId] = {timestamp = Now(), points = ach.points}
-    Print("|cFFFF0000[Admin Grant]|r "..target.." awarded: |cFF2DD35C"..ach.name.."|r (+"..ach.points.." pts)")
-    if IsInGuild() then
-      local achLink = "|cFFFFD700|Hleafve_ach:"..achId.."|h["..ach.name.."]|h|r"
-      local guildMsg
-      if ach.category == "Legendary" and LEGENDARY_GUILD_MESSAGES[achId] then
-        local legendaryMsg = LEGENDARY_GUILD_MESSAGES[achId](target)
-        guildMsg = "|cFFFF0000[LEGENDARY]|r " .. legendaryMsg
-      elseif ach.category == "Guild" and GUILD_RANK_GUILD_MESSAGES[achId] then
-        local rankMsg = GUILD_RANK_GUILD_MESSAGES[achId](target)
-        guildMsg = "|cFF8B4513[GUILD RANK]|r " .. rankMsg
-      else
-        guildMsg = "|cFF2DD35C[LeafVE Achievement]|r earned "..achLink
-      end
-      if originalSendChatMessage then
-        originalSendChatMessage(guildMsg, "GUILD")
-      else
-        SendChatMessage(guildMsg, "GUILD")
-      end
-    end
-    LeafVE_AchTest.UI:Refresh()
+    Print("|cFFFF0000[Admin Guild Grant]|r "..targetOrError.." awarded: |cFF2DD35C"..achOrNil.name.."|r (+"..achOrNil.points.." pts)")
   end)
 
   local adminStatusLabel = adminFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  adminStatusLabel:SetPoint("TOPLEFT", adminAchLabel, "BOTTOMLEFT", 0, -14)
+  adminStatusLabel:SetPoint("TOPLEFT", adminAchDropdown, "BOTTOMLEFT", 16, -8)
   adminStatusLabel:SetWidth(700)
   adminStatusLabel:SetJustifyH("LEFT")
-  adminStatusLabel:SetText("|cFF888888Hint: Use /achgrant <name> <id> in chat, or enter above and click Grant.|r")
+  adminStatusLabel:SetText("|cFF888888Hint: Dropdown is grouped by category (and pages for large categories). /achgrant <name> <id> and /achgrantguild <name> <id> still work.|r")
   self.adminStatusLabel = adminStatusLabel
 
   -- Legendary achievements quick-reference list
@@ -3256,7 +3767,7 @@ function LeafVE_AchTest.UI:Refresh()
   local totalPoints = LeafVE_AchTest:GetTotalAchievementPoints(me)
   local currentTitle = LeafVE_AchTest:GetCurrentTitle(me)
   local _, rankName = GetGuildInfo("player")
-  local hasAdminAccess = rankName ~= nil and (rankName == "Anbu" or rankName == "Sannin" or rankName == "Hokage")
+  local hasAdminAccess = IsOfficerRank(rankName)
 
   if not hasAdminAccess and self.currentView == "admin" then
     self.currentView = "achievements"
@@ -3721,6 +4232,11 @@ local firedThisTrade  = false
 local DEATH_CLASSIFY_WINDOW = 3
 -- Track whether player was dead, to count only genuine resurrections.
 local playerWasDead = false
+-- Resurrection request state: only accepted player-cast resurrects should count.
+local pendingAcceptedPlayerRes = false
+local lastResurrectRequester = nil
+local lastResurrectRequestTime = 0
+local RESURRECT_REQUEST_WINDOW = 30
 -- Recent target tracking for fallback boss kill validation ("X dies." / "X has been slain.")
 local BOSS_TARGET_WINDOW = 30  -- seconds
 local recentTargets = {}       -- lowercase mob name -> last-targeted timestamp
@@ -3783,6 +4299,31 @@ local function InstallAuctionHooks()
   end
 end
 
+local resurrectHookInstalled = false
+local function IsLikelyPlayerResurrecter(name)
+  local short = ShortName(name)
+  if not short or short == "" then return false end
+  if string.find(short, " ") then return false end
+  local low = string.lower(short)
+  if string.find(low, "spirit", 1, true) and string.find(low, "healer", 1, true) then
+    return false
+  end
+  return true
+end
+
+local function InstallResurrectionHooks()
+  if resurrectHookInstalled then return end
+  resurrectHookInstalled = true
+  if AcceptResurrect then
+    local oldAcceptResurrect = AcceptResurrect
+    AcceptResurrect = function()
+      local recent = (GetTime() - lastResurrectRequestTime) <= RESURRECT_REQUEST_WINDOW
+      pendingAcceptedPlayerRes = recent and IsLikelyPlayerResurrecter(lastResurrectRequester)
+      oldAcceptResurrect()
+    end
+  end
+end
+
 local ef = CreateFrame("Frame")
 ef:RegisterEvent("ADDON_LOADED")
 ef:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -3793,6 +4334,7 @@ ef:RegisterEvent("PLAYER_TARGET_CHANGED")
 ef:RegisterEvent("PLAYER_DEAD")
 ef:RegisterEvent("PLAYER_ALIVE")
 ef:RegisterEvent("PLAYER_UNGHOST")
+ef:RegisterEvent("RESURRECT_REQUEST")
 ef:RegisterEvent("TAXIMAP_CLOSED")
 ef:RegisterEvent("TRADE_CLOSED")
 ef:RegisterEvent("TRADE_SHOW")
@@ -3811,6 +4353,7 @@ ef:SetScript("OnEvent", function()
   if event == "ADDON_LOADED" and arg1 == LeafVE_AchTest.name then
     EnsureDB()
     InstallAuctionHooks()
+    InstallResurrectionHooks()
     -- Backlog: award completions from previously stored boss kill progress + history
     LeafVE_AchTest:CheckBacklogAchievements()
     Print("Achievement System Loaded! Type /achtest")
@@ -3828,15 +4371,47 @@ ef:SetScript("OnEvent", function()
     LeafVE_AchTest:CheckBattlegroundAchievements(true)
     LeafVE_AchTest:CheckAuctionHouseAchievements(true)
     LeafVE_AchTest:CheckRunMilestoneAchievements(true)
+    LeafVE_AchTest:CheckCachedProgressAchievements(true)
+    LeafVE_AchTest:CheckExplorationAchievements(true)
     LeafVE_AchTest:CheckGuildRankAchievements(true)
     LeafVE_AchTest:CheckBacklogAchievements()
+    LeafVE_AchTest:CheckAchievementMetaAchievements(true)
+    do
+      local me = ShortName(UnitName("player"))
+      if me then
+        SetCounter(me, "lastSeenLevel", UnitLevel("player") or 0)
+      end
+    end
+    pendingAcceptedPlayerRes = false
+    lastResurrectRequester = nil
+    lastResurrectRequestTime = 0
     LeafVE_AchTest.initialized = true
   end
   if event == "PLAYER_TARGET_CHANGED" then
     local tname = UnitName("target")
     if tname then recentTargets[string.lower(tname)] = time() end
   end
-  if event == "PLAYER_LEVEL_UP" and LeafVE_AchTest.initialized then LeafVE_AchTest:CheckLevelAchievements() end
+  if event == "PLAYER_LEVEL_UP" and LeafVE_AchTest.initialized then
+    local me = ShortName(UnitName("player"))
+    if me then
+      EnsureDB()
+      local pc = LeafVE_AchTest_DB.progressCounters
+      if not pc[me] then pc[me] = {} end
+
+      local oldLevel = tonumber(pc[me].lastSeenLevel) or 0
+      local eventLevel = tonumber(arg1) or 0
+      local liveLevel = UnitLevel("player") or 0
+      local newLevel = eventLevel
+
+      if newLevel < 1 then newLevel = liveLevel end
+      if liveLevel > newLevel then newLevel = liveLevel end
+      -- This event means at least one level was gained; guard against stale payloads.
+      if newLevel <= oldLevel then newLevel = oldLevel + 1 end
+
+      LeafVE_AchTest:AwardLevelMilestonesBetween(oldLevel + 1, newLevel, false)
+      SetCounter(me, "lastSeenLevel", newLevel)
+    end
+  end
   if event == "PLAYER_MONEY" and LeafVE_AchTest.initialized then LeafVE_AchTest:CheckGoldAchievements() end
   if event == "UPDATE_FACTION" and LeafVE_AchTest.initialized then LeafVE_AchTest:CheckReputationAchievements() end
   if event == "AUCTION_HOUSE_SHOW" and LeafVE_AchTest.initialized then
@@ -3849,6 +4424,10 @@ ef:SetScript("OnEvent", function()
   if (event == "CHAT_MSG_BG_SYSTEM_ALLIANCE" or event == "CHAT_MSG_BG_SYSTEM_HORDE" or event == "CHAT_MSG_BG_SYSTEM_NEUTRAL")
     and LeafVE_AchTest.initialized then
     LeafVE_AchTest:HandleBattlegroundSystemMessage(event, arg1 or "")
+  end
+  if event == "RESURRECT_REQUEST" then
+    lastResurrectRequester = arg1
+    lastResurrectRequestTime = GetTime()
   end
   if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
     -- Boss kill tracking only; generic kills are handled by LeafVE_Ach_Kills.lua.
@@ -3906,12 +4485,11 @@ ef:SetScript("OnEvent", function()
   end
   if event == "PLAYER_DEAD" then
     playerWasDead = true
+    pendingAcceptedPlayerRes = false
     local me = ShortName(UnitName("player"))
     if me then
       local total = IncrCounter(me, "deaths")
-      if total >= 5   then LeafVE_AchTest:AwardAchievement("casual_deaths_5")   end
-      if total >= 10  then LeafVE_AchTest:AwardAchievement("casual_deaths_10")  end
-      if total >= 25  then LeafVE_AchTest:AwardAchievement("casual_deaths_25")  end
+      SetCounter(me, "questsSinceDeath", 0)
       if total >= 50  then LeafVE_AchTest:AwardAchievement("casual_deaths_50")  end
       if total >= 100 then LeafVE_AchTest:AwardAchievement("casual_deaths_100") end
       -- Check if death was caused by falling (fall damage fired just before death)
@@ -3960,6 +4538,10 @@ ef:SetScript("OnEvent", function()
       end
       if questTurnedIn then
         IncrCounter(me, "quests")
+        local streak = IncrCounter(me, "questsSinceDeath")
+        if streak >= 200 then
+          LeafVE_AchTest:AwardAchievement("casual_quest_streak_200")
+        end
         LeafVE_AchTest:CheckQuestAchievements()
       end
       questLogSnapshot = currentLog
@@ -3989,25 +4571,36 @@ ef:SetScript("OnEvent", function()
     local winner, loser = smatch(msg, "^(.-) has defeated (.+) in a duel$")
     if winner then
       local me = ShortName(UnitName("player"))
+      local winnerShort = ShortName(winner)
+      local loserShort = ShortName(loser)
       if me and ShortName(winner) == me then
         Debug("Duel won against: "..tostring(loser))
         local total = IncrCounter(me, "duels")
+        local streak = IncrCounter(me, "duelStreak")
         if total >= 10  then LeafVE_AchTest:AwardAchievement("pvp_duel_10")  end
         if total >= 25  then LeafVE_AchTest:AwardAchievement("pvp_duel_25")  end
         if total >= 50  then LeafVE_AchTest:AwardAchievement("pvp_duel_50")  end
         if total >= 100 then LeafVE_AchTest:AwardAchievement("pvp_duel_100") end
+        if streak >= 25 then LeafVE_AchTest:AwardAchievement("pvp_duel_streak_25") end
+      elseif me and loserShort == me and winnerShort ~= me then
+        SetCounter(me, "duelStreak", 0)
       end
     end
   end
   if event == "PLAYER_ALIVE" or event == "PLAYER_UNGHOST" then
     -- Only count resurrections when coming back from a previous death
     if playerWasDead then
+      local shouldCountRes = pendingAcceptedPlayerRes
       playerWasDead = false
-      local me = ShortName(UnitName("player"))
-      if me then
-        local total = IncrCounter(me, "resurrections")
-        if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_resurrect_10") end
-        if total >= 50 then LeafVE_AchTest:AwardAchievement("casual_resurrect_50") end
+      pendingAcceptedPlayerRes = false
+      lastResurrectRequester = nil
+      if shouldCountRes then
+        local me = ShortName(UnitName("player"))
+        if me then
+          local total = IncrCounter(me, "resurrections")
+          if total >= 10 then LeafVE_AchTest:AwardAchievement("casual_resurrect_10") end
+          if total >= 50 then LeafVE_AchTest:AwardAchievement("casual_resurrect_50") end
+        end
       end
     end
   end
@@ -4361,7 +4954,7 @@ end
 SLASH_ACHGRANT1 = "/achgrant"
 SlashCmdList["ACHGRANT"] = function(msg)
   local _, rankName = GetGuildInfo("player")
-  if rankName ~= "Anbu" and rankName ~= "Sannin" and rankName ~= "Hokage" then
+  if not IsOfficerRank(rankName) then
     Print("Only Anbu, Sannin, or Hokage may grant achievements.")
     return
   end
@@ -4371,52 +4964,33 @@ SlashCmdList["ACHGRANT"] = function(msg)
     Print("Example: /achgrant Naruto dung_rfc_complete")
     return
   end
-  -- Prefix dung_ if player typed a bare dungeon key like rfc_complete
-  if not string.find(achId, "^dung_") and not string.find(achId, "^raid_") then
-    -- Try prefixing dung_ first, then raid_
-    if ACHIEVEMENTS["dung_"..achId] then
-      achId = "dung_"..achId
-    elseif ACHIEVEMENTS["raid_"..achId] then
-      achId = "raid_"..achId
-    end
-  end
-  local ach = ACHIEVEMENTS[achId]
-  if not ach then
-    Print("Unknown achievement ID: "..achId)
+  local ok, targetOrError, achOrNil = LeafVE_AchTest:AdminGrantAchievement(target, achId, false)
+  if not ok then
+    Print(targetOrError)
     return
   end
-  local playerName = ShortName(target)
-  EnsureDB()
-  if not LeafVE_AchTest_DB.achievements[playerName] then
-    LeafVE_AchTest_DB.achievements[playerName] = {}
-  end
-  if LeafVE_AchTest_DB.achievements[playerName][achId] then
-    Print(playerName.." already has: "..ach.name)
+  Print("|cFFFF7F00[Admin Grant]|r "..targetOrError.." awarded: |cFF2DD35C"..achOrNil.name.."|r (+"..achOrNil.points.." pts)")
+end
+
+SLASH_ACHGRANTGUILD1 = "/achgrantguild"
+SlashCmdList["ACHGRANTGUILD"] = function(msg)
+  local _, rankName = GetGuildInfo("player")
+  if not IsOfficerRank(rankName) then
+    Print("Only Anbu, Sannin, or Hokage may grant achievements.")
     return
   end
-  LeafVE_AchTest_DB.achievements[playerName][achId] = {timestamp = Now(), points = ach.points}
-  Print("|cFFFF7F00[Admin Grant]|r "..playerName.." awarded: |cFF2DD35C"..ach.name.."|r (+"..ach.points.." pts)")
-  if IsInGuild() then
-    local achLink = "|cFFFFD700|Hleafve_ach:"..achId.."|h["..ach.name.."]|h|r"
-    local guildMsg
-    if ach.category == "Legendary" and LEGENDARY_GUILD_MESSAGES[achId] then
-      local legendaryMsg = LEGENDARY_GUILD_MESSAGES[achId](playerName)
-      guildMsg = "|cFFFF0000[LEGENDARY]|r " .. legendaryMsg
-    elseif ach.category == "Guild" and GUILD_RANK_GUILD_MESSAGES[achId] then
-      local rankMsg = GUILD_RANK_GUILD_MESSAGES[achId](playerName)
-      guildMsg = "|cFF8B4513[GUILD RANK]|r " .. rankMsg
-    else
-      guildMsg = "|cFF2DD35C[LeafVE Achievement]|r earned "..achLink
-    end
-    if originalSendChatMessage then
-      originalSendChatMessage(guildMsg, "GUILD")
-    else
-      SendChatMessage(guildMsg, "GUILD")
-    end
+  local target, achId = smatch(msg, "^(%S+)%s+(%S+)$")
+  if not target or not achId then
+    Print("Usage: /achgrantguild <GuildieName> <achievementId>")
+    Print("Example: /achgrantguild Naruto explore_tw_balor")
+    return
   end
-  if LeafVE_AchTest.UI and LeafVE_AchTest.UI.Refresh then
-    LeafVE_AchTest.UI:Refresh()
+  local ok, targetOrError, achOrNil = LeafVE_AchTest:AdminGrantAchievement(target, achId, true)
+  if not ok then
+    Print(targetOrError)
+    return
   end
+  Print("|cFFFF7F00[Admin Guild Grant]|r "..targetOrError.." awarded: |cFF2DD35C"..achOrNil.name.."|r (+"..achOrNil.points.." pts)")
 end
 
 -- Chat Title Integration with Orange Color (Vanilla WoW Compatible)
@@ -4465,12 +5039,29 @@ minimapButton:SetFrameStrata("MEDIUM")
 minimapButton:SetFrameLevel(8)
 minimapButton:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
 
+local MINIMAP_ICON_CANDIDATES = {
+  "Interface\\Icons\\Spell_Nature_ResistNature",
+  "Interface\\Icons\\INV_Misc_Book_09",
+  "Interface\\Icons\\INV_Misc_QuestionMark",
+}
+
+local function ApplyMinimapIcon(tex)
+  for _, path in ipairs(MINIMAP_ICON_CANDIDATES) do
+    tex:SetTexture(path)
+    if tex:GetTexture() then
+      return
+    end
+  end
+end
+
 -- Icon
 local icon = minimapButton:CreateTexture(nil, "ARTWORK")
-icon:SetWidth(18)
-icon:SetHeight(18)
-icon:SetTexture("Interface\\Icons\\INV_Misc_Trophy_Gold")
-icon:SetPoint("CENTER", minimapButton, "CENTER", 0, 1)
+icon:SetWidth(20)
+icon:SetHeight(20)
+ApplyMinimapIcon(icon)
+icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+icon:SetVertexColor(1, 1, 1, 1)
+icon:SetPoint("CENTER", minimapButton, "CENTER", 0, 0)
 minimapButton.icon = icon
 
 -- Border
@@ -4571,40 +5162,11 @@ zoneDiscFrame:SetScript("OnEvent", function()
     anyNew = true
     newlyDiscovered[subzone] = true
   end
-  if not anyNew then return end
-  -- Check every zone-group achievement; notify on first discovery
-  local soundPlayed = false
-  for groupKey, zones in pairs(ZONE_GROUP_ZONES) do
-    local achId = ZONE_GROUP_ACH[groupKey] or ("explore_tw_"..groupKey)
-    local total = table.getn(zones)
-    local found = 0
-    local hasNew = false
-    for _, z in ipairs(zones) do
-      if LeafVE_AchTest_DB.exploredZones[me][z] then
-        found = found + 1
-      end
-      if newlyDiscovered[z] then
-        hasNew = true
-      end
-    end
-    if hasNew then
-      local achName = ACHIEVEMENTS[achId] and ACHIEVEMENTS[achId].name or achId
-      for _, z in ipairs(zones) do
-        if newlyDiscovered[z] then
-          Print('Discovered "'..z..'" - '..found..'/'..total..' Locations for '..achName)
-        end
-      end
-      if not soundPlayed then
-        PlaySound("QUESTCOMPLETED")
-        soundPlayed = true
-      end
-    end
-    if not LeafVE_AchTest:HasAchievement(me, achId) then
-      if found == total then
-        LeafVE_AchTest:AwardAchievement(achId)
-      end
-    end
+  if not anyNew then
+    LeafVE_AchTest:CheckExplorationAchievements(true)
+    return
   end
+  LeafVE_AchTest:CheckExplorationAchievements(false, newlyDiscovered)
 end)
 
 local hookTimer = 0

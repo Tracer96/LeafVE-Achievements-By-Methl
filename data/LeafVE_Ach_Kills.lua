@@ -22,6 +22,7 @@ local GENERIC_KILLS = {
   {id="kill_1000",   name="Massacre Master",    desc="Defeat 1,000 enemies.",                 value=1000,   points=25},
   {id="kill_10000",  name="Unstoppable",        desc="Defeat 10,000 enemies.",                value=10000,  points=50},
   {id="kill_50000",  name="Godslayer",          desc="Defeat 50,000 enemies.",                value=50000,  points=100},
+  {id="kill_100000", name="Slayer Eternal",     desc="Defeat 100,000 enemies.",               value=100000, points=200},
 }
 
 -- Named critter and mob kills (require 50 kills each)

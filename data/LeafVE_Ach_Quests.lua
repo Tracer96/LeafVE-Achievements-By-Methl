@@ -1,33 +1,91 @@
 -- LeafVE_Ach_Quests.lua
--- Notable multi-step quest chain achievements with per-step progress tracking.
+-- Notable quest-chain and one-off quest achievements with persistent per-step progress.
 -- Quest completions are detected via CHAT_MSG_SYSTEM: Quest "Name" completed.
 -- Requires LeafVE_AchievementsTest.lua to be loaded first.
 
--- Lua 5.0 compatibility: string.match does not exist in vanilla WoW
+-- Lua 5.0 compatibility: string.match does not exist in vanilla WoW.
 local function smatch(str, pattern)
   local s, _, c1, c2, c3 = string.find(str, pattern)
   if s then return c1 or true, c2, c3 end
   return nil
 end
 
+-- Normalize quest names so punctuation/quote variants still match.
+-- Also strips a "[DEPRECATED]" prefix so old/new variants can share progress.
+local function NormalizeQuestKey(name)
+  if type(name) ~= "string" then return nil end
+  local n = string.lower(name)
+  n = string.gsub(n, "\\'", "'")
+  n = string.gsub(n, "^%s*%[deprecated%]%s*", "")
+  n = string.gsub(n, "[^%w%s]", " ")
+  n = string.gsub(n, "%s+", " ")
+  n = string.gsub(n, "^%s+", "")
+  n = string.gsub(n, "%s+$", "")
+  if n == "" then return nil end
+  return n
+end
+
+local function LegacyQuestKey(name)
+  if type(name) ~= "string" then return nil end
+  local n = string.lower(name)
+  if n == "" then return nil end
+  return n
+end
+
+local function ReadQuestCount(value)
+  if type(value) == "number" then
+    if value < 0 then return 0 end
+    return value
+  end
+  if value then return 1 end
+  return 0
+end
+
+-- Step can be:
+--   "Quest Name"
+--   {name="Quest Name", count=3}
+local function GetStepData(step)
+  if type(step) == "string" then return step, 1 end
+  if type(step) == "table" then
+    local name = step.name or step[1]
+    if type(name) ~= "string" or name == "" then return nil, nil end
+    local needed = tonumber(step.count) or tonumber(step.required) or 1
+    if needed < 1 then needed = 1 end
+    return name, needed
+  end
+  return nil, nil
+end
+
+local function GetQuestCompletionCount(completedMap, stepName)
+  if not completedMap then return 0 end
+  local norm = NormalizeQuestKey(stepName)
+  local count = 0
+  if norm then
+    count = ReadQuestCount(completedMap[norm])
+  end
+  local legacy = LegacyQuestKey(stepName)
+  if legacy and legacy ~= norm then
+    local legacyCount = ReadQuestCount(completedMap[legacy])
+    if legacyCount > count then count = legacyCount end
+  end
+  return count
+end
+
 -- ============================================================
--- Quest Chain Definitions
--- Each chain has an achievement + optional title reward.
--- _questSteps lists the exact quest turn-in names that must
--- be completed (case-insensitive match).
+-- Quest chain definitions
 -- ============================================================
 
 local QUEST_CHAINS = {
 
-  -- ── Alliance: Onyxia's Lair Attunement ───────────────────
+  -- Alliance: Onyxia's Lair Attunement
   {
-    id    = "quest_onyxia_alliance",
-    name  = "The Great Masquerade",
-    desc  = "Complete the Onyxia's Lair attunement quest chain (Alliance).",
+    id     = "quest_onyxia_alliance",
+    name   = "The Great Masquerade",
+    desc   = "Complete the Onyxia's Lair attunement quest chain (Alliance).",
     points = 100,
-    icon  = "Interface\\Icons\\INV_Misc_Head_Dragon_01",
-    title = {id="title_onyxia_bane", name="Onyxia's Bane", prefix=false},
-    steps = {
+    icon   = "Interface\\Icons\\INV_Misc_Head_Dragon_01",
+    title  = {id="title_onyxia_bane", name="Onyxia's Bane", prefix=false},
+    steps  = {
       "Dragonkin Menace",
       "The True Masters",
       "Marshal Windsor",
@@ -42,15 +100,15 @@ local QUEST_CHAINS = {
     },
   },
 
-  -- ── Horde: Onyxia's Lair Attunement ─────────────────────
+  -- Horde: Onyxia's Lair Attunement
   {
-    id    = "quest_onyxia_horde",
-    name  = "Blood of the Black Dragon Champion",
-    desc  = "Complete the Onyxia's Lair attunement quest chain (Horde).",
+    id     = "quest_onyxia_horde",
+    name   = "Blood of the Black Dragon Champion",
+    desc   = "Complete the Onyxia's Lair attunement quest chain (Horde).",
     points = 100,
-    icon  = "Interface\\Icons\\INV_Misc_Head_Dragon_01",
-    title = {id="title_bloodbound", name="the Bloodbound", prefix=false},
-    steps = {
+    icon   = "Interface\\Icons\\INV_Misc_Head_Dragon_01",
+    title  = {id="title_bloodbound", name="the Bloodbound", prefix=false},
+    steps  = {
       "Warlord's Command",
       "Eitrigg's Wisdom",
       "For The Horde!",
@@ -67,15 +125,15 @@ local QUEST_CHAINS = {
     },
   },
 
-  -- ── Thunderfury, Blessed Blade of the Windseeker ─────────
+  -- Thunderfury, Blessed Blade of the Windseeker
   {
-    id    = "quest_thunderfury",
-    name  = "The Windseeker's Legacy",
-    desc  = "Forge Thunderfury by completing the elemental weapon quest chain.",
+    id     = "quest_thunderfury",
+    name   = "The Windseeker's Legacy",
+    desc   = "Forge Thunderfury by completing the elemental weapon quest chain.",
     points = 150,
-    icon  = "Interface\\Icons\\INV_Sword_39",
-    title = {id="title_windseeker", name="the Windseeker", prefix=false},
-    steps = {
+    icon   = "Interface\\Icons\\INV_Sword_39",
+    title  = {id="title_windseeker", name="the Windseeker", prefix=false},
+    steps  = {
       "Vessel of Rebirth",
       "Thunderaan's Oculus",
       "Arcanite Crystal",
@@ -84,15 +142,15 @@ local QUEST_CHAINS = {
     },
   },
 
-  -- ── Linken's Adventure (Un'Goro Crater) ──────────────────
+  -- Linken's Adventure (Un'Goro Crater)
   {
-    id    = "quest_linken",
-    name  = "Hero of Un'Goro Crater",
-    desc  = "Help Linken recover his memory and complete his epic adventure chain.",
+    id     = "quest_linken",
+    name   = "Hero of Un'Goro Crater",
+    desc   = "Help Linken recover his memory and complete his epic adventure chain.",
     points = 50,
-    icon  = "Interface\\Icons\\INV_Misc_Note_06",
-    title = {id="title_ungoro_adventurer", name="the Un'Goro Adventurer", prefix=false},
-    steps = {
+    icon   = "Interface\\Icons\\INV_Misc_Note_06",
+    title  = {id="title_ungoro_adventurer", name="the Un'Goro Adventurer", prefix=false},
+    steps  = {
       "It's a Secret to Everybody",
       "The Videre Elixir",
       "Meet at the Grave",
@@ -106,15 +164,15 @@ local QUEST_CHAINS = {
     },
   },
 
-  -- ── The Missing Diplomat (Alliance) ──────────────────────
+  -- The Missing Diplomat (Alliance)
   {
-    id    = "quest_missing_diplomat",
-    name  = "A Diplomat's Journey",
-    desc  = "Unravel the disappearance of King Varian Wrynn across Azeroth.",
+    id     = "quest_missing_diplomat",
+    name   = "A Diplomat's Journey",
+    desc   = "Unravel the disappearance of King Varian Wrynn across Azeroth.",
     points = 75,
-    icon  = "Interface\\Icons\\INV_Misc_Map_02",
-    title = {id="title_kingfinder", name="the Kingfinder", prefix=false},
-    steps = {
+    icon   = "Interface\\Icons\\INV_Misc_Map_02",
+    title  = {id="title_kingfinder", name="the Kingfinder", prefix=false},
+    steps  = {
       "A Fishy Peril",
       "Further Concerns",
       "What Lurks Beneath",
@@ -131,45 +189,45 @@ local QUEST_CHAINS = {
     },
   },
 
-  -- ── Rhok'delar, Longbow of the Ancient Keepers (Hunter) ──
+  -- Rhok'delar, Longbow of the Ancient Keepers (Hunter)
   {
-    id    = "quest_rhokdelar",
-    name  = "Bow of the Ancient Keepers",
-    desc  = "Slay four ancient demons and claim Rhok'delar from the demigod Remulos.",
+    id     = "quest_rhokdelar",
+    name   = "Bow of the Ancient Keepers",
+    desc   = "Slay four ancient demons and claim Rhok'delar from the demigod Remulos.",
     points = 75,
-    icon  = "Interface\\Icons\\INV_Weapon_Bow_13",
-    title = {id="title_beastmaster", name="the Beastmaster", prefix=false},
-    steps = {
+    icon   = "Interface\\Icons\\INV_Weapon_Bow_13",
+    title  = {id="title_beastmaster", name="the Beastmaster", prefix=false},
+    steps  = {
       "The Ancient Leaf",
       "Stave of the Ancients",
       "Rhok'delar, Longbow of the Ancient Keepers",
     },
   },
 
-  -- ── Benediction / Anathema (Priest) ──────────────────────
+  -- Benediction / Anathema (Priest)
   {
-    id    = "quest_benediction",
-    name  = "The Light's Chosen Staff",
-    desc  = "Balance Light and Shadow to forge Benediction (or Anathema).",
+    id     = "quest_benediction",
+    name   = "The Light's Chosen Staff",
+    desc   = "Balance Light and Shadow to forge Benediction (or Anathema).",
     points = 75,
-    icon  = "Interface\\Icons\\INV_Staff_30",
-    title = {id="title_lightbringer", name="the Lightbringer", prefix=false},
-    steps = {
+    icon   = "Interface\\Icons\\INV_Staff_30",
+    title  = {id="title_lightbringer", name="the Lightbringer", prefix=false},
+    steps  = {
       "Redemption",
       "The Balance of Light and Shadow",
       "Benediction",
     },
   },
 
-  -- ── Darrowshire (Eastern / Western Plaguelands) ───────────
+  -- Darrowshire (Eastern / Western Plaguelands)
   {
-    id    = "quest_darrowshire",
-    name  = "Echoes of Darrowshire",
-    desc  = "Relive the tragic Battle of Darrowshire and lay its ghosts to rest.",
+    id     = "quest_darrowshire",
+    name   = "Echoes of Darrowshire",
+    desc   = "Relive the tragic Battle of Darrowshire and lay its ghosts to rest.",
     points = 75,
-    icon  = "Interface\\Icons\\Spell_Shadow_RaiseDead",
-    title = {id="title_darrowshire_hero", name="the Darrowshire Hero", prefix=false},
-    steps = {
+    icon   = "Interface\\Icons\\Spell_Shadow_RaiseDead",
+    title  = {id="title_darrowshire_hero", name="the Darrowshire Hero", prefix=false},
+    steps  = {
       "Little Pamela",
       "Pamela's Doll",
       "Auntie Marlene",
@@ -180,30 +238,30 @@ local QUEST_CHAINS = {
     },
   },
 
-  -- ── Molten Core Attunement ─────────────────────────────────
+  -- Molten Core Attunement
   {
-    id    = "quest_mc_attunement",
-    name  = "Attunement to the Core",
-    desc  = "Complete the Molten Core attunement quest chain.",
+    id     = "quest_mc_attunement",
+    name   = "Attunement to the Core",
+    desc   = "Complete the Molten Core attunement quest chain.",
     points = 75,
-    icon  = "Interface\\Icons\\Spell_Fire_LavaSpawn",
-    title = {id="title_core_seeker", name="Core Seeker", prefix=false},
-    steps = {
+    icon   = "Interface\\Icons\\Spell_Fire_LavaSpawn",
+    title  = {id="title_core_seeker", name="Core Seeker", prefix=false},
+    steps  = {
       "Fireproof",
       "Overmaster Pyron",
       "Attunement to the Core",
     },
   },
 
-  -- ── Princess Theradras Chain (Maraudon) ────────────────────
+  -- Princess Theradras Chain (Maraudon)
   {
-    id    = "quest_princess_theradras",
-    name  = "Earth's Bane",
-    desc  = "Defeat Princess Theradras after completing the Maraudon quest chain.",
+    id     = "quest_princess_theradras",
+    name   = "Earth's Bane",
+    desc   = "Defeat Princess Theradras after completing the Maraudon quest chain.",
     points = 50,
-    icon  = "Interface\\Icons\\INV_Misc_Root_02",
-    title = {id="title_deep_diver", name="Deep Diver", prefix=false},
-    steps = {
+    icon   = "Interface\\Icons\\INV_Misc_Root_02",
+    title  = {id="title_deep_diver", name="Deep Diver", prefix=false},
+    steps  = {
       "Corruption of Earth and Seed",
       "Legends of Maraudon",
       "The Scepter of Celebras",
@@ -212,15 +270,15 @@ local QUEST_CHAINS = {
     },
   },
 
-  -- ── Dreadsteed of Xoroth (Warlock Epic Mount) ─────────────
+  -- Dreadsteed of Xoroth (Warlock Epic Mount)
   {
-    id    = "quest_dreadsteed",
-    name  = "Dreadsteed of Xoroth",
-    desc  = "Complete the Warlock epic mount quest chain and summon the Dreadsteed.",
+    id     = "quest_dreadsteed",
+    name   = "Dreadsteed of Xoroth",
+    desc   = "Complete the Warlock epic mount quest chain and summon the Dreadsteed.",
     points = 100,
-    icon  = "Interface\\Icons\\Ability_Mount_Nightmarehorse",
-    title = {id="title_dreadlord", name="the Dreadlord", prefix=false},
-    steps = {
+    icon   = "Interface\\Icons\\Ability_Mount_Nightmarehorse",
+    title  = {id="title_dreadlord", name="the Dreadlord", prefix=false},
+    steps  = {
       "Seeking Stinky and Smelly",
       "Klinfran the Crazed",
       "Corruption",
@@ -230,15 +288,15 @@ local QUEST_CHAINS = {
     },
   },
 
-  -- ── Charger (Paladin Epic Mount) ───────────────────────────
+  -- Charger (Paladin Epic Mount)
   {
-    id    = "quest_charger",
-    name  = "Blessed Charger",
-    desc  = "Complete the Paladin epic mount quest chain and receive the Charger.",
+    id     = "quest_charger",
+    name   = "Blessed Charger",
+    desc   = "Complete the Paladin epic mount quest chain and receive the Charger.",
     points = 100,
-    icon  = "Interface\\Icons\\Spell_Holy_SealOfWrath",
-    title = {id="title_lightsworn", name="the Lightsworn", prefix=false},
-    steps = {
+    icon   = "Interface\\Icons\\Spell_Holy_SealOfWrath",
+    title  = {id="title_lightsworn", name="the Lightsworn", prefix=false},
+    steps  = {
       "Emphasis on Effort",
       "The Work of Grimand Elmore",
       "Blessed Arcanite Barding",
@@ -250,15 +308,15 @@ local QUEST_CHAINS = {
     },
   },
 
-  -- ── Quel'Serrar (Warrior / Paladin legendary blade) ────────
+  -- Quel'Serrar (Warrior / Paladin legendary blade)
   {
-    id    = "quest_quelserrar",
-    name  = "The Ancient Blade Reforged",
-    desc  = "Reforge Quel'Serrar by completing its legendary quest chain.",
+    id     = "quest_quelserrar",
+    name   = "The Ancient Blade Reforged",
+    desc   = "Reforge Quel'Serrar by completing its legendary quest chain.",
     points = 100,
-    icon  = "Interface\\Icons\\INV_Sword_39",
-    title = {id="title_blade_of_lore", name="Blade of Lore", prefix=false},
-    steps = {
+    icon   = "Interface\\Icons\\INV_Sword_39",
+    title  = {id="title_blade_of_lore", name="Blade of Lore", prefix=false},
+    steps  = {
       "The Highborne's Token",
       "A Worthy Vessel",
       "The Emerald Dreamcatcher",
@@ -267,21 +325,495 @@ local QUEST_CHAINS = {
     },
   },
 
+  -- Classic repeated-title chains
+  {
+    id     = "quest_defias_chapters",
+    name   = "The Defias Dossier",
+    desc   = "Complete all chapters of The Defias Brotherhood.",
+    points = 60,
+    icon   = "Interface\\Icons\\INV_Letter_15",
+    steps  = {
+      {name = "The Defias Brotherhood", count = 7},
+    },
+  },
+  {
+    id     = "quest_peoples_militia_chapters",
+    name   = "Sentinel Hill Veteran",
+    desc   = "Complete all chapters of The People's Militia.",
+    points = 40,
+    icon   = "Interface\\Icons\\INV_Shield_09",
+    steps  = {
+      {name = "The People's Militia", count = 3},
+    },
+  },
+  {
+    id     = "quest_hidden_enemies_chapters",
+    name   = "Hidden No More",
+    desc   = "Complete all chapters of Hidden Enemies.",
+    points = 50,
+    icon   = "Interface\\Icons\\Ability_Spy",
+    steps  = {
+      {name = "Hidden Enemies", count = 5},
+    },
+  },
+
+  -- Additional classic chains
+  {
+    id     = "quest_tirion_in_dreams",
+    name   = "Fordring's Redemption",
+    desc   = "Complete Tirion's late Plaguelands chain through In Dreams.",
+    points = 120,
+    icon   = "Interface\\Icons\\INV_Misc_Book_11",
+    title  = {id="title_dreamward", name="the Dreamward", prefix=false},
+    steps  = {
+      "Demon Dogs",
+      "Blood Tinged Skies",
+      "Carrion Grubbage",
+      "Redemption",
+      "Of Forgotten Memories",
+      "Of Lost Honor",
+      {name = "Of Love and Family", count = 2},
+      "In Dreams",
+    },
+  },
+  {
+    id     = "quest_scholomance_keyline",
+    name   = "Keeper of Scholomance",
+    desc   = "Complete the Scholomance key progression quests.",
+    points = 90,
+    icon   = "Interface\\Icons\\INV_Key_03",
+    title  = {id="title_keywarden", name="the Keywarden", prefix=false},
+    steps  = {
+      "Doctor Theolen Krastinov, the Butcher",
+      "Kirtonos the Herald",
+      "The Human, Ras Frostwhisper",
+      "The Key to Scholomance",
+    },
+  },
+  {
+    id     = "quest_atiesh_legacy",
+    name   = "Atiesh Reborn",
+    desc   = "Reclaim and purify Atiesh, Greatstaff of the Guardian.",
+    points = 150,
+    icon   = "Interface\\Icons\\INV_Staff_Medivh",
+    title  = {id="title_guardians_heir", name="the Guardian's Heir", prefix=false},
+    steps  = {
+      "Frame of Atiesh",
+      "Atiesh, the Befouled Greatstaff",
+      "Atiesh, Greatstaff of the Guardian",
+    },
+  },
+  {
+    id     = "quest_aq_eternal_board",
+    name   = "A Pawn No Longer",
+    desc   = "Complete A Pawn on the Eternal Board.",
+    points = 100,
+    icon   = "Interface\\Icons\\INV_QirajIdol_Death",
+    steps  = {
+      "A Pawn on the Eternal Board",
+    },
+  },
+  {
+    id     = "quest_blueleaf_tubers",
+    name   = "Blueleaf Forager",
+    desc   = "Complete Blueleaf Tubers.",
+    points = 35,
+    icon   = "Interface\\Icons\\INV_Misc_Herb_08",
+    steps  = {
+      "Blueleaf Tubers",
+    },
+  },
+  {
+    id     = "quest_araj_scarab",
+    name   = "Scarab of Andorhal",
+    desc   = "Complete Araj's Scarab.",
+    points = 55,
+    icon   = "Interface\\Icons\\INV_Misc_Orb_03",
+    steps  = {
+      "Araj's Scarab",
+    },
+  },
+  {
+    id     = "quest_brood_of_onyxia",
+    name   = "Brood Exposed",
+    desc   = "Complete Identifying the Brood and The Brood of Onyxia.",
+    points = 60,
+    icon   = "Interface\\Icons\\INV_Misc_Head_Dragon_Black",
+    steps  = {
+      "Identifying the Brood",
+      "The Brood of Onyxia",
+    },
+  },
+  {
+    id     = "quest_sunken_temple_trials",
+    name   = "Temple Delver",
+    desc   = "Complete The Sunken Temple.",
+    points = 55,
+    icon   = "Interface\\Icons\\INV_Misc_Eye_01",
+    steps  = {
+      "The Sunken Temple",
+    },
+  },
+  {
+    id     = "quest_return_to_chromie",
+    name   = "Chronicle's Return",
+    desc   = "Complete Return to Chromie.",
+    points = 50,
+    icon   = "Interface\\Icons\\INV_Misc_PocketWatch_01",
+    steps  = {
+      "Return to Chromie",
+    },
+  },
+
+  -- Classic low-level one-offs
+  {
+    id     = "quest_hogger_bounty",
+    name   = "Hogger's End",
+    desc   = "Complete Wanted: Hogger.",
+    points = 20,
+    icon   = "Interface\\Icons\\INV_Misc_Head_Gnoll_01",
+    steps  = {"Wanted: Hogger"},
+  },
+  {
+    id     = "quest_maggot_eye_bounty",
+    name   = "Eye for Maggot Eye",
+    desc   = "Complete Wanted: Maggot Eye.",
+    points = 20,
+    icon   = "Interface\\Icons\\Ability_CriticalStrike",
+    steps  = {"Wanted: Maggot Eye"},
+  },
+  {
+    id     = "quest_princess_must_die",
+    name   = "Boar Crown Broken",
+    desc   = "Complete Princess Must Die!",
+    points = 20,
+    icon   = "Interface\\Icons\\INV_Misc_Head_Boar_01",
+    steps  = {"Princess Must Die!"},
+  },
+  {
+    id     = "quest_disruption_ends",
+    name   = "No More Disruption",
+    desc   = "Complete The Disruption Ends.",
+    points = 20,
+    icon   = "Interface\\Icons\\INV_Pick_02",
+    steps  = {"The Disruption Ends"},
+  },
+  {
+    id     = "quest_kolkar_leaders",
+    name   = "Kolkar Decapitated",
+    desc   = "Complete Kolkar Leaders.",
+    points = 20,
+    icon   = "Interface\\Icons\\INV_Axe_06",
+    steps  = {"Kolkar Leaders"},
+  },
+  {
+    id     = "quest_echeyakee",
+    name   = "White Mane Fell",
+    desc   = "Complete Echeyakee.",
+    points = 25,
+    icon   = "Interface\\Icons\\Ability_Hunter_Pet_Cat",
+    steps  = {"Echeyakee"},
+  },
+  {
+    id     = "quest_harpy_raiders",
+    name   = "Featherbreaker",
+    desc   = "Complete Harpy Raiders.",
+    points = 20,
+    icon   = "Interface\\Icons\\INV_Feather_02",
+    steps  = {"Harpy Raiders"},
+  },
+  {
+    id     = "quest_raptor_horns",
+    name   = "Horn Collector",
+    desc   = "Complete Raptor Horns.",
+    points = 20,
+    icon   = "Interface\\Icons\\INV_Misc_Bone_03",
+    steps  = {"Raptor Horns"},
+  },
+  {
+    id     = "quest_consumed_by_hatred",
+    name   = "Hatred Spent",
+    desc   = "Complete Consumed by Hatred.",
+    points = 20,
+    icon   = "Interface\\Icons\\Spell_Shadow_Curse",
+    steps  = {"Consumed by Hatred"},
+  },
+  {
+    id     = "quest_leaders_of_the_fang",
+    name   = "Fangbreaker",
+    desc   = "Complete Leaders of the Fang.",
+    points = 25,
+    icon   = "Interface\\Icons\\INV_Misc_MonsterFang_01",
+    steps  = {"Leaders of the Fang"},
+  },
+  {
+    id     = "quest_trouble_at_docks",
+    name   = "Dockside Cleanup",
+    desc   = "Complete Trouble at the Docks.",
+    points = 20,
+    icon   = "Interface\\Icons\\INV_Crate_03",
+    steps  = {"Trouble at the Docks"},
+  },
+  {
+    id     = "quest_family_fishing_pole",
+    name   = "Family Catch",
+    desc   = "Complete The Family and the Fishing Pole.",
+    points = 20,
+    icon   = "Interface\\Icons\\INV_Fishingpole_01",
+    steps  = {"The Family and the Fishing Pole"},
+  },
+  {
+    id     = "quest_stockade_riots",
+    name   = "Riot Suppressor",
+    desc   = "Complete The Stockade Riots.",
+    points = 20,
+    icon   = "Interface\\Icons\\INV_Misc_Bag_11",
+    steps  = {"The Stockade Riots"},
+  },
+  {
+    id     = "quest_fenris_assault",
+    name   = "Fenris Breaker",
+    desc   = "Complete Assault on Fenris Isle.",
+    points = 20,
+    icon   = "Interface\\Icons\\Ability_Racial_BloodRage",
+    steps  = {"Assault on Fenris Isle"},
+  },
+  {
+    id     = "quest_arugal_must_die",
+    name   = "Shadowfang's End",
+    desc   = "Complete Arugal Must Die.",
+    points = 25,
+    icon   = "Interface\\Icons\\Spell_Shadow_ShadowBolt",
+    steps  = {"Arugal Must Die"},
+  },
+  {
+    id     = "quest_lost_in_battle",
+    name   = "Remember the Fallen",
+    desc   = "Complete Lost in Battle.",
+    points = 20,
+    icon   = "Interface\\Icons\\INV_Sword_04",
+    steps  = {"Lost in Battle"},
+  },
+  {
+    id     = "quest_baron_longshore_bounty",
+    name   = "Longshore Cut Short",
+    desc   = "Complete WANTED: Baron Longshore.",
+    points = 20,
+    icon   = "Interface\\Icons\\INV_Misc_Head_Human_01",
+    steps  = {"WANTED: Baron Longshore"},
+  },
+  {
+    id     = "quest_gathilzogg_bounty",
+    name   = "Gath'Ilzogg's Fall",
+    desc   = "Complete Wanted: Gath'Ilzogg.",
+    points = 20,
+    icon   = "Interface\\Icons\\INV_Misc_Head_Orc_01",
+    steps  = {"Wanted: Gath'Ilzogg"},
+  },
+  {
+    id     = "quest_fangore_bounty",
+    name   = "Lieutenant No More",
+    desc   = "Complete Wanted: Lieutenant Fangore.",
+    points = 20,
+    icon   = "Interface\\Icons\\INV_Misc_Head_Human_02",
+    steps  = {"Wanted: Lieutenant Fangore"},
+  },
+  {
+    id     = "quest_murkdeep_bounty",
+    name   = "Murkdeep Hunted",
+    desc   = "Complete WANTED: Murkdeep!",
+    points = 20,
+    icon   = "Interface\\Icons\\INV_Misc_Head_Murloc_01",
+    steps  = {"WANTED: Murkdeep!"},
+  },
+
+  -- Turtle quest chains
+  {
+    id     = "quest_turtle_kheyna_timeway",
+    name   = "Gears of Time",
+    desc   = "Complete Kheyna's long campaign through Black Morass timeways.",
+    points = 140,
+    icon   = "Interface\\Icons\\INV_Misc_PocketWatch_02",
+    title  = {id="title_chronomechanic", name="the Chronomechanic", prefix=false},
+    steps  = {
+      "A Glittering Opportunity",
+      "A Bloody Good Deed",
+      "Sap Their Strength",
+      "A Pounding Brain",
+      "Zalazane's Apprentice",
+      "Re-assembler!",
+      "To Build a Pounder",
+      "The Zeppelin Crash",
+      "Delivery for Drazzit",
+      "Secure the Cargo!",
+      "A Letter From a Friend",
+      "A Slaughter for Brains",
+      "Return to Kheyna",
+      "A Timely Situation",
+      "An Infinite Hunt",
+      "A Journey Into The Caverns",
+      "The First Opening of The Dark Portal",
+    },
+  },
+  {
+    id     = "quest_turtle_si7_scarlet",
+    name   = "Scarlet Masquerade",
+    desc   = "Complete the SI:7 infiltration line.",
+    points = 130,
+    icon   = "Interface\\Icons\\INV_Misc_Cape_18",
+    title  = {id="title_scarlet_shadow", name="the Scarlet Shadow", prefix=false},
+    steps  = {
+      "A Particular Letter",
+      "The Elusive SI:7",
+      "Young and Foolish",
+      "Thandol Span",
+      "Are You True to Your Nature?",
+      "The Means of Persuading",
+      "Seeking Justice or Vengeance?",
+      "The Price Of Information",
+      "Scarlet Aid",
+      "Donning the Red Flag",
+      "It's All in Their Brains",
+      "Supplies We Need",
+    },
+  },
+  {
+    id     = "quest_turtle_dark_lady",
+    name   = "Banshee's Gambit",
+    desc   = "Complete the Forsaken anti-Scarlet intelligence chain.",
+    points = 130,
+    icon   = "Interface\\Icons\\Spell_Shadow_RaiseDead",
+    title  = {id="title_banshees_hand", name="the Banshee's Hand", prefix=false},
+    steps  = {
+      "A Dreadful Summon",
+      "Grim News",
+      "To Catch a Rat...",
+      "Trusted Apothecary",
+      "Consulting an Expert",
+      "In Gunther's Favor",
+      "Soul and Alchemy",
+      "Dark Temper for a Dark Lady",
+      "The Future Looks Grim",
+      "A Different Shade of Red",
+    },
+  },
+  {
+    id     = "quest_turtle_alahthalas_legacy",
+    name   = "Echoes of Alah'Thalas",
+    desc   = "Complete the Alah'Thalas legacy line.",
+    points = 80,
+    icon   = "Interface\\Icons\\INV_Misc_Gem_Sapphire_02",
+    steps  = {
+      "Assisting the Children of the Sun",
+      "To Alah'Thalas!",
+      "A Crystal Clear Task",
+      "Relics in Feralas",
+      "Smashing Zul'Mashar",
+      "Welcome to Alah'Thalas",
+      "Tears of the Poppy",
+      "Help With a Compassionate Matter",
+      "Teslinah's Search I",
+      "Teslinah's Search II",
+      "Teslinah's Search III",
+      "Teslinah's Search IV",
+      "Teslinah's Search V",
+    },
+  },
+  {
+    id     = "quest_turtle_donation_drive",
+    name   = "Two Banners, Ten Donations",
+    desc   = "Complete all donation drives for Silvermoon Remnants and Revantusk Tribe.",
+    points = 70,
+    icon   = "Interface\\Icons\\INV_Misc_Coin_01",
+    steps  = {
+      "A Donation of Wool: Silvermoon Remnants",
+      "A Donation of Silk: Silvermoon Remnants",
+      "A Donation of Mageweave: Silvermoon Remnants",
+      "A Donation of Runecloth: Silvermoon Remnants",
+      "Additional Runecloth: Silvermoon Remnants",
+      "A Donation of Wool: Revantusk Tribe",
+      "A Donation of Silk: Revantusk Tribe",
+      "A Donation of Mageweave: Revantusk Tribe",
+      "A Donation of Runecloth: Revantusk Tribe",
+      "Additional Runecloth: Revantusk Tribe",
+    },
+  },
+  {
+    id     = "quest_turtle_scale_requests",
+    name   = "Scalebound Secrets",
+    desc   = "Complete Aurelius's scale requests.",
+    points = 55,
+    icon   = "Interface\\Icons\\INV_Misc_MonsterScales_03",
+    steps  = {
+      "An Uncommon Request",
+      "A Rare Request",
+    },
+  },
+  {
+    id     = "quest_turtle_lantern_rite",
+    name   = "Lantern Rite",
+    desc   = "Complete Illuminate the Moonlit Night.",
+    points = 25,
+    icon   = "Interface\\Icons\\INV_Misc_Lantern_01",
+    steps  = {
+      "Illuminate the Moonlit Night",
+    },
+  },
+  {
+    id     = "quest_turtle_beast_training",
+    name   = "The Beast Within",
+    desc   = "Complete Training the Beast.",
+    points = 40,
+    icon   = "Interface\\Icons\\Ability_Hunter_BeastTaming",
+    steps  = {
+      "Training the Beast",
+    },
+  },
+  {
+    id     = "quest_turtle_strategic_strike",
+    name   = "Strategic Strike",
+    desc   = "Complete Strategic Strike.",
+    points = 80,
+    icon   = "Interface\\Icons\\INV_Sword_48",
+    steps  = {
+      {name = "Strategic Strike", count = 1},
+    },
+  },
 }
+
+-- Map each normalized quest step to the chains that use it.
+local STEP_TO_CHAINS = {}
+local TRACKED_STEPS = {}
+
+local function IndexQuestChains()
+  STEP_TO_CHAINS = {}
+  TRACKED_STEPS = {}
+  for _, chain in ipairs(QUEST_CHAINS) do
+    for _, step in ipairs(chain.steps or {}) do
+      local stepName = GetStepData(step)
+      local key = NormalizeQuestKey(stepName)
+      if key then
+        TRACKED_STEPS[key] = true
+        if not STEP_TO_CHAINS[key] then STEP_TO_CHAINS[key] = {} end
+        table.insert(STEP_TO_CHAINS[key], chain)
+      end
+    end
+  end
+end
+
+IndexQuestChains()
 
 -- ============================================================
 -- Helpers
 -- ============================================================
 
 -- Extract quest name from CHAT_MSG_SYSTEM completion message.
--- Handles: Quest "Name" completed.  /  Quest 'Name' completed.
+-- Handles: Quest "Name" completed. / Quest 'Name' completed.
 local function ExtractQuestName(msg)
   if type(msg) ~= "string" then return nil end
-  -- Primary pattern: Quest "Name" completed. (straight or curly quotes)
   local name = smatch(msg, 'Quest "([^"]+)" completed%.')
-               or smatch(msg, "Quest '([^']+)' completed%.")
+            or smatch(msg, "Quest '([^']+)' completed%.")
   if name and name ~= "" then return name end
-  -- Fallback: ends with " completed."
   if string.find(msg, " completed%.") then
     local stripped = string.gsub(msg, " completed%.", "")
     stripped = string.gsub(stripped, '^Quest%s*["\']', "")
@@ -298,35 +830,46 @@ end
 local function CheckChain(me, chain, silent)
   if LeafVE_AchTest:HasAchievement(me, chain.id) then return end
   if not LeafVE_AchTest_DB or not LeafVE_AchTest_DB.completedQuests then return end
-  local cq = LeafVE_AchTest_DB.completedQuests[me]
-  if not cq then return end
-  for _, step in ipairs(chain.steps) do
-    if not cq[string.lower(step)] then return end
+  local completed = LeafVE_AchTest_DB.completedQuests[me]
+  if not completed then return end
+
+  for _, step in ipairs(chain.steps or {}) do
+    local stepName, needed = GetStepData(step)
+    if not stepName then return end
+    if GetQuestCompletionCount(completed, stepName) < needed then return end
   end
+
   LeafVE_AchTest:AwardAchievement(chain.id, silent)
 end
 
--- Record a quest completion and check chains.
+-- Record a quest completion and check impacted chains.
 local function RecordQuestCompletion(me, questName)
-  if not questName or questName == "" then return end
+  if not me or not questName or questName == "" then return end
   if not LeafVE_AchTest_DB then return end
+
+  local key = NormalizeQuestKey(questName)
+  if not key or not TRACKED_STEPS[key] then return end
+
   if not LeafVE_AchTest_DB.completedQuests then LeafVE_AchTest_DB.completedQuests = {} end
   if not LeafVE_AchTest_DB.completedQuests[me] then LeafVE_AchTest_DB.completedQuests[me] = {} end
-  local lname = string.lower(questName)
-  -- Record the step and check each chain that contains it
-  local recorded = false
-  for _, chain in ipairs(QUEST_CHAINS) do
-    for _, step in ipairs(chain.steps) do
-      if string.lower(step) == lname then
-        LeafVE_AchTest_DB.completedQuests[me][lname] = true
-        recorded = true
-        break
-      end
+
+  local completed = LeafVE_AchTest_DB.completedQuests[me]
+  local newCount = ReadQuestCount(completed[key]) + 1
+  completed[key] = newCount
+
+  -- Keep legacy lowercase key in sync so older code and old DB entries remain compatible.
+  local legacyKey = LegacyQuestKey(questName)
+  if legacyKey and legacyKey ~= key then
+    local legacyCount = ReadQuestCount(completed[legacyKey])
+    if newCount > legacyCount then
+      completed[legacyKey] = newCount
     end
-    if recorded then
-      CheckChain(me, chain)
-      recorded = false
-    end
+  end
+
+  local chains = STEP_TO_CHAINS[key]
+  if not chains then return end
+  for _, chain in ipairs(chains) do
+    CheckChain(me, chain)
   end
 end
 
@@ -335,6 +878,7 @@ end
 -- ============================================================
 
 local function RegisterQuestChainAchievements()
+  LeafVE_AchTest.NormalizeQuestStepKey = NormalizeQuestKey
   for _, chain in ipairs(QUEST_CHAINS) do
     LeafVE_AchTest:AddAchievement(chain.id, {
       id          = chain.id,
@@ -350,7 +894,7 @@ local function RegisterQuestChainAchievements()
         id          = chain.title.id,
         name        = chain.title.name,
         achievement = chain.id,
-        prefix      = false,
+        prefix      = chain.title.prefix or false,
         category    = "Quests",
         icon        = chain.icon,
       })
@@ -359,7 +903,7 @@ local function RegisterQuestChainAchievements()
 end
 
 -- ============================================================
--- Event Handler
+-- Event handler
 -- ============================================================
 
 local questFrame = CreateFrame("Frame")
@@ -368,10 +912,13 @@ questFrame:RegisterEvent("CHAT_MSG_SYSTEM")
 
 questFrame:SetScript("OnEvent", function()
   if event == "ADDON_LOADED" and arg1 == "LeafVE_AchievementsTest" then
+    if LeafVE_AchTest then
+      LeafVE_AchTest.NormalizeQuestStepKey = NormalizeQuestKey
+    end
     if LeafVE_AchTest and LeafVE_AchTest.AddAchievement then
       RegisterQuestChainAchievements()
     end
-    -- Backlog: re-check chains in case all steps were completed in a prior session
+    -- Backlog: re-check chains in case required steps were completed in a prior session.
     local me = LeafVE_AchTest and LeafVE_AchTest.ShortName and
                LeafVE_AchTest.ShortName(UnitName("player"))
     if me then

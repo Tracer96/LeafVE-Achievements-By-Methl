@@ -1,5 +1,5 @@
 -- LeafVE_Ach_Skills.lua
--- Profession milestone (75/150/225) and weapon skill achievements.
+-- Profession and weapon-skill achievements (300 only).
 -- Adapted from KeijinAchievementMonitor for LeafVE.
 -- Requires LeafVE_AchievementsTest.lua to be loaded first.
 
@@ -24,10 +24,6 @@ local PROFESSIONS = {
 }
 
 local PROF_STEPS = {
-  {value=75,  title="Apprentice", points=5},
-  {value=125, title="Adept",      points=8},
-  {value=150, title="Journeyman", points=10},
-  {value=225, title="Expert",     points=15},
   {value=300, title="Artisan",    points=25},
 }
 
@@ -91,7 +87,7 @@ end
 -- Called on CHAT_MSG_SKILL (every skill-up) and on ADDON_LOADED
 -- (backlog check).
 -- ============================================================
-local PROF_MILESTONES = {75, 125, 150, 225, 300}
+local PROF_MILESTONES = {300}
 local WEAPON_MILESTONES = {300}
 
 -- Maps display name -> canonical id prefix for professions
