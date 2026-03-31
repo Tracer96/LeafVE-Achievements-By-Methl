@@ -1,4 +1,4 @@
--- LeafVE Achievement System - v2.0 - More Titles + Title Search Bar
+-- LeafVE Achievement System - v3.0 - More Titles + Title Search Bar
 -- Guild message: [Title] [LeafVE Achievement] has earned [Achievement]
 
 LeafVE_AchTest = LeafVE_AchTest or {}
@@ -6,6 +6,10 @@ LeafVE_AchTest.name = "LeafVE_AchievementsTest"
 LeafVE_AchTest_DB = LeafVE_AchTest_DB or {}
 LeafVE_AchTest.DEBUG = false -- Set to true for debug messages
 LeafVE_AchTest.initialized = false -- Set to true after PLAYER_ENTERING_WORLD backlog scan
+
+local ADDON_COMM_PREFIX = "LeafVEAch"
+local LEAFVE_RELEASE_VERSION = "3.0"
+local VERSION_REMINDER_INTERVAL = 24 * 60 * 60
 
 local THEME = {
   bg = {0.05, 0.04, 0.03, 1.00},
@@ -62,6 +66,40 @@ end
 
 local function Trim(s)
   return string.gsub(s or "", "^%s*(.-)%s*$", "%1")
+end
+
+local function GetAddonVersion()
+  local version = ""
+  if GetAddOnMetadata then
+    version = Trim(GetAddOnMetadata(LeafVE_AchTest.name, "Version"))
+  end
+  if not version or version == "" then
+    version = LEAFVE_RELEASE_VERSION
+  end
+  return version
+end
+
+local function ParseVersionParts(version)
+  local parts = {}
+  for part in string.gfind(tostring(version or ""), "(%d+)") do
+    table.insert(parts, tonumber(part) or 0)
+  end
+  return parts
+end
+
+local function CompareVersions(leftVersion, rightVersion)
+  local leftParts = ParseVersionParts(leftVersion)
+  local rightParts = ParseVersionParts(rightVersion)
+  local maxParts = math.max(table.getn(leftParts), table.getn(rightParts))
+
+  for i = 1, maxParts do
+    local left = leftParts[i] or 0
+    local right = rightParts[i] or 0
+    if left < right then return -1 end
+    if left > right then return 1 end
+  end
+
+  return 0
 end
 
 local function IsOfficerRank(rankName)
@@ -121,6 +159,83 @@ local function EnsureDB()
   if not LeafVE_AchTest_DB.peakGold then LeafVE_AchTest_DB.peakGold = {} end
   if not LeafVE_AchTest_DB.goldEarnedTotal then LeafVE_AchTest_DB.goldEarnedTotal = {} end
   if not LeafVE_AchTest_DB.goldLastSeen then LeafVE_AchTest_DB.goldLastSeen = {} end
+  if type(LeafVE_AchTest_DB.versionInfo) ~= "table" then LeafVE_AchTest_DB.versionInfo = {} end
+  if type(LeafVE_AchTest_DB.versionInfo.guildVersions) ~= "table" then LeafVE_AchTest_DB.versionInfo.guildVersions = {} end
+  if not LeafVE_AchTest_DB.versionInfo.lastReminderAt then LeafVE_AchTest_DB.versionInfo.lastReminderAt = 0 end
+
+  local installedVersion = GetAddonVersion()
+  local latestKnownVersion = LeafVE_AchTest_DB.versionInfo.latestKnownVersion or installedVersion
+  if CompareVersions(latestKnownVersion, LEAFVE_RELEASE_VERSION) < 0 then
+    latestKnownVersion = LEAFVE_RELEASE_VERSION
+  end
+  if CompareVersions(latestKnownVersion, installedVersion) < 0 then
+    latestKnownVersion = installedVersion
+  end
+  LeafVE_AchTest_DB.versionInfo.latestKnownVersion = latestKnownVersion
+end
+
+local function RecordKnownVersion(playerName, version)
+  EnsureDB()
+  playerName = ShortName(playerName)
+  version = Trim(version)
+  if not playerName or version == "" then return end
+
+  LeafVE_AchTest_DB.versionInfo.guildVersions[playerName] = version
+
+  local latestKnownVersion = LeafVE_AchTest_DB.versionInfo.latestKnownVersion or LEAFVE_RELEASE_VERSION
+  if CompareVersions(version, latestKnownVersion) > 0 then
+    LeafVE_AchTest_DB.versionInfo.latestKnownVersion = version
+  end
+end
+
+local function GetRequiredAddonVersion()
+  EnsureDB()
+  local requiredVersion = LeafVE_AchTest_DB.versionInfo.latestKnownVersion or LEAFVE_RELEASE_VERSION
+  if CompareVersions(requiredVersion, LEAFVE_RELEASE_VERSION) < 0 then
+    requiredVersion = LEAFVE_RELEASE_VERSION
+  end
+  return requiredVersion
+end
+
+if StaticPopupDialogs then
+  StaticPopupDialogs["LEAFVE_ACH_OUTDATED_VERSION"] = {
+    text = "LeafVE Achievements %s is required.\nYou are currently on %s.\nPlease update your addon.",
+    button1 = "Okay",
+    timeout = 0,
+    whileDead = 1,
+    hideOnEscape = 1,
+  }
+end
+
+function LeafVE_AchTest:ShowVersionReminder(requiredVersion, currentVersion)
+  EnsureDB()
+  requiredVersion = requiredVersion or GetRequiredAddonVersion()
+  currentVersion = currentVersion or GetAddonVersion()
+  LeafVE_AchTest_DB.versionInfo.lastReminderAt = Now()
+
+  if StaticPopup_Show then
+    StaticPopup_Show("LEAFVE_ACH_OUTDATED_VERSION", requiredVersion, currentVersion)
+  else
+    Print("LeafVE Achievements "..requiredVersion.." is required. You are currently on "..currentVersion..". Please update your addon.")
+  end
+end
+
+function LeafVE_AchTest:CheckVersionReminder(force)
+  EnsureDB()
+
+  local currentVersion = GetAddonVersion()
+  local requiredVersion = GetRequiredAddonVersion()
+  if CompareVersions(currentVersion, requiredVersion) >= 0 then
+    return false
+  end
+
+  local lastReminderAt = tonumber(LeafVE_AchTest_DB.versionInfo.lastReminderAt) or 0
+  if not force and (Now() - lastReminderAt) < VERSION_REMINDER_INTERVAL then
+    return false
+  end
+
+  self:ShowVersionReminder(requiredVersion, currentVersion)
+  return true
 end
 
 
@@ -1776,18 +1891,39 @@ function LeafVE_AchTest:BroadcastAchievements()
   
   -- Send via addon channel
   if table.getn(achData) > 0 then
-    SendAddonMessage("LeafVEAch", "SYNC:"..message, "GUILD")
+    SendAddonMessage(ADDON_COMM_PREFIX, "SYNC:"..message, "GUILD")
     Debug("Broadcast "..table.getn(achData).." achievements to guild")
   else
     Debug("No achievements to broadcast")
   end
+
+  self:BroadcastVersion()
+end
+
+function LeafVE_AchTest:BroadcastVersion(targetPlayer)
+  local version = GetAddonVersion()
+  if not version or version == "" then return end
+
+  if targetPlayer and targetPlayer ~= "" then
+    SendAddonMessage(ADDON_COMM_PREFIX, "VER:"..version, "WHISPER", targetPlayer)
+    return
+  end
+
+  if not IsInGuild() then return end
+  SendAddonMessage(ADDON_COMM_PREFIX, "VER:"..version, "GUILD")
+end
+
+function LeafVE_AchTest:RequestGuildVersions()
+  if not IsInGuild() then return end
+  SendAddonMessage(ADDON_COMM_PREFIX, "VERREQ", "GUILD")
 end
 
 -- Receive other players' achievements (FIXED for Vanilla WoW)
 function LeafVE_AchTest:OnAddonMessage(prefix, message, channel, sender)
-  if prefix ~= "LeafVEAch" then return end
-  if channel ~= "GUILD" then return end
-  
+  if prefix ~= ADDON_COMM_PREFIX then return end
+  if channel ~= "GUILD" and channel ~= "WHISPER" then return end
+
+  EnsureDB()
   sender = ShortName(sender)
   if not sender then return end
 
@@ -1796,7 +1932,25 @@ function LeafVE_AchTest:OnAddonMessage(prefix, message, channel, sender)
   if sender == me then return end
 
   Debug("Received addon message from "..sender)
-  
+
+  if message == "VERREQ" then
+    if channel == "GUILD" then
+      self:BroadcastVersion(sender)
+    end
+    return
+  end
+
+  if string.sub(message, 1, 4) == "VER:" then
+    local version = Trim(string.sub(message, 5))
+    if version ~= "" then
+      RecordKnownVersion(sender, version)
+      Debug("Stored addon version "..version.." from "..sender)
+    end
+    return
+  end
+
+  if channel ~= "GUILD" then return end
+
   -- Parse sync message
   if string.sub(message, 1, 5) == "SYNC:" then
     local achData = string.sub(message, 6)
@@ -1892,6 +2046,32 @@ loginBroadcast:SetScript("OnEvent", function()
       end
     end)
   end
+end)
+
+local versionReminderFrame = CreateFrame("Frame")
+versionReminderFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+versionReminderFrame:SetScript("OnEvent", function()
+  if event ~= "PLAYER_ENTERING_WORLD" then return end
+  if LeafVE_AchTest.versionReminderLoginDone then return end
+  LeafVE_AchTest.versionReminderLoginDone = true
+
+  local waitTimer = 0
+  local requestedVersions = false
+
+  this:SetScript("OnUpdate", function()
+    waitTimer = waitTimer + arg1
+
+    if not requestedVersions and waitTimer >= 2 then
+      requestedVersions = true
+      LeafVE_AchTest:RequestGuildVersions()
+    end
+
+    if waitTimer >= 7 then
+      LeafVE_AchTest:CheckVersionReminder(false)
+      this:SetScript("OnUpdate", nil)
+      this:UnregisterEvent("PLAYER_ENTERING_WORLD")
+    end
+  end)
 end)
 
 Print("Achievement sync system loaded!")

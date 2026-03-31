@@ -1,6 +1,6 @@
 # LeafVE Achievements
 
-**Version:** 2.0 · **Interface:** 11200 (Vanilla WoW / Turtle WoW 1.12)  
+**Version:** 3.0 · **Interface:** 11200 (Vanilla WoW / Turtle WoW 1.12)  
 **Author:** Methl · **Server:** LeafVE private server
 
 A comprehensive, self-contained achievement system for the LeafVE Vanilla WoW private server.  
@@ -270,3 +270,4 @@ All debug messages are prefixed with `[DEBUG]` in red.
 - Minimap button and draggable positioning.
 - Achievement broadcasting via `/achsync`.
 - Officer grant command via `/achgrant`.
+
