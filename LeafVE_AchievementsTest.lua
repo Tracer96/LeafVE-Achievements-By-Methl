@@ -1904,11 +1904,6 @@ function LeafVE_AchTest:BroadcastVersion(targetPlayer)
   local version = GetAddonVersion()
   if not version or version == "" then return end
 
-  if targetPlayer and targetPlayer ~= "" then
-    SendAddonMessage(ADDON_COMM_PREFIX, "VER:"..version, "WHISPER", targetPlayer)
-    return
-  end
-
   if not IsInGuild() then return end
   SendAddonMessage(ADDON_COMM_PREFIX, "VER:"..version, "GUILD")
 end
@@ -1921,7 +1916,7 @@ end
 -- Receive other players' achievements (FIXED for Vanilla WoW)
 function LeafVE_AchTest:OnAddonMessage(prefix, message, channel, sender)
   if prefix ~= ADDON_COMM_PREFIX then return end
-  if channel ~= "GUILD" and channel ~= "WHISPER" then return end
+  if channel ~= "GUILD" then return end
 
   EnsureDB()
   sender = ShortName(sender)
@@ -1934,9 +1929,7 @@ function LeafVE_AchTest:OnAddonMessage(prefix, message, channel, sender)
   Debug("Received addon message from "..sender)
 
   if message == "VERREQ" then
-    if channel == "GUILD" then
-      self:BroadcastVersion(sender)
-    end
+    self:BroadcastVersion()
     return
   end
 
@@ -1948,9 +1941,6 @@ function LeafVE_AchTest:OnAddonMessage(prefix, message, channel, sender)
     end
     return
   end
-
-  if channel ~= "GUILD" then return end
-
   -- Parse sync message
   if string.sub(message, 1, 5) == "SYNC:" then
     local achData = string.sub(message, 6)
